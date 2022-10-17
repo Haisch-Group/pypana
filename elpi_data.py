@@ -1,12 +1,14 @@
 """
 Import and Display of the Data acquired from the Dekati ELPI+
-Kevin Maier (kevin.r.maier@tum.de)
-Created (2020/11/01): data_reader and plot_profile
-Edit1 (2020/11/11 KM): now displays the concentration value calculated by ELPI instead of the raw current
-Edit2 (2020/11/17 KM): added tkinter module for file picking
+
+Created 2020-11-01: data_reader and plot_profile
+@written by Kevin Maier (kevin.r.maier@tum.de)
+
+2020-11-11 KM: now displays the concentration value calculated by ELPI instead of the raw current
+2020-11-17 KM: added tkinter module for file picking
             function particles_per_stage added to calculate collected particles per stage for the collection
             function mass_per_stage added to estimate the mass collected on each stage
-Edit3 (2021/01/13 KM): can now load in more than one file, and concatenates the data acquired from the files to display
+2021-01-13 KM: can now load in more than one file, and concatenates the data acquired from the files to display
             one measurement that was split up by the ELPI in multiple datafiles
             fixed particles_per_stage to actually calculate particle numbers and not something in P/min
             fixed display of datetime in plot and adapted plot for thesis

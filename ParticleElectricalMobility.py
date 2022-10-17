@@ -1,5 +1,12 @@
-"""calculation of the particle size of a particle with different charge, but same mobility as another particle
-with that also calculation of Cunningham factor and electrical mobility of the initial particle"""
+"""
+calculation of the particle size of a particle with different charge, but same mobility as another particle
+with that also calculation of Cunningham factor and electrical mobility of the initial particle
+
+Created 2022-08
+@written by Kevin Maier (kevin.r.maier@tum.de)
+"""
+
+
 import math
 from matplotlib import pyplot as plt
 

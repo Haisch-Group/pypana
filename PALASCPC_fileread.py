@@ -3,9 +3,10 @@
 Script for Data import of the PALAS CPC 100
 
 Created v0 2022-03-10 to 2022-04-04
+@written by Kevin Maier (kevin.r.maier@tum.de)
 
-
-Kevin Maier (kevin.r.maier@tum.de)
+2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
+    version number
 """
 
 import numpy as np

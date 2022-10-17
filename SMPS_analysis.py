@@ -5,7 +5,8 @@ Data has to be imported by the import function suitable for the used SMPS
 
 Created 2022-01-18 to 2022-01-20
 @written by Kevin Maier (kevin.r.maier@tum.de)
-v0 modified functions from oldSMPS_fileread_v1 and added functions for statistical evaluation
+
+modified functions from oldSMPS_fileread_v1 and added functions for statistical evaluation
     function set:   fileread
                     select_data
                     mean_up_down
@@ -17,10 +18,12 @@ v0 modified functions from oldSMPS_fileread_v1 and added functions for statistic
                     geometric_mean
                     geometric_std
                     lognormal_dist
-                    plot_singledata (added on 2022-02-10)
-    2022-03-03: now works with oldSMPS_fileread_v3 as well
-    2022-03-23: added plot_3Dsingledata
-v1 2022-07-20: changed lognormal dist function
+2022-02-10: plot_singledata
+2022-03-03: now works with oldSMPS_fileread_v3 as well
+2022-03-23: added plot_3Dsingledata
+2022-07-20: changed lognormal dist function
+2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
+    version number
 
 Possible changes:
     write concentration data to csv automatically
@@ -39,9 +42,9 @@ def fileread():
     #used_smps = 1
 
     if int(used_smps) == 0:
-        import oldSMPS_fileread_v3 as fr
+        import oldSMPS_fileread as fr
     else:
-        import newSMPS_fileread_v4 as fr
+        import newSMPS_fileread as fr
 
     filename = fr.get_filename()
     X, bar_width, Cn, time = fr.import_data(filename)

@@ -1,6 +1,10 @@
-"""calculation of terminal settling velocity, Re(settling), relaxation time, Stopping distance, root mean square
+"""
+calculation of terminal settling velocity, Re(settling), relaxation time, Stopping distance, root mean square
 displacement along axis, Diffusion coefficient and Cunningham correction factor of a particle with given diameter
-@written by Kevin Maier (kevin.r.maier@tum.de)"""
+
+Created 2022-08
+@written by Kevin Maier (kevin.r.maier@tum.de)
+"""
 
 
 import math

@@ -5,13 +5,15 @@ Data has to be exported in rows and plot is written, so that it displays the dW/
 Mean and std of three consecutive measurements is calculated, so triplicates should be measured
 
 Created v0 2021-10-22 - 2021-10-26
-v1 2021-11-17: title of the produced figures now in two lines, added concentration to be extracted, averaged, printed
-v2 2022-01-18: started to modify it, to work with SMPS_analysis_v0 -> continue this later on, shifted bar_width from
+@written by Kevin Maier (kevin.r.maier@tum.de)
+2021-11-17: title of the produced figures now in two lines, added concentration to be extracted, averaged, printed
+2022-01-18: started to modify it, to work with SMPS_analysis_v0 -> continue this later on, shifted bar_width from
                 plot to extract function, changed mean_of_3 to mean of n, which was ez
-v3 2022-03-03: reworked it, so it can be used as import filter for SMPS_analysis_v0 -> removed all doubly functions
+2022-03-03: reworked it, so it can be used as import filter for SMPS_analysis_v0 -> removed all doubly functions
                 now gives X, bar_width, Cn and time as newSMPS_fileread_v4.py
+2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
+    version number
 
-Kevin Maier (kevin.r.maier@tum.de)
 """
 
 import numpy as np

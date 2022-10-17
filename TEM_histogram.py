@@ -4,8 +4,6 @@ Script for creating TEM histograms from a list of particle areas
 
 Created 2022-04-21
 @written by Kevin Maier (kevin.r.maier@tum.de)
-v0
-
 """
 
 from tkinter import Tk

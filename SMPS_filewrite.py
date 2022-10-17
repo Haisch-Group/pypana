@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Created 2022/06/20
+writing of SMPS data to Excel for student internship
 
+Created 2022-06-20
 @written by Kevin Maier (kevin.r.maier@tum.de)
-    v0 writing of SMPS data to Excel for student internship
+
+2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
+    version number
 """
 
 import csv
-import newSMPS_fileread_v4
+import newSMPS_fileread
 import os
 
-filename = newSMPS_fileread_v4.get_filename()
-X, bar_width, Cn, time = newSMPS_fileread_v4.import_data(filename)
+filename = newSMPS_fileread.get_filename()
+X, bar_width, Cn, time = newSMPS_fileread.import_data(filename)
 
 with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='UTF8', newline="") as f:
     writer = csv.writer(f)

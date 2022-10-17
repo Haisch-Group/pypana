@@ -2,9 +2,8 @@
 """
 Script for Data Evaluation of the TSI APS
 
-Created 2021/10/26
-
-Kevin Maier (kevin.r.maier@tum.de)
+Created 2021-10-26
+@written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
 from matplotlib import ticker

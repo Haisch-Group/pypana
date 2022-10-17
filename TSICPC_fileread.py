@@ -3,10 +3,10 @@
 Script for Data import of the TSI CPC 3775
 Data has to be exported in rows
 
-Created v0 2022-03-10
-    2022-03-24 finished import_data function to produce Cn, el_time, start_time
+Created 2022-03-10
+@written by Kevin Maier (kevin.r.maier@tum.de)
 
-Kevin Maier (kevin.r.maier@tum.de)
+2022-03-24 finished import_data function to produce Cn, el_time, start_time
 """
 
 import numpy as np

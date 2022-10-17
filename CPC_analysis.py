@@ -5,7 +5,8 @@ Data has to be imported by the import function suitable for the used CPC
 
 Created 2022-03-24
 @written by Kevin Maier (kevin.r.maier@tum.de)
-v0
+2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
+    version number
 
 """
 
@@ -22,9 +23,9 @@ def fileread():
     #used_cpc = 0
 
     if int(used_cpc) == 0:
-        import TSICPC_fileread_v0 as fr
+        import TSICPC_fileread as fr
     else:
-        import PALASCPC_fileread_v0 as fr
+        import PALASCPC_fileread as fr
 
     filename = fr.get_filename()
     Cn, el_time, start_time = fr.import_data(filename)

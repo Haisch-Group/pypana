@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created 2020/09/14
-
+Created 2020-09-14
 @written by Karin Wieland
-    v0 Import of Data and Plot
+Import of Data and Plot
 @edited by Kevin Maier (kevin.r.maier@tum.de)
-    v1 2020/10/xx: labels plot with comment from txt instead of timestamp
-    v2 2020/11/14: created functions from previous script as "import_data" and "plot_data"
-    v3 2020/11/17: added tkinter
-    v4 2022/01/14-16: redid import function for later using it with one SMPS_analysis file
+
+2020-10-xx: labels plot with comment from txt instead of timestamp
+2020-11-14: created functions from previous script as "import_data" and "plot_data"
+2020-11-17: added tkinter
+2022-01-14-16: redid import function for later using it with one SMPS_analysis file
+2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
+    version number
 """
 
 import numpy as np
