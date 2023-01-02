@@ -341,21 +341,21 @@ if __name__ == "__main__":
 
     X, bar_width, Cn, time = fileread()
 
-    scan_nrs = np.arange(1, 43)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
-    nr_mean = 3
+    scan_nrs = np.arange(1, 33)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
+    nr_mean = 1
     density = 1  # if unknown use 1 g/cm^3
 
-    sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
-    mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
-        pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
+    # sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
+    # mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
+    #     pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
 
-    dg, sigma_g, fit = calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width)
-    #print(f'median = {dg}, sigma = {sigma_g}')
+    # dg, sigma_g, fit = calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width)
+    # print(f'median = {dg}, sigma = {sigma_g}')
 
-    measurement_nr = [0]#np.arange(1, 7)
-    #ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
+    # measurement_nr = [0]#np.arange(1, 7)
+    # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
     # ax1 = plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, measurement_nr)
-    ax1 = plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, measurement_nr)
-    print(dg)
-    print(sigma_g)
+    # ax1 = plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, measurement_nr)
+    # print(dg)
+    # print(sigma_g)
 
