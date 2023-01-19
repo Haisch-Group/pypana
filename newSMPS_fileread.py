@@ -11,6 +11,7 @@ Import of Data and Plot
 2022-01-14-16: redid import function for later using it with one SMPS_analysis file
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
+2023-01-19: filename is retrieved from SMPS_analysis now
 """
 
 import numpy as np
@@ -19,11 +20,11 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    return filename
+# def get_filename():
+#     """get the filename via UI"""
+#     Tk().withdraw()
+#     filename = askopenfilename()
+#     return filename
 
 
 def import_data(filename):

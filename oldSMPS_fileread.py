@@ -13,6 +13,7 @@ Created v0 2021-10-22 - 2021-10-26
                 now gives X, bar_width, Cn and time as newSMPS_fileread_v4.py
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
+2023-01-19: filename is retrieved from SMPS_analysis now
 
 """
 
@@ -23,11 +24,11 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    return filename
+# def get_filename():
+#     """get the filename via UI"""
+#     Tk().withdraw()
+#     filename = askopenfilename()
+#     return filename
 
 
 def import_data(filename):

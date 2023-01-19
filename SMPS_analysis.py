@@ -24,11 +24,14 @@ modified functions from oldSMPS_fileread_v1 and added functions for statistical 
 2022-07-20: changed lognormal dist function
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
+2023-01-19: filename is retrieved from SMPS_analysis now and printed in console to save it with console input
 
 Possible changes:
     write concentration data to csv automatically
 """
 
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 from matplotlib import ticker
 from matplotlib import pyplot as plt
 import numpy as np
@@ -36,7 +39,15 @@ import math
 from matplotlib import cm as colormap
 
 
-def fileread():
+def get_filename():
+    """get the filename via UI"""
+    Tk().withdraw()
+    filename = askopenfilename()
+    print(filename)
+    return filename
+
+
+def fileread(filename):
     """just a very fast function for applying the correct import filter according to user choice"""
     used_smps = input("Which SMPS did you use, type 0 for old TSI, or 1 for new PALAS")
     #used_smps = 1
@@ -46,7 +57,7 @@ def fileread():
     else:
         import newSMPS_fileread as fr
 
-    filename = fr.get_filename()
+    # filename = fr.get_filename()
     X, bar_width, Cn, time = fr.import_data(filename)
     # somehow, when using the function twice, to import one old and one new smps file, it does not update fr,
     # but tries to use the fileread script used before
@@ -173,8 +184,12 @@ def pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean):
     sel_Cv = volume_conc(sel_X, sel_Cn)
     sel_Cm = mass_conc(sel_Cv, density)
     calc_conc_n, calc_conc_v, calc_conc_m = get_conc(sel_Cn, sel_Cv, sel_Cm)
-    mean_Cn, std_Cn, mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, \
-    std_conc_m = mean_of_n(sel_Cn, sel_X, sel_bar_width, calc_conc_n, calc_conc_v, calc_conc_m, nr_mean)
+    if nr_mean == 0 or nr_mean == 1:
+        mean_Cn, std_Cn, mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, \
+            std_conc_m = [], [], [], [], [], [], [], [], [], []
+    else:
+        mean_Cn, std_Cn, mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, \
+        std_conc_m = mean_of_n(sel_Cn, sel_X, sel_bar_width, calc_conc_n, calc_conc_v, calc_conc_m, nr_mean)
 
     return sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
         mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m
@@ -223,7 +238,7 @@ def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nr):
     # yscale='log', xscale='log', xlabel='$\mathregular{dlog D_p}$ / nm', ylabel='dN / $\mathregular{P/cm^3}$'
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
-    if len(scan_nr) == 1:
+    if len(scan_nr) == 1:   # this could maybe be moved up into the previous for loop
         k = scan_nr[0]
         legend_entries = [input(f"Please enter the legend entry for scan {k}")]
         print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
@@ -308,20 +323,22 @@ def lognormal_dist(mean_conc_n, sigma_g, dg, mean_X, mean_bar_width):
     return fit
 
 
-def calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width):  # theoretically this would also work with noon-mean spectra
-    dg = geometric_mean(mean_X, mean_Cn, mean_conc_n)
+def calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width):  # theoretically this would also work with noon-mean
+    dg = geometric_mean(mean_X, mean_Cn, mean_conc_n)   # spectra by using sel_X, sel_Cn, calc_conc_n, sel_bar_width
     sigma_g = geometric_std(mean_X, mean_Cn, mean_conc_n, dg)
     fit = lognormal_dist(mean_conc_n, sigma_g, dg, mean_X, mean_bar_width)
     return dg, sigma_g, fit
 
 
-def save_values(calc_conc_n):
+def save_values(filename, calc_conc_n):
     """function, that saves all the important values (median, sigma, conc) to a csv or txt"""
+    savefile = f"{filename[0:-4]}_savedata.xlsx"
     return
 
 
 def save_meanvalues(mean_conc_n, dg, sigma):
     """function, that saves all the important values (median, sigma, conc) to a csv or txt"""
+
     return
 
 
@@ -339,23 +356,30 @@ def save_meanvalues(mean_conc_n, dg, sigma):
 
 if __name__ == "__main__":
 
-    X, bar_width, Cn, time = fileread()
+    filename = get_filename()
+    X, bar_width, Cn, time = fileread(filename)
 
     scan_nrs = np.arange(1, 33)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
     nr_mean = 1
     density = 1  # if unknown use 1 g/cm^3
+    print(f"scan_nrs: {scan_nrs}, nr_mean: {nr_mean}, density: {density}")
 
-    # sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
-    # mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
-    #     pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
+    sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
+    mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
+         pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
 
     # dg, sigma_g, fit = calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width)
+    dg, sigma_g, fit = calc_geometry(sel_X, sel_Cn, calc_conc_n, sel_bar_width)
+
     # print(f'median = {dg}, sigma = {sigma_g}')
 
-    # measurement_nr = [0]#np.arange(1, 7)
-    # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
+    measurement_nr = [0]#np.arange(1, 7) # for plotting
+    # print(f"measurement_nr: {measurement_nr}")
+
     # ax1 = plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, measurement_nr)
     # ax1 = plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, measurement_nr)
+
+    # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
     # print(dg)
     # print(sigma_g)
 
