@@ -233,8 +233,8 @@ def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nr):
             #, alpha=0.5)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
-           xlabel='Logarithmic Particle Diameter / nm',
-           ylabel='Differential Particle Number Concentration / $\mathregular{P/cm^3}$')
+           xlabel='Particle Diameter / nm',
+           ylabel='Differential Particle Number Concentration / $\mathregular{1/cm^3}$')
     # yscale='log', xscale='log', xlabel='$\mathregular{dlog D_p}$ / nm', ylabel='dN / $\mathregular{P/cm^3}$'
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
@@ -359,7 +359,7 @@ if __name__ == "__main__":
     filename = get_filename()
     X, bar_width, Cn, time = fileread(filename)
 
-    scan_nrs = np.arange(1, 33)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
+    scan_nrs = np.arange(1, 26)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
     nr_mean = 1
     density = 1  # if unknown use 1 g/cm^3
     print(f"scan_nrs: {scan_nrs}, nr_mean: {nr_mean}, density: {density}")
@@ -369,7 +369,7 @@ if __name__ == "__main__":
          pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
 
     # dg, sigma_g, fit = calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width)
-    dg, sigma_g, fit = calc_geometry(sel_X, sel_Cn, calc_conc_n, sel_bar_width)
+    # dg, sigma_g, fit = calc_geometry(sel_X, sel_Cn, calc_conc_n, sel_bar_width)
 
     # print(f'median = {dg}, sigma = {sigma_g}')
 
