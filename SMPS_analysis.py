@@ -53,7 +53,8 @@ def fileread(filename):
     #used_smps = 1
 
     if int(used_smps) == 0:
-        import oldSMPS_fileread as fr
+        import oldSMPS_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last column P/cm^3
+        # does not work sometimes, just change the ^3 to 3 in the data txt then
     else:
         import newSMPS_fileread as fr
 
@@ -359,10 +360,10 @@ if __name__ == "__main__":
     filename = get_filename()
     X, bar_width, Cn, time = fileread(filename)
 
-    scan_nrs = np.arange(1, 26)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
-    nr_mean = 1
-    density = 1  # if unknown use 1 g/cm^3
-    print(f"scan_nrs: {scan_nrs}, nr_mean: {nr_mean}, density: {density}")
+    # scan_nrs = np.arange(1, 28)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
+    # nr_mean = 2
+    # density = 1  # if unknown use 1 g/cm^3
+    # print(f"scan_nrs: {scan_nrs}, nr_mean: {nr_mean}, density: {density}")
 
     sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
     mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
@@ -373,7 +374,7 @@ if __name__ == "__main__":
 
     # print(f'median = {dg}, sigma = {sigma_g}')
 
-    measurement_nr = [0]#np.arange(1, 7) # for plotting
+    # measurement_nr = [0]#np.arange(1, 7) # for plotting
     # print(f"measurement_nr: {measurement_nr}")
 
     # ax1 = plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, measurement_nr)
