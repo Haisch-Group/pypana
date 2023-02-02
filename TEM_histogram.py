@@ -12,6 +12,7 @@ import pandas as pd
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import statistics
 
 
 def get_filename():
@@ -25,6 +26,7 @@ def import_data():
     filename = get_filename()
     data = pd.read_csv(filename)
     areas = data.Area
+    print(filename)
     return areas
 
 
@@ -38,7 +40,10 @@ def plot_hist(diameters):
     cm = 1 / 2.54  # inches to cm
     fig, ax = plt.subplots(figsize=(18.5 * cm, 10 * cm))  # height with title 12, without 10
     ax.hist(diameters, bins=bins, density=True)
-    ax.set(xlabel='particle diameter / nm', ylabel='probability', xlim=(0, 40))
+    ax.set(xlabel='particle diameter / nm', ylabel='prevalence of particles with given diameter', xlim=(0, 40))
+    sample_size = len(diameters)
+    median_dp = statistics.median(diameters)
+    plt.title(f"n = {sample_size}, median = {round(median_dp, 2)} nm")
     plt.show()
     return ax
 
