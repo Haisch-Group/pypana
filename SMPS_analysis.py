@@ -230,8 +230,7 @@ def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nr):
         ax.bar(sel_X[k, :], sel_Cn[k, :], width=sel_bar_width[k, :], edgecolor='black')
     else:
         for k in scan_nr:
-            ax.bar(sel_X[k, :], sel_Cn[k, :], width=sel_bar_width[k, :], edgecolor='black')
-            #, alpha=0.5)
+            ax.bar(sel_X[k, :], sel_Cn[k, :], width=sel_bar_width[k, :], edgecolor='black', alpha=0.5)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
            xlabel='Particle Diameter / nm',
@@ -337,6 +336,13 @@ def save_values(filename, calc_conc_n):
     return
 
 
+def cut_X(X, Cn):
+    """to cut a part of the spectrum"""
+    strt_idx = np.where(X[10] > 150)[0][0]
+    end_idx = np.where(X[10] < 250)[-1][-1] + 1
+    return
+
+
 def save_meanvalues(mean_conc_n, dg, sigma):
     """function, that saves all the important values (median, sigma, conc) to a csv or txt"""
 
@@ -361,13 +367,13 @@ if __name__ == "__main__":
     X, bar_width, Cn, time = fileread(filename)
 
     # scan_nrs = np.arange(1, 28)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
-    # nr_mean = 2
+    # nr_mean = 1
     # density = 1  # if unknown use 1 g/cm^3
     # print(f"scan_nrs: {scan_nrs}, nr_mean: {nr_mean}, density: {density}")
 
-    sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
-    mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
-         pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
+    # sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
+    # mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
+    #      pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
 
     # dg, sigma_g, fit = calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width)
     # dg, sigma_g, fit = calc_geometry(sel_X, sel_Cn, calc_conc_n, sel_bar_width)
