@@ -343,7 +343,7 @@ def cut_X(X, Cn):
     return
 
 
-def save_meanvalues(mean_conc_n, dg, sigma):
+def save_values(mean_conc_n, dg, sigma):
     """function, that saves all the important values (median, sigma, conc) to a csv or txt"""
 
     return
