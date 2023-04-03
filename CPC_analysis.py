@@ -7,14 +7,13 @@ Created 2022-03-24
 @written by Kevin Maier (kevin.r.maier@tum.de)
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
-
 """
 
 from matplotlib import ticker
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
-import mpldatacursor
+#import mpldatacursor
 
 
 def fileread():
@@ -60,7 +59,7 @@ def plot_singledata(Cn, el_time, conc_n, std_n, scan_nr):
             ax.scatter(el_time, Cn[k, :], edgecolor='black')
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set(xlabel='Elapsed Time / s',
-           ylabel='Particle Number Concentration / $\mathregular{P/cm^3}$')
+           ylabel='Particle Number Concentration / $\mathregular{1/cm^3}$')
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     if len(scan_nr) == 1:
@@ -74,7 +73,7 @@ def plot_singledata(Cn, el_time, conc_n, std_n, scan_nr):
             legend_entries.append(input(f"Please enter the legend entry for measurement {k}"))
     [print(f"measurement {k} conc. = " + "{:e}".format(float(conc_n[k])) + u"\u00B1" +
             "{:e}".format(float(std_n[k])) + " P/cm" + u"\u00B3") for k in scan_nr]
-    mpldatacursor.datacursor(ax)
+    #mpldatacursor.datacursor(ax)
     plt.legend(legend_entries)
 
     plt.show()
@@ -92,13 +91,13 @@ def plot_timeline(conc_n, std_n, start_time, start, end):
     ax.xaxis.set_tick_params(reset=True)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     ax.set(xlabel='Time / HH:MM',
-           ylabel='Mean Particle Number Concentration / $\mathregular{P/cm^3}$')
+           ylabel='Mean Particle Number Concentration / $\mathregular{1/cm^3}$')
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     legend_entries = [input(f"Please enter the legend entry for the measurement")]
     [print(f"measurement {k} conc. = " + "{:e}".format(float(conc_n[k])) + u"\u00B1" +
            "{:e}".format(float(std_n[k])) + " P/cm" + u"\u00B3") for k in np.arange(start, end)]
-    mpldatacursor.datacursor(ax)
+    #mpldatacursor.datacursor(ax)
     plt.legend(legend_entries)
 
     plt.show()
@@ -109,8 +108,10 @@ if __name__ == "__main__":
 
     Cn, el_time, start_time = fileread()
     conc_n, std_n = get_meanconc(Cn)
-    measurement_nr = [0]#np.arange(0, 3)
-    ax = plot_singledata(Cn, el_time, conc_n, std_n, measurement_nr)
-    #ax = plot_timeline(conc_n, std_n, start_time, start, end) # start end are measurement numbers in conc array
+    # measurement_nr = [0]#np.arange(0, 3)
+    # ax = plot_singledata(Cn, el_time, conc_n, std_n, measurement_nr)
+    # ax = plot_timeline(conc_n, std_n, start_time, start, end) # start end are measurement numbers in conc array
 
-#ax.legend(legend_entries, ncol=2,handleheight=2.4, labelspacing=0.05) if legend is too long
+    # ax.legend(legend_entries, ncol=2,handleheight=2.4, labelspacing=0.05) if legend is too long
+
+    """utf-8 error is mostly due to the cm^-3 column -> replace 0xb3 by cm3"""

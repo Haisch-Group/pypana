@@ -205,8 +205,8 @@ def plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc
         ax.bar(mean_X[k, :], mean_Cn[k, :], width=mean_bar_width[k, :], yerr=std_Cn[k, :], edgecolor='black')
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
-           xlabel='Logarithmic Particle Diameter / nm',
-           ylabel='Differential Particle Number Concentration / $\mathregular{P/cm^3}$')
+           xlabel='Particle Diameter / nm',
+           ylabel='Differential Particle Number Concentration / $\mathregular{1/cm^3}$')
     # yscale='log', xscale='log', xlabel='$\mathregular{dlog D_p}$ / nm', ylabel='dN / $\mathregular{P/cm^3}$'
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
@@ -263,9 +263,9 @@ def plot_3Dsingledata(sel_X, sel_Cn, start, end):
         #, alpha=0.5)
     ax.set(xticks=[np.log(20), np.log(50), np.log(100), np.log(200), np.log(400), np.log(800)],
            xticklabels=[20, 50, 100, 200, 400, 800],
-           xlabel='Logarithmic Particle Diameter / nm',
+           xlabel='Particle Diameter / nm',
            ylabel='Scan Number',
-           zlabel='Differential Particle Number Concentration / $\mathregular{P/cm^3}$')
+           zlabel='Differential Particle Number Concentration / $\mathregular{1/cm^3}$')
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     #fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     #legend_entries = []
@@ -389,4 +389,7 @@ if __name__ == "__main__":
     # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
     # print(dg)
     # print(sigma_g)
+
+    # plt.ioff()
+    # plt.show() # if plot doesnt show!
 
