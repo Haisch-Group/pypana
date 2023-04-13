@@ -10,17 +10,24 @@ Created 2023-04-13 from ParticleMechanics.py and ParticleElectricalMobility.py
 import math
 import pandas as pd
 
-"""particle properties and experimental parameters"""
-dp_nm = [10, 30, 50, 100, 350, 500, 800, 1000] # particle diameter in nanometer
-dp_m = [i*10**(-9) for i in dp_nm]  # particle diameter in meter
-ro_p = 1000     # particle density in kg/m^3
-v0 = 10     # initial velocity of the particle in m/s
+"""experimental parameters"""
+d_tube_mm = 3 # diameter of a tube or nozzle
+d_tube_m = d_tube_mm/10**3
+flow_lpm = 0.3  # flow rate in liter per minute in a tube or nozzle
+flow_cmps = flow_lpm/(10**3*60) # flow rate in cubic meters per second
+v0 = flow_cmps/((0.5*d_tube_m)**2*math.pi)# initial velocity of a particle in m/s
+# v0 = 10     # initial velocity of a particle in m/s
 t = 1   # observation time in s
-n_el = 1    # number of charges
-v_el = 3000 # electrical potential between two electrodes
+v_el = -3000 # electrical potential between two electrodes
 d_el_mm = 1 # distance of two opposing electrodes in mm
 d_el_m = d_el_mm*10**(-3)   # distance of two opposing electrodes in m
 E = -v_el/d_el_m    # electrical field strength
+
+"""particle properties"""
+dp_nm = [10, 30, 50, 100, 350, 500, 800, 1000] # particle diameter in nanometer
+dp_m = [i*10**(-9) for i in dp_nm]  # particle diameter in meter
+ro_p = 1000     # particle density in kg/m^3
+n_el = 1    # number of charges
 
 """physical constants"""
 k = 1.38*10**(-23)  # rounded Boltzmann constant in (kg*m^2)/(s^2*K)
@@ -123,5 +130,6 @@ if __name__ == "__main__":
         table = table.append({'d[nm]':dp_nm[i], 'vts[mm/s]':vts_mm, 'B[m^2/s]':B, 'Re(settling)':Res, 'tau[s]':tau,
                               'S[mm]':S_mm, 'xrms[mm]':xrms_mm, 'D[m^2/s]':D, 'vte[mm/s]':vte_mm, 'Z[m^2/Vs]':Z,
                               'Cc':Cc}, ignore_index=True)
+    print(f'v0[mm/s]={v0*10**(3)}')
     print(table)
     #table.to_clipboard(excel=True, sep='\t')
