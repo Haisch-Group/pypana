@@ -3,7 +3,7 @@ calculation of terminal settling velocity, Re(settling), relaxation time, Stoppi
 displacement along axis, Diffusion coefficient and Cunningham correction factor of a particle with given diameter
 
 Created 2022-08
-@written by Kevin Maier (kevin.r.maier@tum.de)
+@written by Kevin Maier (kevin.r.maier@tum.de) for the Aerosol Summer School in Vienna 2022
 """
 
 
