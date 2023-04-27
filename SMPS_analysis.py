@@ -323,6 +323,12 @@ def lognormal_dist(mean_conc_n, sigma_g, dg, mean_X, mean_bar_width):
     return fit
 
 
+def lognormal_function(x, A, mu, sigma):
+    """definition of a log-normal function with A being a scale factor, mu being the median and sigma being the geometric
+    standard deviation"""
+    return A*(np.exp(-((np.log(x)-mu)**2)/(2*sigma**2))/(sigma*x*np.sqrt(2*math.pi)))
+
+
 def calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width):  # theoretically this would also work with noon-mean
     dg = geometric_mean(mean_X, mean_Cn, mean_conc_n)   # spectra by using sel_X, sel_Cn, calc_conc_n, sel_bar_width
     sigma_g = geometric_std(mean_X, mean_Cn, mean_conc_n, dg)
