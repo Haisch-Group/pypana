@@ -37,6 +37,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import math
 from matplotlib import cm as colormap
+from scipy import optimize
+import scipy.integrate as integrate
 
 
 def get_filename():
@@ -323,16 +325,30 @@ def lognormal_dist(mean_conc_n, sigma_g, dg, mean_X, mean_bar_width):
     return fit
 
 
-def lognormal_function(x, A, loc, m, sigma):
-    """definition of a log-normal function with x being an array of x-values, A being a scale factor, loc being the location parameterm being the
-    median and sigma being the geometric standard deviation"""
-    return A*np.exp(-((np.log(x)-m)**2)/(2*sigma**2))/(sigma*x*np.sqrt(2*math.pi))
+def lognormal_function(x, A, m, sigma):
+    """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
+    standard deviation"""
+    return A*(np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))/(np.log(sigma)*x*np.sqrt(2*math.pi)))
 
 
 def normal_function(x, A, mu, sigma):
     """definition of a normal function with A being a scale factor, mu being the median and sigma being the geometric
     standard deviation"""
     return A*np.exp(-((x-mu)**2)/(2*sigma**2))/(sigma*np.sqrt(2*math.pi))
+
+
+def lognormal_fit(X, Cn):
+    """fit of a lognormal peak"""
+    p0=[1000, 100, 1.2]
+    lowerbounds=[0, 10, 0.2]
+    upperbounds=[np.inf, 1000, 5]
+    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(lognormal_function, X, Cn, p0=p0,
+                                                            bounds=(lowerbounds, upperbounds), maxfev=1000)
+    A_fit=popt_lognorm_fit[0]
+    m_fit=popt_lognorm_fit[1]
+    sigma_fit=popt_lognorm_fit[2]
+    Cn_fit=lognormal_function(X, *popt_lognorm_fit)
+    return A_fit, m_fit, sigma_fit ,Cn_fit
 
 
 def calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width):  # theoretically this would also work with noon-mean
