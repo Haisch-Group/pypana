@@ -25,7 +25,7 @@ from tkinter.filedialog import askopenfilename
 def import_data(filename):
     """import aps data from txt file with name filename to pd dataframe
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
-    to work, the data has to be exported in rows"""
+    to work, the data has to be exported in rows and should be exported as concentration i guess"""
     data = pd.read_table(filename, sep='\t', header=5, index_col=0, skiprows=1,
                          engine='python', encoding='ansi')
 
