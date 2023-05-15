@@ -51,7 +51,8 @@ def get_filename():
 
 def fileread(filename):
     """just a very fast function for applying the correct import filter according to user choice"""
-    used_smps = input("Which SMPS did you use, type 0 for old TSI, or 1 for new PALAS")
+    used_smps = input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100 and 2 for TSI APS "
+                      "3321")
     #used_smps = 1
 
     if int(used_smps) == 0:
