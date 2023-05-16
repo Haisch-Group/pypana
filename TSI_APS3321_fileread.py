@@ -15,13 +15,6 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 
-# def get_filename():
-#     """get the filename via UI"""
-#     Tk().withdraw()
-#     filename = askopenfilename()
-#     return filename
-
-
 def import_data(filename):
     """import aps data from txt file with name filename to pd dataframe
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time

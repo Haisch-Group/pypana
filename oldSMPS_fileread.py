@@ -24,13 +24,6 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 
-# def get_filename():
-#     """get the filename via UI"""
-#     Tk().withdraw()
-#     filename = askopenfilename()
-#     return filename
-
-
 def import_data(filename):
     """import smps data from txt file with name filename to pd dataframe, also includes time, some settings and some
     statistical values calculated by the TSI program
@@ -67,6 +60,12 @@ def import_data(filename):
 
 
 if __name__ == "__main__":
+
+    def get_filename():
+        """get the filename via UI"""
+        Tk().withdraw()
+        filename = askopenfilename()
+        return filename
 
     filename = get_filename()
     X, bar_width, Cn, time = import_data(filename)
