@@ -56,10 +56,10 @@ def fileread(filename):
     #used_smps = 1
 
     if int(used_smps) == 0:
-        import oldSMPS_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last column P/cm^3
+        import TSI_SMPS3071_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last column P/cm^3
         # does not work sometimes, just change the ^3 to 3 in the data txt then
     elif int(used_smps) == 1:
-        import newSMPS_fileread as fr
+        import PALAS_SMPS2100_fileread as fr
     else:
         import TSI_APS3321_fileread as fr
 

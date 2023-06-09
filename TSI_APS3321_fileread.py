@@ -3,7 +3,7 @@
 Script for Data Evaluation of the TSI APS 3321
 Data has to be exported in rows and plot is written, so that it displays the dW/logDp
 
-Created 2023-05-15 from oldSMPS_fileread.py
+Created 2023-05-15 from TSI_SMPS3071_fileread.py
 
 !!first data column is al particles below the given size!!
 """

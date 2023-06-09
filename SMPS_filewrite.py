@@ -10,7 +10,7 @@ Created 2022-06-20
 """
 
 import csv
-import newSMPS_fileread
+import PALAS_SMPS2100_fileread
 import os
 
 filename = newSMPS_fileread.get_filename()

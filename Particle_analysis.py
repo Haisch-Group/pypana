@@ -1,33 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Script for Particle Data Evaluation
-Data has to be imported by the import function suitable for the used SMPS
+Data has to be imported by the import function suitable for the used Device
 
-Created 2022-01-18 to 2022-01-20
+Created 2023-05 from SMPS_analysis.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
-modified functions from oldSMPS_fileread_v1 and added functions for statistical evaluation
-    function set:   fileread
-                    select_data
-                    mean_up_down
-                    volume_conc
-                    mass_conc
-                    get_conc
-                    mean_of_n
-                    plot_meandata
-                    geometric_mean
-                    geometric_std
-                    lognormal_dist
-2022-02-10: plot_singledata
-2022-03-03: now works with oldSMPS_fileread_v3 as well
-2022-03-23: added plot_3Dsingledata
-2022-07-20: changed lognormal dist function
-2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
-    version number
-2023-01-19: filename is retrieved from SMPS_analysis now and printed in console to save it with console input
-
-Possible changes:
-    write concentration data to csv automatically
 """
 
 from tkinter import Tk
@@ -50,24 +28,19 @@ def get_filename():
 
 
 def fileread(filename):
-    """just a very fast function for applying the correct import filter according to user choice"""
-    used_smps = input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100 and 2 for TSI APS "
-                      "3321")
-    #used_smps = 1
+    """applying the correct import filter according to user choice"""
+    used_device = input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100 and 2 for TSI "
+                        "APS 3321")
 
-    if int(used_smps) == 0:
-        import oldSMPS_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last column P/cm^3
-        # does not work sometimes, just change the ^3 to 3 in the data txt then
-    elif int(used_smps) == 1:
-        import newSMPS_fileread as fr
+    if int(used_device) == 0:
+        import TSI_SMPS3071_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last column
+        # P/cm^3 does not work sometimes, just change the ^3 to 3 in the data txt then
+    elif int(used_device) == 1:
+        import PALAS_SMPS2100_fileread as fr
     else:
         import TSI_APS3321_fileread as fr
 
-    # filename = fr.get_filename()
     X, bar_width, Cn, time = fr.import_data(filename)
-    # somehow, when using the function twice, to import one old and one new smps file, it does not update fr,
-    # but tries to use the fileread script used before
-    # -> :D it always chose the else, as the input is string which does not work with == 0
     return X, bar_width, Cn, time
 
 
@@ -88,20 +61,20 @@ def select_data(X, Cn, bar_width, scan_nrs):
     return sel_Cn, sel_X, sel_bar_width
 
 
-def mean_up_down(sel_Cn, sel_X, sel_bar_width):
-    """calculates the mean od up and down scan"""
-    # not needed atm
-    n = 2
-    size = sel_Cn.shape
-    nth_len = int(size[0] / n)
-    up_down_Cn = np.zeros(shape=(nth_len, size[1]))
-    up_down_X = np.zeros_like(up_down_Cn)
-    up_down_bar_width = np.zeros_like(up_down_Cn)
-    for k in range(nth_len):
-        up_down_Cn[k, :] = np.mean(sel_Cn[(k*n):((k+1)*n-1), :], axis=0)
-        up_down_X[k, :] = np.mean(sel_X[(k*n):((k+1)*n-1), :], axis=0)
-        up_down_bar_width[k, :] = np.mean(sel_bar_width[(k * n):((k + 1) * n - 1), :], axis=0)
-    return up_down_Cn, up_down_X, up_down_bar_width  # can be used as sel_Cn, sel_X, sel_bar_width
+# def mean_up_down(sel_Cn, sel_X, sel_bar_width):
+#     """calculates the mean od up and down scan"""
+#     # not needed atm
+#     n = 2
+#     size = sel_Cn.shape
+#     nth_len = int(size[0] / n)
+#     up_down_Cn = np.zeros(shape=(nth_len, size[1]))
+#     up_down_X = np.zeros_like(up_down_Cn)
+#     up_down_bar_width = np.zeros_like(up_down_Cn)
+#     for k in range(nth_len):
+#         up_down_Cn[k, :] = np.mean(sel_Cn[(k*n):((k+1)*n-1), :], axis=0)
+#         up_down_X[k, :] = np.mean(sel_X[(k*n):((k+1)*n-1), :], axis=0)
+#         up_down_bar_width[k, :] = np.mean(sel_bar_width[(k * n):((k + 1) * n - 1), :], axis=0)
+#     return up_down_Cn, up_down_X, up_down_bar_width  # can be used as sel_Cn, sel_X, sel_bar_width
 
 
 def volume_conc(sel_X, sel_Cn):
@@ -397,14 +370,14 @@ if __name__ == "__main__":
     filename = get_filename()
     X, bar_width, Cn, time = fileread(filename)
 
-    # scan_nrs = np.arange(1, 28)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
-    # nr_mean = 1
-    # density = 1  # if unknown use 1 g/cm^3
-    # print(f"scan_nrs: {scan_nrs}, nr_mean: {nr_mean}, density: {density}")
+    scan_nrs = np.arange(1, 109)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
+    nr_mean = 1
+    density = 1  # if unknown use 1 g/cm^3
+    print(f"scan_nrs: {scan_nrs}, nr_mean: {nr_mean}, density: {density}")
 
-    # sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
-    # mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
-    #      pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
+    sel_Cn, sel_X, sel_bar_width, sel_Cv, sel_Cm, calc_conc_n, calc_conc_v, calc_conc_m, mean_Cn, std_Cn, \
+    mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, std_conc_m = \
+        pick_scans(X, Cn, bar_width, density, scan_nrs, nr_mean)
 
     # dg, sigma_g, fit = calc_geometry(mean_X, mean_Cn, mean_conc_n, mean_bar_width)
     # dg, sigma_g, fit = calc_geometry(sel_X, sel_Cn, calc_conc_n, sel_bar_width)
