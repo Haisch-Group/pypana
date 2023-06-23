@@ -396,6 +396,7 @@ if __name__ == "__main__":
 
     filename = get_filename()
     X, bar_width, Cn, time = fileread(filename)
+    # data_identifier = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time} # set identifier as desired e.g. date
 
     # scan_nrs = np.arange(1, 28)  # actual scan numbers in non-pythonian logic + 1 in the and due tu np.arange
     # nr_mean = 1
