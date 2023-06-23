@@ -357,6 +357,7 @@ if __name__ == "__main__":
     used_device = 1  # input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100 and 2 for TSI
     # APS 3321")
     X, bar_width, Cn, time = fileread(filename, used_device)
+    # data_identifier = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time} # set identifier as desired e.g. date
 
     """data selection"""
     # scan_nrs = list(range(1, 26))  # actual scan numbers in non-pythonian logic + 1 in the end due to range()
