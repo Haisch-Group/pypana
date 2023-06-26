@@ -10,11 +10,23 @@ Created 2022-06-20
 """
 
 import csv
-import PALAS_SMPS2100_fileread
 import os
+import PALAS_SMPS2100_fileread
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
-filename = newSMPS_fileread.get_filename()
-X, bar_width, Cn, time = newSMPS_fileread.import_data(filename)
+
+def get_filename():
+    """get the filename via UI"""
+    Tk().withdraw()
+    filename = askopenfilename()
+    return filename
+
+
+filename = get_filename()
+
+
+X, bar_width, Cn, time = PALAS_SMPS2100_fileread.import_data(filename)
 
 with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='UTF8', newline="") as f:
     writer = csv.writer(f)
@@ -25,3 +37,4 @@ with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='UTF8', newline=
 
     for msmt in range(len(Cn)):
         writer.writerow(Cn[msmt])
+
