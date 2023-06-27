@@ -252,6 +252,22 @@ def geometric_mean(X, C, conc):
     return dg  # seems to work
 
 
+def geometric_mean10(X, C, conc):
+    """calculates the geometric mean from given X, C and conc, can be used with mean_C, or sel_C,
+    call mean_dg = geometric_mean(mean_X, mean_C, mean_conc then, or sel_dg = geometric_mean(sel_X, sel_C, calc_conc)"""
+    # for lognormal, count median diameter = geometric mean diameter
+    # maybe add a check for lognormal
+    dg = []
+    for k in np.arange(0, C.shape[0]):
+        dg.append(math.pow(10, (1/conc[k]) * np.nansum(np.log10(X[k])*C[k])))
+        # gives seemingly correct results
+        # dg.append(math.pow(10, ((1 / mean_conc_n[k]) * np.nansum(np.log10(mean_X[k]) * mean_Cn[k]))))
+        # same result as above
+        # dg.append(np.nansum(np.multiply(mean_Cn[k], mean_X[k])) / np.nansum(mean_Cn[k]))
+        # gives bit higher dg that seems wrong
+    return dg  # seems to work
+
+
 def geometric_std(X, C, conc, dg):
     """calculates the geometric standard deviation from given X, C and conc, can be used with mean_C, or sel_C,
         call mean_sigma_g = geometric_std(mean_X, mean_C, mean_conc, mean_dg then,
@@ -259,6 +275,20 @@ def geometric_std(X, C, conc, dg):
     sigma_g = []
     for k in np.arange(0, len(conc)):
         sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k]) - np.log(dg[k]))*C[k]))/
+                                         (conc[k]-1))))  # 22-13 in aerosol measurement, kulkarni et.al.
+        #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
+        #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
+        # same result as above
+    return sigma_g
+
+
+def geometric_std10(X, C, conc, dg):
+    """calculates the geometric standard deviation from given X, C and conc, can be used with mean_C, or sel_C,
+        call mean_sigma_g = geometric_std(mean_X, mean_C, mean_conc, mean_dg then,
+        or sel_sigma_g = geometric_std(sel_X, sel_C, calc_conc, sel_dg)"""
+    sigma_g = []
+    for k in np.arange(0, len(conc)):
+        sigma_g.append(math.pow(10, math.sqrt((np.nansum(np.square(np.log10(X[k]) - np.log10(dg[k]))*C[k]))/
                                          (conc[k]-1))))  # 22-13 in aerosol measurement, kulkarni et.al.
         #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
         #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
