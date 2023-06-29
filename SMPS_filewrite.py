@@ -26,15 +26,19 @@ def get_filename():
 filename = get_filename()
 
 
-X, bar_width, Cn, time = PALAS_SMPS2100_fileread.import_data(filename)
+X, bar_width, Cn, time, comments = PALAS_SMPS2100_fileread.import_data_and_comments(filename)
 
 with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='UTF8', newline="") as f:
     writer = csv.writer(f)
 
-    writer.writerow(X[0])
+    x_row = ["X", "nm"]
+    [x_row.append(i) for i in X[0]]
+    writer.writerow(x_row)
     # only writes one line of the particle sizes to the file, so when the measuring range is changed during the
     # measurements, this leads to errors
 
-    for msmt in range(len(Cn)):
-        writer.writerow(Cn[msmt])
+    for msmt in range((len(Cn))):
+        Cn_row = [f"{comments[msmt]}", "1/cm^3"]
+        [Cn_row.append(i) for i in Cn[msmt]]
+        writer.writerow(Cn_row)
 
