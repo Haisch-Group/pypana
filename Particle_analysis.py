@@ -39,6 +39,7 @@ def fileread(filename, used_device):
         import TSI_APS3321_fileread as fr
 
     X, bar_width, Cn, time = fr.import_data(filename)
+    # data = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time}
     return X, bar_width, Cn, time
 
 
@@ -192,7 +193,7 @@ def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nrs):
     if len(plot_nrs) == 1:
         k = plot_nrs[0]
         ax.bar(sel_X[k, :], sel_Cn[k, :], width=sel_bar_width[k, :], edgecolor='black')
-        legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[k]}")]
+        legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
         # scan_nrs is used here on purpose
         print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
     else:
@@ -252,22 +253,6 @@ def geometric_mean(X, C, conc):
     return dg  # seems to work
 
 
-def geometric_mean10(X, C, conc):
-    """calculates the geometric mean from given X, C and conc, can be used with mean_C, or sel_C,
-    call mean_dg = geometric_mean(mean_X, mean_C, mean_conc then, or sel_dg = geometric_mean(sel_X, sel_C, calc_conc)"""
-    # for lognormal, count median diameter = geometric mean diameter
-    # maybe add a check for lognormal
-    dg = []
-    for k in np.arange(0, C.shape[0]):
-        dg.append(math.pow(10, (1/conc[k]) * np.nansum(np.log10(X[k])*C[k])))
-        # gives seemingly correct results
-        # dg.append(math.pow(10, ((1 / mean_conc_n[k]) * np.nansum(np.log10(mean_X[k]) * mean_Cn[k]))))
-        # same result as above
-        # dg.append(np.nansum(np.multiply(mean_Cn[k], mean_X[k])) / np.nansum(mean_Cn[k]))
-        # gives bit higher dg that seems wrong
-    return dg  # seems to work
-
-
 def geometric_std(X, C, conc, dg):
     """calculates the geometric standard deviation from given X, C and conc, can be used with mean_C, or sel_C,
         call mean_sigma_g = geometric_std(mean_X, mean_C, mean_conc, mean_dg then,
@@ -275,20 +260,6 @@ def geometric_std(X, C, conc, dg):
     sigma_g = []
     for k in np.arange(0, len(conc)):
         sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k]) - np.log(dg[k]))*C[k]))/
-                                         (conc[k]-1))))  # 22-13 in aerosol measurement, kulkarni et.al.
-        #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
-        #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
-        # same result as above
-    return sigma_g
-
-
-def geometric_std10(X, C, conc, dg):
-    """calculates the geometric standard deviation from given X, C and conc, can be used with mean_C, or sel_C,
-        call mean_sigma_g = geometric_std(mean_X, mean_C, mean_conc, mean_dg then,
-        or sel_sigma_g = geometric_std(sel_X, sel_C, calc_conc, sel_dg)"""
-    sigma_g = []
-    for k in np.arange(0, len(conc)):
-        sigma_g.append(math.pow(10, math.sqrt((np.nansum(np.square(np.log10(X[k]) - np.log10(dg[k]))*C[k]))/
                                          (conc[k]-1))))  # 22-13 in aerosol measurement, kulkarni et.al.
         #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
         #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
@@ -374,12 +345,6 @@ def py_logic_converter(nr_list):
     return py_nr_list
 
 
-# def save_values(filename, calc_conc_n):
-#     """function, that saves all the important values (median, sigma, conc) to a csv or txt"""
-#     savefile = f"{filename[0:-4]}_savedata.xlsx"
-#     return
-
-
 if __name__ == "__main__":
 
     """data import"""
@@ -391,7 +356,7 @@ if __name__ == "__main__":
 
     """data selection"""
     # scan_nrs = list(range(1, 26))  # actual scan numbers in non-pythonian logic + 1 in the end due to range()
-    # scan_nrs = [1, 3, 5,9, 12] # as alternative
+    # scan_nrs = [1, 3, 5, 9, 12] # as alternative
     # sel_Cn, sel_X, sel_bar_width, sel_time = select_data(X, Cn, bar_width, time, scan_nrs)
     # print(f"selected scan_nrs: {scan_nrs}")
 
