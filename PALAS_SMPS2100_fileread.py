@@ -20,7 +20,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 
-def import_data(filename):
+def import_data_and_comments(filename):
     """takes the raw data and extracts the variables from it to return:
     X  = array with all the X values = particle size
     Xl = array with all the lower borders of the size bins (named Xu in the Palas SMPS file)
@@ -78,21 +78,34 @@ def import_data(filename):
         for k in range(2, data_len[int(5 + i * 6)]):  # 5 is based on the inverted diff corrected data, 3 on the raw data
             Cn[i, k-2] = data[int(5 + i * 6)][int(k)]
 
-    labels = np.genfromtxt(fname=filename, delimiter='\t', usecols=(0, 1), dtype=str)
-    # imports the first two columns containing the labels, the date and the time, from that create time and
-    # len of the whole file
+    labels = np.genfromtxt(fname=filename, delimiter='\t', usecols=(0, 1, 2), dtype=str)
+    # imports the first thre columns containing the labels, the date, the time, and the comment from that create time
+    # and len of the whole file
     time = []  # defining time list
+    comments = []
     for i in range(0, nr_scans, 1):  # iteratively filling time list with datetime objects
         time.append(datetime.strptime(labels[i * 7, 0] + " " + labels[i * 7, 1], '%m/%d/%Y %I:%M %p'))
+        comments.append(labels[i*7, 2])
     # %p is the identifier for AM or PM in a 12 hour format
 
     bar_width = np.subtract(Xu, Xl)
     dlogDp = np.log10(Xu/Xl)
     #Cn = Cn/dlogDp  # calculate dC/dlogDp from known interval width
 
-    return X, bar_width, Cn, time # , scan_nr
+    return X, bar_width, Cn, time, comments
 
-# could actually do X just as a list with only the longest X axis in it
+
+def import_data(filename):
+    """renamed the old import data_function, to also import the comments from the SMPS directly in the already working
+    import function, but in order to still have it work with the particle_analysis file, the function for importing X,
+    bar_width, Cn and time must be named import_data, so the new import_data function now cuts the named values from
+    import_data_and_comments, import_data_and_comments is directly used in PALAS_SMPS2100_csv_convert.py to generate
+    files for students"""
+    X, bar_width, Cn, time, comments = import_data_and_comments(filename)
+    return X, bar_width, Cn, time
+
+# could actually do X just as a list with only the longest X axis in it - no couldn't as when changing the settings
+# during one day, the x-axis will also change
 
 
 if __name__ == "__main__":
