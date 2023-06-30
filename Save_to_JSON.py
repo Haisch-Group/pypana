@@ -24,14 +24,10 @@ def save_workspace(filename):
     motherfile = os.path.splitext(filename)[0]
     add_text = input("please enter some additional filename-text")
     with open(f'{motherfile}{add_text}.json', 'w') as f:
-        json.dump(workspace, f)
+        json.dumps(workspace, f)
     return
 
 
 def load_workspace(filename):
     """lalala"""
     return
-
-
-if __name__ == "__main__":
-    print("sigh")
