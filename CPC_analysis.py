@@ -22,9 +22,9 @@ def fileread():
     #used_cpc = 0
 
     if int(used_cpc) == 0:
-        import TSICPC_fileread as fr
+        import TSI_CPC3775_fileread as fr
     else:
-        import PALASCPC_fileread as fr
+        import PALAS_UFCPC_fileread as fr
 
     filename = fr.get_filename()
     Cn, el_time, start_time = fr.import_data(filename)

@@ -53,9 +53,13 @@ def get_data():
     return data
 
 
-def select_data(X, Cn, bar_width, time, scan_nrs):
+def select_data(data, scan_nrs):
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)"""
+    X = data["X"]
+    Cn = data["Cn"]
+    bar_width = data["bar_width"]
+    time = data["time"]
     sel_Cn = np.zeros((len(scan_nrs), Cn.shape[1]))
     # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
     sel_X = np.zeros_like(sel_Cn)
@@ -251,12 +255,15 @@ def geometric_mean(X, C, conc):
     # maybe add a check for lognormal
     dg = []
     for k in np.arange(0, C.shape[0]):
-        dg.append(math.exp((1/conc[k]) * np.nansum(np.log(X[k])*C[k])))
-        # gives seemingly correct results
-        # dg.append(math.pow(10, ((1 / mean_conc_n[k]) * np.nansum(np.log10(mean_X[k]) * mean_Cn[k]))))
-        # same result as above
-        # dg.append(np.nansum(np.multiply(mean_Cn[k], mean_X[k])) / np.nansum(mean_Cn[k]))
-        # gives bit higher dg that seems wrong
+        if conc[k] == 0:
+            dg.append(0)
+        else:
+            dg.append(math.exp((1/conc[k]) * np.nansum(np.log(X[k])*C[k])))
+            # gives seemingly correct results
+            # dg.append(math.pow(10, ((1 / mean_conc_n[k]) * np.nansum(np.log10(mean_X[k]) * mean_Cn[k]))))
+            # same result as above
+            # dg.append(np.nansum(np.multiply(mean_Cn[k], mean_X[k])) / np.nansum(mean_Cn[k]))
+            # gives bit higher dg that seems wrong
     return dg  # seems to work
 
 
@@ -266,7 +273,10 @@ def geometric_std(X, C, conc, dg):
         or sel_sigma_g = geometric_std(sel_X, sel_C, calc_conc, sel_dg)"""
     sigma_g = []
     for k in np.arange(0, len(conc)):
-        sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k]) - np.log(dg[k]))*C[k]))/
+        if conc[k] == 0:
+            sigma_g.append(np.inf)
+        else:
+            sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k]) - np.log(dg[k]))*C[k]))/
                                          (conc[k]-1))))  # 22-13 in aerosol measurement, kulkarni et.al.
         #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
         #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
@@ -352,10 +362,20 @@ def py_logic_converter(nr_list):
     return py_nr_list
 
 
+def typical_calculations(data):
+    data["calc_conc_n"] = get_conc(data["Cn"])
+    data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["bar_width"])
+    return data
+
+
 if __name__ == "__main__":
 
-    """data import"""
-    # data = get_data()
+    """data import - imports one file at a time to a dictionary"""
+    # data_identifier = get_data() # change identifier to something that identifies the dataset, like a date
+
+    """typical calculations - calculates number concentration, geometric mean and standard deviation and adds them to
+    the data dictionary"""
+    # typical_calculations(data);
 
     """data selection"""
     # scan_nrs = list(range(1, 26))  # actual scan numbers in non-pythonian logic + 1 in the end due to range()
