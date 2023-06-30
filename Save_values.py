@@ -20,7 +20,7 @@ if __name__ == "__main__":
             except TypeError:
                 pass
     # to save session
-    with open(f'{path}', 'wb') as f:
+    with open(path, 'wb') as f:
         pickle.dump(bk, f)
 
     # to load your session
