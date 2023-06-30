@@ -14,9 +14,9 @@ from matplotlib import ticker
 from matplotlib import pyplot as plt
 import numpy as np
 import math
-# from matplotlib import cm as colormap
 from scipy import optimize
 # import scipy.integrate as integrate
+# from matplotlib import cm as colormap
 
 
 def get_filename():
@@ -28,22 +28,29 @@ def get_filename():
 
 
 def fileread(filename, used_device):
-    """applying the correct import filter according to user choice"""
-
+    """applying the correct import filter according to user choice and importing data as
+    X = np.array((nr_scans, nr_bins)), bar_width, Cn = X.shape, time = []"""
     if int(used_device) == 0:
-        import TSI_SMPS3071_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last column
-        # P/cm^3 does not work sometimes, just change the ^3 to 3 in the data txt then
+        import TSI_SMPS3071_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last
+        # column P/cm^3 does not work sometimes, just change the ^3 to 3 in the data txt then
     elif int(used_device) == 1:
         import PALAS_SMPS2100_fileread as fr
+    elif int(used_device) == 2:
+        import TSI_LAS3340A_fileread as fr
     else:
         import TSI_APS3321_fileread as fr
 
     X, bar_width, Cn, time = fr.import_data(filename)
-    # data = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time}
     return X, bar_width, Cn, time
 
 
-"""X = np.array((nr_scans, nr_bins)), bar_width, Cn = X.shape, time = []"""
+def get_data():
+    filename = get_filename()
+    used_device = input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100, 2 for "
+                        "TSI LAS 3340A and 3 for TSI APS 3321")
+    X, bar_width, Cn, time = fileread(filename, used_device)
+    data = {"filename": filename, "used_device": used_device, "X": X, "Cn": Cn, "bar_width": bar_width, "time": time}
+    return data
 
 
 def select_data(X, Cn, bar_width, time, scan_nrs):
@@ -348,11 +355,7 @@ def py_logic_converter(nr_list):
 if __name__ == "__main__":
 
     """data import"""
-    filename = get_filename()
-    used_device = 1  # input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100 and 2 for TSI
-    # APS 3321")
-    X, bar_width, Cn, time = fileread(filename, used_device)
-    # data_identifier = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time} # set identifier as desired e.g. date
+    # data = get_data()
 
     """data selection"""
     # scan_nrs = list(range(1, 26))  # actual scan numbers in non-pythonian logic + 1 in the end due to range()
