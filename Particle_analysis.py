@@ -37,8 +37,10 @@ def fileread(filename, used_device):
         import PALAS_SMPS2100_fileread as fr
     elif int(used_device) == 2:
         import TSI_LAS3340A_fileread as fr
-    else:
+    elif int(used_device) == 3:
         import TSI_APS3321_fileread as fr
+    else:
+        print(f"Device {used_device} is not a viable option") # could be integrated after the input(used_device)
 
     X, bar_width, Cn, time = fr.import_data(filename)
     return X, bar_width, Cn, time
@@ -50,26 +52,31 @@ def get_data():
                         "TSI LAS 3340A and 3 for TSI APS 3321")
     X, bar_width, Cn, time = fileread(filename, used_device)
     data = {"filename": filename, "used_device": used_device, "X": X, "Cn": Cn, "bar_width": bar_width, "time": time}
+    for k in range(len(data)):
+        data["scan_nr"][k] = k+1
     return data
 
 
 def select_data(data, scan_nrs):
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)"""
-    X = data["X"]
-    Cn = data["Cn"]
-    bar_width = data["bar_width"]
-    time = data["time"]
-    sel_Cn = np.zeros((len(scan_nrs), Cn.shape[1]))
+    # X = data["X"]
+    # Cn = data["Cn"]
+    # bar_width = data["bar_width"]
+    # time = data["time"]
+    # scan_nr = data["scan_nr"]
+    sel_Cn = np.zeros((len(scan_nrs), data["Cn"].shape[1]))
     # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
     sel_X = np.zeros_like(sel_Cn)
     sel_bar_width = np.zeros_like(sel_Cn)
     sel_time = []
+    sel_scan_nr = []
     for k in np.arange(len(scan_nrs)):  # fill the arrays with the selected data
-        sel_Cn[k, :] = Cn[scan_nrs[k]-1, :]
-        sel_X[k, :] = X[scan_nrs[k]-1, :]
-        sel_bar_width[k, :] = bar_width[scan_nrs[k]-1, :]
-        sel_time.append(time[scan_nrs[k]-1])
+        sel_Cn[k, :] = data["Cn"][scan_nrs[k]-1, :]
+        sel_X[k, :] = data["X"][scan_nrs[k]-1, :]
+        sel_bar_width[k, :] = data["bar_width"][scan_nrs[k]-1, :]
+        sel_time.append(data["time"][scan_nrs[k]-1])
+        sel_scan_nr.append(data["scan_nr"][scan_nrs[k]-1])
     return sel_Cn, sel_X, sel_bar_width, sel_time
 
 
@@ -163,7 +170,7 @@ def format_plot(fig, ax, used_device):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    if used_device == 2:
+    if used_device == 2 or 3:
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
                xlabel='Particle Diameter / $\mu$m',  # changed that to go with APS data for a moment
                ylabel='dN/dlogD$_{p}$ / $\mathregular{1/cm^3}$')
@@ -369,6 +376,8 @@ def typical_calculations(data):
 
 
 if __name__ == "__main__":
+
+    # run particle_analysis.py
 
     """data import - imports one file at a time to a dictionary"""
     # data_identifier = get_data() # change identifier to something that identifies the dataset, like a date
