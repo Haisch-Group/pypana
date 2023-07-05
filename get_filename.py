@@ -9,11 +9,11 @@ Script for fetching a filename using an UI
 
 
 from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, askopenfilenames
 
 
 def get_filename():
-    """get the filename via UI"""
+    """get one filename via UI"""
     popup = Tk()
     popup.attributes('-topmost', 1)
     popup.withdraw()
@@ -22,6 +22,17 @@ def get_filename():
     return filename
 
 
+def get_filenames():
+    """get multiple filenames via UI"""
+    popup = Tk()
+    popup.attributes('-topmost', 1)
+    popup.withdraw()
+    filenames = askopenfilenames()
+    print(filenames)
+    return filenames
+
+
 if __name__ == "__main__":
 
-    filename = get_filename()
+    # filename = get_filename()
+    filenames = get_filenames()  # also works with only 1 filename
