@@ -31,7 +31,7 @@ def fileread(filename, used_device):
     elif int(used_device) == 3:
         import TSI_APS3321_fileread as fr
     else:
-        print(f"Device {used_device} is not a viable option") # could be integrated after the input(used_device)
+        print(f"Device {used_device} is not a viable option")  # could be integrated after the input(used_device)
 
     X, bar_width, Cn, time = fr.import_data(filename)
     return X, bar_width, Cn, time
@@ -42,84 +42,95 @@ def get_data():
     used_device = input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100, 2 for "
                         "TSI LAS 3340A and 3 for TSI APS 3321")
     X, bar_width, Cn, time = fileread(filename, used_device)
-    data = {"filename": filename, "used_device": used_device, "X": X, "Cn": Cn, "bar_width": bar_width, "time": time}
     scan_nr = []
-    [scan_nr.append(k+1) for k in range(len(data["X"]))]
-    data["scan_nr"] = scan_nr
+    [scan_nr.append(k+1) for k in range(len(X))]
+    data = {"X": X, "Cn": Cn, "bar_width": bar_width,
+            "time": time, "scan_nr": scan_nr, "filename": filename, "used_device": used_device}
     return data
 
 
-def select_data(data, scan_nrs):
+# just a code sniplet, that could be used to automatically import multiple datasets at once
+# naming variables automatically and getting them out of a function does not work though
+
+# input_name = input("Enter a name for the data you are importing (has to start with a letter)")
+# locals()[input_name] = data
+
+
+def select_data(data, sel_nrs):  # merge with cut_dist ?
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
-    in normal non-pythonian logic (starting count at 1)"""
-    # X = data["X"]
-    # Cn = data["Cn"]
-    # bar_width = data["bar_width"]
-    # time = data["time"]
-    # scan_nr = data["scan_nr"]
+    in normal non-pythonian logic (starting count at 1)
+    can only easily select data from one day for comparison"""
+    scan_nrs = py_logic_converter(sel_nrs)
     sel_Cn = np.zeros((len(scan_nrs), data["Cn"].shape[1]))
     # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
     sel_X = np.zeros_like(sel_Cn)
     sel_bar_width = np.zeros_like(sel_Cn)
     sel_time = []
     sel_scan_nr = []
+    sel_filename = data["filename"]  # should be defined as list or array, when making a function to select from
+    # different datasets
+    sel_used_device = data["used_device"]
     for k in np.arange(len(scan_nrs)):  # fill the arrays with the selected data
-        sel_Cn[k, :] = data["Cn"][scan_nrs[k]-1, :]
-        sel_X[k, :] = data["X"][scan_nrs[k]-1, :]
-        sel_bar_width[k, :] = data["bar_width"][scan_nrs[k]-1, :]
-        sel_time.append(data["time"][scan_nrs[k]-1])
-        sel_scan_nr.append(data["scan_nr"][scan_nrs[k]-1])
-    return sel_Cn, sel_X, sel_bar_width, sel_time  # write into dict
+        sel_Cn[k, :] = data["Cn"][scan_nrs[k], :]
+        sel_X[k, :] = data["X"][scan_nrs[k], :]
+        sel_bar_width[k, :] = data["bar_width"][scan_nrs[k], :]
+        sel_time.append(data["time"][scan_nrs[k]])
+        sel_scan_nr.append(data["scan_nr"][scan_nrs[k]])
+    sel_data = {"X": sel_X, "Cn": sel_Cn, "bar_width": sel_bar_width, "time": sel_time, "scan_nr": sel_scan_nr,
+                "filename": sel_filename, "used_device": sel_used_device}
+    return sel_data
 
 
-def volume_dist(sel_X, sel_Cn):
-    """gives volume concentration per bin in micrometer^3 / m^3"""
-    sel_Cv = np.zeros_like(sel_Cn)
-    mum_D = np.divide(sel_X, 1000)
+def volume_dist(Cn, X):
+    """gives volume concentration per bin in micrometer^3 / m^3
+    can be used on data directly, or on data selected with select_data()"""
+    Cv = np.zeros_like(Cn)
+    mum_D = np.divide(X, 1000)
     # convert sel_X from nm to micrometers by dividing by 1000
-    percubicmeter_Cn = np.multiply(sel_Cn, 10 ** 6)
+    percubicmeter_Cn = np.multiply(Cn, 10 ** 6)
     # convert sel_Cn to P/m^3
-    for k in np.arange(sel_Cn.shape[0]):
-        for j in np.arange(sel_Cn.shape[1]):
-            sel_Cv[k, j] = (percubicmeter_Cn[k, j] * ((1 / 6) * math.pi * (mum_D[k, j]) ** 3))
-    return sel_Cv
+    for k in np.arange(Cn.shape[0]):
+        for j in np.arange(Cn.shape[1]):
+            Cv[k, j] = (percubicmeter_Cn[k, j] * ((1 / 6) * math.pi * (mum_D[k, j]) ** 3))
+    return Cv
 
 
-def mass_dist(sel_Cv, density):
-    """gives mass concentration per bin in mg/m^3, takes g/cm^3 as density input, sel_Cv in micrometer/m^3"""
+def mass_dist(Cv, density):
+    """gives mass concentration per bin in mg/m^3, takes g/cm^3 as density input, Cv in micrometer/m^3 must be
+    calculated before! - can be used on data directly, or on data selected with select_data()"""
     densitymgpermum = density*(10**(-9))  # convert the density from g/cm^3 to milligram per cubic micrometer
-    sel_Cm = np.multiply(sel_Cv, densitymgpermum)  # last part converts from per cm^3 to per m^3
-    return sel_Cm # check
+    Cm = np.multiply(Cv, densitymgpermum)  # last part converts from per cm^3 to per m^3
+    return Cm # check
 
 
-def get_conc(sel_C):
-    """calculate the total concentration for each selected measurement, can be applied to sel_Cn, sel_Cv, or sel_Cm
-    call as calc_conc_n = get_conc(sel_Cn) to specify (or Cv, or Cm)"""
-    calc_conc = np.zeros(sel_C.shape[0], )  # preallocate the array again
-    for k in range(sel_C.shape[0]):  # iteratively fill the array with the sum of all size concentrations
-        calc_conc[k, ] = np.nansum(sel_C[k, :])  # np.nansum counts NaN as 0
+def get_conc(C):
+    """calculate the total concentration for each selected measurement, can be applied to Cn, Cv, or Cm
+    call for example as data["calc_conc_n"] = get_conc(data["Cn"]) to specify (or Cv, or Cm)"""
+    calc_conc = np.zeros(C.shape[0], )  # preallocate the array again
+    for k in range(C.shape[0]):  # iteratively fill the array with the sum of all size concentrations
+        calc_conc[k, ] = np.nansum(C[k, :])  # np.nansum counts NaN as 0
     return calc_conc
 
 
-def mean_of_n(sel_C, sel_X, sel_bar_width, nr_mean):
+def mean_of_n(C, X, bar_width, nr_mean):
     """calculates a mean of every n consecutive measurements and also gives the standard deviation
     select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
     only works with more than 3 measurements"""
     n = nr_mean
-    size = sel_C.shape
+    size = C.shape
     nth_len = int(size[0]/n)
     mean_C = np.zeros(shape=(nth_len, size[1]))  # np.nans?
     std_C = np.zeros_like(mean_C)
     mean_X = np.zeros_like(mean_C)
     mean_bar_width = np.zeros_like(mean_C)
-    calc_conc = get_conc(sel_C)
+    calc_conc = get_conc(C)
     mean_conc = []
     std_conc = []
     for k in range(nth_len):
-        mean_C[k, :] = np.mean(sel_C[(k*n):((k+1)*n), :], axis=0)
-        std_C[k, :] = np.std(sel_C[(k*n):((k+1)*n), :], axis=0)
-        mean_X[k, :] = np.mean(sel_X[(k*n):((k+1)*n), :], axis=0)
-        mean_bar_width[k, :] = np.mean(sel_bar_width[(k * n):((k + 1) * n), :], axis=0)
+        mean_C[k, :] = np.mean(C[(k*n):((k+1)*n), :], axis=0)
+        std_C[k, :] = np.std(C[(k*n):((k+1)*n), :], axis=0)
+        mean_X[k, :] = np.mean(X[(k*n):((k+1)*n), :], axis=0)
+        mean_bar_width[k, :] = np.mean(bar_width[(k * n):((k + 1) * n), :], axis=0)
         mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
         std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
     return mean_C, std_C, mean_X, mean_bar_width, mean_conc, std_conc
@@ -143,13 +154,13 @@ def format_plot(fig, ax, used_device):
     return
 
 
-def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nrs):
+def plot_singledata(X, bar_width, Cn, calc_conc_n, used_device, scan_nrs):
     """plots the given data, specify measurement to use from sel_Cn array"""
     plot_nrs = py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     if len(plot_nrs) == 1:
         k = plot_nrs[0]
-        ax.bar(sel_X[k, :], sel_Cn[k, :], width=sel_bar_width[k, :], edgecolor='black')
+        ax.bar(X[k, :], Cn[k, :], width=bar_width[k, :], edgecolor='black')
         legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
         # scan_nrs is used here on purpose
         print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
@@ -157,11 +168,10 @@ def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nrs):
         legend_entries = []
         ct = 0
         for k in plot_nrs:
-            ax.bar(sel_X[k, :], sel_Cn[k, :], width=sel_bar_width[k, :], edgecolor='black', alpha=0.5)
+            ax.bar(X[k, :], Cn[k, :], width=bar_width[k, :], edgecolor='black', alpha=0.5)
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
             print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
             ct += 1
-    used_device = 1 # entfernen wenn bugg weg
     format_plot(fig, ax, used_device)
 
     plt.legend(legend_entries)
@@ -169,7 +179,7 @@ def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nrs):
     return ax
 
 
-def plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, scan_nrs):
+def plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, used_device, scan_nrs):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     plot_nrs = py_logic_converter(scan_nrs)
@@ -285,18 +295,18 @@ def normal_function(x, A, mu, sigma):
     return A*np.exp(-((x-mu)**2)/(2*sigma**2))/(sigma*np.sqrt(2*math.pi))
 
 
-def lognormal_fit(X, Cn):
+def lognormal_fit(X, C):
     """fit of a lognormal peak"""
     p0=[1000, 100, 1.2]
     lowerbounds=[0, 10, 0.2]
     upperbounds=[np.inf, 1000, 5]
-    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(lognormal_function, X, Cn, p0=p0,
+    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(lognormal_function, X, C, p0=p0,
                                                             bounds=(lowerbounds, upperbounds), maxfev=1000)
     A_fit=popt_lognorm_fit[0]
     m_fit=popt_lognorm_fit[1]
     sigma_fit=popt_lognorm_fit[2]
     Cn_fit=lognormal_function(X, *popt_lognorm_fit)
-    return A_fit, m_fit, sigma_fit ,Cn_fit
+    return A_fit, m_fit, sigma_fit ,C_fit
 
 
 def calc_geometry(X, C, conc, bar_width):
@@ -307,19 +317,19 @@ def calc_geometry(X, C, conc, bar_width):
     return dg, sigma_g#, fit
 
 
-def cut_dist(sel_X, sel_C, sel_bar_width, lowerbound, upperbound, scan_nrs):
+def cut_dist(X, C, bar_width, lowerbound, upperbound, scan_nrs):  # merge with select_data
     """to cut a part of the spectrum"""
     cut_nrs = py_logic_converter(scan_nrs)
-    strt_idx = np.where(sel_X[0] > lowerbound)[0][0]
-    end_idx = np.where(sel_X[0] < upperbound)[-1][-1] + 1
-    cut_X = np.zeros((len(cut_nrs), len(sel_X[0, strt_idx:end_idx])))
-    cut_C = np.zeros((len(cut_nrs), len(sel_C[0, strt_idx:end_idx])))
-    cut_bar_width = np.zeros((len(cut_nrs), len(sel_bar_width[0, strt_idx:end_idx])))
+    strt_idx = np.where(X[0] > lowerbound)[0][0]
+    end_idx = np.where(X[0] < upperbound)[-1][-1] + 1
+    cut_X = np.zeros((len(cut_nrs), len(X[0, strt_idx:end_idx])))
+    cut_C = np.zeros((len(cut_nrs), len(C[0, strt_idx:end_idx])))
+    cut_bar_width = np.zeros((len(cut_nrs), len(bar_width[0, strt_idx:end_idx])))
     ct = 0
     for k in cut_nrs:
-        cut_X[ct, :] = sel_X[k, strt_idx:end_idx]
-        cut_C[ct, :] = sel_C[k, strt_idx:end_idx]
-        cut_bar_width[ct, :] = sel_bar_width[k, strt_idx:end_idx]
+        cut_X[ct, :] = X[k, strt_idx:end_idx]
+        cut_C[ct, :] = C[k, strt_idx:end_idx]
+        cut_bar_width[ct, :] = bar_width[k, strt_idx:end_idx]
         ct += 1
     return cut_X, cut_C, cut_bar_width # write into dict
 
@@ -351,20 +361,21 @@ if __name__ == "__main__":
     """data selection"""
     # scan_nrs = list(range(1, 26))  # actual scan numbers in non-pythonian logic + 1 in the end due to range()
     # scan_nrs = [1, 3, 5, 9, 12] # as alternative
-    # sel_Cn, sel_X, sel_bar_width, sel_time = select_data(X, Cn, bar_width, time, scan_nrs) # enter scan_nrs manually
+    # sel_data = select_data(data, scan_nrs) # enter scan_nrs manually (name identifier)
     # print(f"selected scan_nrs: {scan_nrs}")
 
     """calculation of volume and mass distributions"""
     # density = 1  # in g/cm^3
-    # sel_Cv = volume_dist(sel_X, sel_Cn)
-    # sel_Cm = mass_dist(sel_Cv, density)
+    # data["Cv"] = volume_dist(data["X"], data["Cn"])
+    # data["Cm"] = mass_dist(data["Cv"], density)
     # print(f"mass distribution with density = {density} g/cm^3 calculated"
 
     """cut size distribution"""
     # lowerbound = 100 #in the unit, the size data are saved by the instrument e.g. nm
     # upperbound = 350
     # cut_nrs = [1, 5, 7, 15]  # cut_nrs in []
-    # cut_X, cut_Cn, cut_bar_width = cut_dist(sel_X, sel_Cn, sel_bar_width, lowerbound, upperbound, cut_nrs)
+    # cut_X, cut_Cn, cut_bar_width = cut_dist(sel_data["X"], sel_data["Cn"], sel_data["bar_width"], lowerbound,
+    # upperbound, cut_nrs)
 
     """calculation of concentration"""
     # calc_conc_n = get_conc(sel_Cn)
