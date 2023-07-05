@@ -16,8 +16,7 @@ Import of Data and Plot
 
 import numpy as np
 from datetime import datetime
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+from get_filename import get_filename
 
 
 def import_data_and_comments(filename):
@@ -109,12 +108,6 @@ def import_data(filename):
 
 
 if __name__ == "__main__":
-
-    def get_filename():
-        """get the filename via UI"""
-        Tk().withdraw()
-        filename = askopenfilename()
-        return filename
 
     filename = get_filename()
     X, bar_width, Cn, time = import_data(filename)

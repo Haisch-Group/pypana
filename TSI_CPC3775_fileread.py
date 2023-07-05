@@ -12,15 +12,7 @@ Created 2022-03-10
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
-
-
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    return filename
+from get_filename import get_filename
 
 
 def import_data(filename):

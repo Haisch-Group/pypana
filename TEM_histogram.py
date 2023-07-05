@@ -6,20 +6,12 @@ Created 2022-04-21
 @written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+from get_filename import get_filename
 import pandas as pd
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import statistics
-
-
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    return filename
 
 
 def import_data():

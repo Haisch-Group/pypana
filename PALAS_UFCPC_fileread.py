@@ -11,15 +11,7 @@ Created v0 2022-03-10 to 2022-04-04
 
 import numpy as np
 from datetime import datetime
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
-
-
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    return filename
+from get_filename import get_filename
 
 
 def import_data(filename):

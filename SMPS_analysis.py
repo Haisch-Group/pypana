@@ -30,8 +30,7 @@ Possible changes:
     write concentration data to csv automatically
 """
 
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+from get_filename import get_filename
 from matplotlib import ticker
 from matplotlib import pyplot as plt
 import numpy as np
@@ -39,14 +38,6 @@ import math
 from matplotlib import cm as colormap
 from scipy import optimize
 import scipy.integrate as integrate
-
-
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    print(filename)
-    return filename
 
 
 def fileread(filename):

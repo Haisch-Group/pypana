@@ -8,8 +8,7 @@ Created 2023-05 from SMPS_analysis.py
 
 """
 
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+from get_filename import get_filename
 from matplotlib import ticker
 from matplotlib import pyplot as plt
 import numpy as np
@@ -17,14 +16,6 @@ import math
 from scipy import optimize
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
-
-
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    print(filename)
-    return filename
 
 
 def fileread(filename, used_device):
@@ -52,8 +43,9 @@ def get_data():
                         "TSI LAS 3340A and 3 for TSI APS 3321")
     X, bar_width, Cn, time = fileread(filename, used_device)
     data = {"filename": filename, "used_device": used_device, "X": X, "Cn": Cn, "bar_width": bar_width, "time": time}
-    for k in range(len(data)):
-        data["scan_nr"][k] = k+1
+    scan_nr = []
+    [scan_nr.append(k+1) for k in range(len(data["X"]))]
+    data["scan_nr"] = scan_nr
     return data
 
 
@@ -77,23 +69,7 @@ def select_data(data, scan_nrs):
         sel_bar_width[k, :] = data["bar_width"][scan_nrs[k]-1, :]
         sel_time.append(data["time"][scan_nrs[k]-1])
         sel_scan_nr.append(data["scan_nr"][scan_nrs[k]-1])
-    return sel_Cn, sel_X, sel_bar_width, sel_time
-
-
-# def mean_up_down(sel_Cn, sel_X, sel_bar_width):
-#     """calculates the mean od up and down scan"""
-#     # not needed atm
-#     n = 2
-#     size = sel_Cn.shape
-#     nth_len = int(size[0] / n)
-#     up_down_Cn = np.zeros(shape=(nth_len, size[1]))
-#     up_down_X = np.zeros_like(up_down_Cn)
-#     up_down_bar_width = np.zeros_like(up_down_Cn)
-#     for k in range(nth_len):
-#         up_down_Cn[k, :] = np.mean(sel_Cn[(k*n):((k+1)*n-1), :], axis=0)
-#         up_down_X[k, :] = np.mean(sel_X[(k*n):((k+1)*n-1), :], axis=0)
-#         up_down_bar_width[k, :] = np.mean(sel_bar_width[(k * n):((k + 1) * n - 1), :], axis=0)
-#     return up_down_Cn, up_down_X, up_down_bar_width  # can be used as sel_Cn, sel_X, sel_bar_width
+    return sel_Cn, sel_X, sel_bar_width, sel_time  # write into dict
 
 
 def volume_dist(sel_X, sel_Cn):
@@ -113,7 +89,7 @@ def mass_dist(sel_Cv, density):
     """gives mass concentration per bin in mg/m^3, takes g/cm^3 as density input, sel_Cv in micrometer/m^3"""
     densitymgpermum = density*(10**(-9))  # convert the density from g/cm^3 to milligram per cubic micrometer
     sel_Cm = np.multiply(sel_Cv, densitymgpermum)  # last part converts from per cm^3 to per m^3
-    return sel_Cm
+    return sel_Cm # check
 
 
 def get_conc(sel_C):
@@ -129,11 +105,10 @@ def mean_of_n(sel_C, sel_X, sel_bar_width, nr_mean):
     """calculates a mean of every n consecutive measurements and also gives the standard deviation
     select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
     only works with more than 3 measurements"""
-    # can definitely be shortened by making one function and calling it for the arguments
     n = nr_mean
     size = sel_C.shape
     nth_len = int(size[0]/n)
-    mean_C = np.zeros(shape=(nth_len, size[1]))
+    mean_C = np.zeros(shape=(nth_len, size[1]))  # np.nans?
     std_C = np.zeros_like(mean_C)
     mean_X = np.zeros_like(mean_C)
     mean_bar_width = np.zeros_like(mean_C)
@@ -141,36 +116,20 @@ def mean_of_n(sel_C, sel_X, sel_bar_width, nr_mean):
     mean_conc = []
     std_conc = []
     for k in range(nth_len):
-        mean_C[k, :] = np.mean(sel_C[(k*n):((k+1)*n-1), :], axis=0)
-        std_C[k, :] = np.std(sel_C[(k*n):((k+1)*n-1), :], axis=0)
-        mean_X[k, :] = np.mean(sel_X[(k*n):((k+1)*n-1), :], axis=0)
-        mean_bar_width[k, :] = np.mean(sel_bar_width[(k * n):((k + 1) * n - 1), :], axis=0)
-        mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n - 1), ], axis=0))
-        std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n - 1), ], axis=0))
+        mean_C[k, :] = np.mean(sel_C[(k*n):((k+1)*n), :], axis=0)
+        std_C[k, :] = np.std(sel_C[(k*n):((k+1)*n), :], axis=0)
+        mean_X[k, :] = np.mean(sel_X[(k*n):((k+1)*n), :], axis=0)
+        mean_bar_width[k, :] = np.mean(sel_bar_width[(k * n):((k + 1) * n), :], axis=0)
+        mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
+        std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
     return mean_C, std_C, mean_X, mean_bar_width, mean_conc, std_conc
-
-
-# def calc_mean_of_n(X, Cn, bar_width, scan_nrs, nr_mean):
-#   I KILLED IT ALREADY, TO REVIVE IT COPY FROM SMPS_ANALYSIS.PY
-#     """Does the above defined functions in one go and calculates a mean of the n scans given"""
-#     sel_Cn, sel_X, sel_bar_width, sel_time = select_data(X, Cn, bar_width, time, scan_nrs)
-#     sel_Cv = volume_conc(sel_X, sel_Cn)
-#     sel_Cm = mass_conc(sel_X, sel_Cv)
-#     calc_conc_n = get_conc(sel_Cn)
-#     calc_conc_v = get_conc(sel_Cv)
-#     calc_conc_m = get_conc(sel_Cm)
-#
-#     mean_Cn, std_Cn, mean_X, mean_bar_width, mean_conc, std_conc = mean_of_n(sel_Cn, sel_X, sel_bar_width, nr_mean)
-#
-#     return mean_Cn, std_Cn, mean_X, mean_bar_width, mean_conc_n, std_conc_n, mean_conc_v, std_conc_v, mean_conc_m, \
-#            std_conc_m
 
 
 def format_plot(fig, ax, used_device):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    if used_device == 2 or 3:
+    if used_device == 2 or used_device == 3:
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
                xlabel='Particle Diameter / $\mu$m',  # changed that to go with APS data for a moment
                ylabel='dN/dlogD$_{p}$ / $\mathregular{1/cm^3}$')
@@ -182,26 +141,6 @@ def format_plot(fig, ax, used_device):
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
-
-
-def plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, scan_nrs):
-    """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
-    in the given Cn and C arrays"""
-    plot_nrs = py_logic_converter(scan_nrs)
-    fig, ax = plt.subplots()  # height with title 12, without 10
-    legend_entries = []
-    for k in plot_nrs:
-        ax.bar(mean_X[k, :], mean_Cn[k, :], width=mean_bar_width[k, :], yerr=std_Cn[k, :], edgecolor='black')
-        legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[k]}"))
-        # scan_nrs is used here on purpose
-    [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
-           "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
-
-    format_plot(fig, ax, used_device)
-
-    plt.legend(legend_entries)
-    plt.show()
-    return ax
 
 
 def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nrs):
@@ -222,6 +161,26 @@ def plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, scan_nrs):
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
             print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
             ct += 1
+    used_device = 1 # entfernen wenn bugg weg
+    format_plot(fig, ax, used_device)
+
+    plt.legend(legend_entries)
+    plt.show()
+    return ax
+
+
+def plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, scan_nrs):
+    """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
+    in the given Cn and C arrays"""
+    plot_nrs = py_logic_converter(scan_nrs)
+    fig, ax = plt.subplots()  # height with title 12, without 10
+    legend_entries = []
+    for k in plot_nrs:
+        ax.bar(mean_X[k, :], mean_Cn[k, :], width=mean_bar_width[k, :], yerr=std_Cn[k, :], edgecolor='black')
+        legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[k]}"))
+        # scan_nrs is used here on purpose
+    [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
+           "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
     format_plot(fig, ax, used_device)
 
@@ -290,6 +249,8 @@ def geometric_std(X, C, conc, dg):
         # same result as above
     return sigma_g
 
+
+# Vorschlag Nico: Median als senkrechte Linie / Marker in den Plot einbauen
 
 def lognormal_dist(conc, sigma_g, dg, X, bar_width):
     """calculates a normal distribution based on the concentration, the median diameter and the geometric standard
@@ -360,7 +321,7 @@ def cut_dist(sel_X, sel_C, sel_bar_width, lowerbound, upperbound, scan_nrs):
         cut_C[ct, :] = sel_C[k, strt_idx:end_idx]
         cut_bar_width[ct, :] = sel_bar_width[k, strt_idx:end_idx]
         ct += 1
-    return cut_X, cut_C, cut_bar_width
+    return cut_X, cut_C, cut_bar_width # write into dict
 
 
 def py_logic_converter(nr_list):
@@ -380,6 +341,7 @@ if __name__ == "__main__":
     # run particle_analysis.py
 
     """data import - imports one file at a time to a dictionary"""
+
     # data_identifier = get_data() # change identifier to something that identifies the dataset, like a date
 
     """typical calculations - calculates number concentration, geometric mean and standard deviation and adds them to
@@ -389,7 +351,7 @@ if __name__ == "__main__":
     """data selection"""
     # scan_nrs = list(range(1, 26))  # actual scan numbers in non-pythonian logic + 1 in the end due to range()
     # scan_nrs = [1, 3, 5, 9, 12] # as alternative
-    # sel_Cn, sel_X, sel_bar_width, sel_time = select_data(X, Cn, bar_width, time, scan_nrs)
+    # sel_Cn, sel_X, sel_bar_width, sel_time = select_data(X, Cn, bar_width, time, scan_nrs) # enter scan_nrs manually
     # print(f"selected scan_nrs: {scan_nrs}")
 
     """calculation of volume and mass distributions"""

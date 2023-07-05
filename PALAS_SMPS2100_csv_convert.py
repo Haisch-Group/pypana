@@ -12,15 +12,7 @@ Created 2022-06-20
 import csv
 import os
 import PALAS_SMPS2100_fileread
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
-
-
-def get_filename():
-    """get the filename via UI"""
-    Tk().withdraw()
-    filename = askopenfilename()
-    return filename
+from get_filename import get_filename
 
 
 filename = get_filename()

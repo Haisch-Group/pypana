@@ -11,8 +11,7 @@ Created 2023-05-15 from TSI_SMPS3071_fileread.py
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+from get_filename import get_filename
 
 
 def import_data(filename):
@@ -50,11 +49,6 @@ def import_data(filename):
 
 
 if __name__ == "__main__":
-    def get_filename():
-        """get the filename via UI"""
-        Tk().withdraw()
-        filename = askopenfilename()
-        return filename
 
     filename = get_filename()
     X, bar_width, Cn, time = import_data(filename)
