@@ -349,20 +349,27 @@ def typical_calculations(data):
 
 if __name__ == "__main__":
 
-    # run particle_analysis.py
+    # 1. run particle_analysis.py
 
     """data import - imports one file at a time to a dictionary"""
 
-    # data_identifier = get_data() # change identifier to something that identifies the dataset, like a date
+    # 2. data_identifier = get_data() # change identifier to something that identifies the dataset, like a date
 
     """typical calculations - calculates number concentration, geometric mean and standard deviation and adds them to
     the data dictionary"""
     # typical_calculations(data);
 
+    """calculation of concentration"""
+    # 3. data_identifier["calc_conc_n"] = get_conc(data_identifier["Cn"]
+    # calc_conc_n = get_conc(Cn)
+    # calc_conc_v = get_conc(Cv)
+    # calc_conc_m = get_conc(Cm)
+
     """data selection"""
     # scan_nrs = list(range(1, 26))  # actual scan numbers in non-pythonian logic + 1 in the end due to range()
-    # scan_nrs = [1, 3, 5, 9, 12] # as alternative
-    # sel_data = select_data(data, scan_nrs) # enter scan_nrs manually (name identifier)
+    # 4. scan_nrs = [1, 3, 5, 9, 12] # as alternative
+    # 5. sel_data = select_data(data, scan_nrs) # enter scan_nrs manually in a list (name identifier)
+    # 6. sel_data["conc"] = get_conc(sel_data["Cn"])
     # print(f"selected scan_nrs: {scan_nrs}")
 
     """calculation of volume and mass distributions"""
@@ -378,14 +385,10 @@ if __name__ == "__main__":
     # cut_X, cut_Cn, cut_bar_width = cut_dist(sel_data["X"], sel_data["Cn"], sel_data["bar_width"], lowerbound,
     # upperbound, cut_nrs)
 
-    """calculation of concentration"""
-    # data_identifier["calc_conc_n"] = get_conc(data_identifier["Cn"]
-    # calc_conc_n = get_conc(Cn)
-    # calc_conc_v = get_conc(Cv)
-    # calc_conc_m = get_conc(Cm)
-
-    """mean of data"""
-    # nr_mean = 1
+    """mean of data - data have to be selected before"""
+    # 7. nr_mean = 1
+    # 8. mean_C, std_C, mean_X, mean_bar_width, mean_conc, std_conc = mean_of_n(data_identifier["C"], data_identifier["X"],
+    #       data_identifier["bar_width"], nr_mean)
     # print(f"mean of: {nr_mean} calculated")
 
     """calculation of geometric parameters"""
@@ -401,10 +404,14 @@ if __name__ == "__main__":
     # plot_nrs = [1, 5, 7, 15]  # or list(range(1, 7))
     # print(f"Plotted scan numbers: {plot_nrs}")
     # ax1 = plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, plot_nrs)
-    # ax1 = plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, plot_nrs)
+    # 9. ax1 = plot_singledata(data_identifier["X"], data_identifier["bar_width"], data_identifier["Cn"],
+    #   data_identifier["calc_conc_n"], plot_nrs) # [1,4,7,9]
+
     # ax2 = plot_singledata(cut_X, cut_bar_width, cut_Cn, calc_conc_n, plot_nrs)
     # if only a selection of distributions was cut with e.g. cut_nrs = [1, 5, 7, 15], counting for the plot of the cut
     # distributions has to start at 1, if all distributions were cut, the scan_nrs can be used as plot_nrs
+
+    # 9. ax1 = plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, plot_nrs)
 
     """other calls"""
     # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
