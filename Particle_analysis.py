@@ -307,7 +307,7 @@ def lognormal_fit(X, C):
     m_fit=popt_lognorm_fit[1]
     sigma_fit=popt_lognorm_fit[2]
     Cn_fit=lognormal_function(X, *popt_lognorm_fit)
-    return A_fit, m_fit, sigma_fit ,C_fit
+    return A_fit, m_fit, sigma_fit ,Cn_fit
 
 
 def calc_geometry(X, C, conc, bar_width):
@@ -345,6 +345,10 @@ def typical_calculations(data):
     data["calc_conc_n"] = get_conc(data["Cn"])
     data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["bar_width"])
     return data
+
+
+def merge_data():
+    return
 
 
 if __name__ == "__main__":
@@ -387,8 +391,8 @@ if __name__ == "__main__":
 
     """mean of data - data have to be selected before"""
     # 7. nr_mean = 1
-    # 8. mean_C, std_C, mean_X, mean_bar_width, mean_conc, std_conc = mean_of_n(data_identifier["C"], data_identifier["X"],
-    #       data_identifier["bar_width"], nr_mean)
+    # 8. mean_C, std_C, mean_X, mean_bar_width, mean_conc, std_conc = mean_of_n(data_identifier["C"],
+    #   data_identifier["X"], data_identifier["bar_width"], nr_mean)
     # print(f"mean of: {nr_mean} calculated")
 
     """calculation of geometric parameters"""
@@ -405,7 +409,7 @@ if __name__ == "__main__":
     # print(f"Plotted scan numbers: {plot_nrs}")
     # ax1 = plot_singledata(sel_X, sel_bar_width, sel_Cn, calc_conc_n, plot_nrs)
     # 9. ax1 = plot_singledata(data_identifier["X"], data_identifier["bar_width"], data_identifier["Cn"],
-    #   data_identifier["calc_conc_n"], plot_nrs) # [1,4,7,9]
+    #   data_identifier["calc_conc_n"], used_device, plot_nrs) # [1,4,7,9]
 
     # ax2 = plot_singledata(cut_X, cut_bar_width, cut_Cn, calc_conc_n, plot_nrs)
     # if only a selection of distributions was cut with e.g. cut_nrs = [1, 5, 7, 15], counting for the plot of the cut
