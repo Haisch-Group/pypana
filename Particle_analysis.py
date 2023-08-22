@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import math
 from scipy import optimize
+import pandas as pd
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
 
@@ -348,6 +349,19 @@ def typical_calculations(data):
 
 
 def merge_data():
+    return
+
+
+def save_calc_to_csv(data_dict):
+    path = data_dict["filename"][:-4]+"_particleDF"+".csv"
+    dataframe = pd.DataFrame()
+    dataframe["scan_nr"] = data_dict["scan_nr"]
+    dataframe["time"] = data_dict["time"]
+    dataframe["dg"] = data_dict["dg"]
+    dataframe["sigma"] = data_dict["sigma"]
+    dataframe["calc_conc_n"] = data_dict["calc_conc_n"]
+    print("wrote file to csv")
+    dataframe.to_csv(path)
     return
 
 
