@@ -183,6 +183,7 @@ def plot_singledata(X, bar_width, Cn, calc_conc_n, used_device, scan_nrs):
 def plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, used_device, scan_nrs):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
+    # at a mean of n in a corner of the plot
     plot_nrs = py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     legend_entries = []
@@ -254,15 +255,13 @@ def geometric_std(X, C, conc, dg):
             sigma_g.append(np.inf)
         else:
             sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
-                                                                   - np.log(dg[k]))*C[k]))/(np.nansum(C[k]-1)))))
+                                                                   - np.log(dg[k]))*C[k]))/(conc[k]-1))))
             # 22-13 in aerosol measurement, Kulkarni et.al.  # 20230705 changed /conc to /np.nansum(C[k]-1)
         #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
         #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
         # same result as above
     return sigma_g
 
-
-# Vorschlag Nico: Median als senkrechte Linie / Marker in den Plot einbauen
 
 def lognormal_dist(conc, sigma_g, dg, X, bar_width):
     """calculates a normal distribution based on the concentration, the median diameter and the geometric standard
@@ -333,7 +332,7 @@ def cut_dist(X, C, bar_width, lowerbound, upperbound, scan_nrs):  # merge with s
         cut_C[ct, :] = C[k, strt_idx:end_idx]
         cut_bar_width[ct, :] = bar_width[k, strt_idx:end_idx]
         ct += 1
-    return cut_X, cut_C, cut_bar_width # write into dict
+    return cut_X, cut_C, cut_bar_width, cut_conc# write into dict
 
 
 def py_logic_converter(nr_list):
@@ -348,10 +347,6 @@ def typical_calculations(data):
     return data
 
 
-def merge_data():
-    return
-
-
 def save_calc_to_csv(data_dict):
     path = data_dict["filename"][:-4]+"_particleDF"+".csv"
     dataframe = pd.DataFrame()
@@ -363,6 +358,36 @@ def save_calc_to_csv(data_dict):
     print("wrote file to csv")
     dataframe.to_csv(path)
     return
+
+
+# def merge_data():
+#     sel_data_20230710 = select_data(data_20230710, [3])
+#     sel_data_20230711 = select_data(data_20230711, [6, 60])
+#     sel_data_20230713 = select_data(data_20230713, [3])
+#     merged_data = {}
+#     merged_data["X"] = sel_data_20230710["X"]
+#     merged_data["Cn"] = sel_data_20230710["Cn"]
+#     merged_data["bar_width"] = sel_data_20230710["bar_width"]
+#     merged_data["time"] = sel_data_20230710["time"]
+#     merged_data["scan_nr"] = sel_data_20230710["scan_nr"]
+#     merged_data["origin"] = []
+#     [merged_data["origin"].append(sel_data_20230710["filename"]) for k in range(len(sel_data_20230710["scan_nr"]))]
+#     # following carried out for each file to add
+#     merged_data["X"] = np.append(merged_data["X"], sel_data_20230713["X"], axis=0)
+#     merged_data["Cn"] = np.append(merged_data["Cn"], sel_data_20230713["Cn"], axis=0)
+#     merged_data["bar_width"] = np.append(merged_data["bar_width"], sel_data_20230713["bar_width"], axis=0)
+#     for k in range(len(sel_data_20230713["scan_nr"])):
+#         merged_data["time"].append(sel_data_20230713["time"][k])
+#         merged_data["scan_nr"].append(sel_data_20230713["scan_nr"][k])
+#         merged_data["origin"].append(sel_data_20230713["filename"])
+#     return
+
+
+"""ToDo:"""
+
+# Vorschlag Nico: Median als senkrechte Linie / Marker in den Plot einbauen
+
+# Idea: y-error = deviation of Median particle size
 
 
 if __name__ == "__main__":
@@ -429,7 +454,9 @@ if __name__ == "__main__":
     # if only a selection of distributions was cut with e.g. cut_nrs = [1, 5, 7, 15], counting for the plot of the cut
     # distributions has to start at 1, if all distributions were cut, the scan_nrs can be used as plot_nrs
 
-    # 9. ax1 = plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, plot_nrs)
+    # 9. ax1 = plot_meandata(mean_X, mean_bar_width, mean_C, std_C, mean_conc, std_conc, used device, plot_nrs)
+
+    # save_calc_to_csv(data_identifier)
 
     """other calls"""
     # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
