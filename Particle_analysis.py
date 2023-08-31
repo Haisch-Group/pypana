@@ -174,7 +174,8 @@ def plot_singledata(X, bar_width, Cn, calc_conc_n, used_device, scan_nrs):
             print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
             ct += 1
     format_plot(fig, ax, used_device)
-
+    #plt.rcParams['figure.dpi'] = 600
+    #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)
     plt.show()
     return ax
