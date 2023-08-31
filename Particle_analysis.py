@@ -50,13 +50,6 @@ def get_data():
     return data
 
 
-# just a code sniplet, that could be used to automatically import multiple datasets at once
-# naming variables automatically and getting them out of a function does not work though
-
-# input_name = input("Enter a name for the data you are importing (has to start with a letter)")
-# locals()[input_name] = data
-
-
 def select_data(data, sel_nrs):  # merge with cut_dist ?
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)
@@ -135,6 +128,18 @@ def mean_of_n(C, X, bar_width, nr_mean):
         mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
         std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
     return mean_C, std_C, mean_X, mean_bar_width, mean_conc, std_conc
+
+
+def mean_and_std(data):
+    """calculates the mean and std of whatever
+    e.g. call for mean_dg, std_dg = mean_and_std(sel_data["dg"][idx]) to get mean and std of the geometric mean
+    diameter, or call mean_conc_n, std_conc_n = mean_and_std(data_identifier["calc_conc_n"][idx])"""
+    n = len(data)
+    mean = np.mean(data)
+    std = np.std(data)
+    # print(f"mean of {n}:" + "{:e}".format(float(mean)) + u"\u00B1" +
+    #        "{:e}".format(float(std)))
+    return mean, std
 
 
 def format_plot(fig, ax, used_device):
@@ -348,8 +353,10 @@ def typical_calculations(data):
     return data
 
 
-def save_calc_to_csv(data_dict):
-    path = data_dict["filename"][:-4]+"_particleDF"+".csv"
+def save_calc_to_csv(data_dict, fileaddition="_particleDF"):
+    """saves selected variables to a csv file, allways use a different fileaddition when saving anything else than the
+    data input array data_identifier"""
+    path = data_dict["filename"][:-4]+fileaddition+".csv"
     dataframe = pd.DataFrame()
     dataframe["scan_nr"] = data_dict["scan_nr"]
     dataframe["time"] = data_dict["time"]
@@ -388,8 +395,18 @@ def save_calc_to_csv(data_dict):
 
 # Vorschlag Nico: Median als senkrechte Linie / Marker in den Plot einbauen
 
-# Idea: y-error = deviation of Median particle size
+# save funktion die dict zu einfacherer struktur macht, evtl. in form ähnlich zu PALAS Daten?
+#   filename, scan_nr ,time, used_device, calc_conc_n, dg, sigma # everything that is only one item per measurement
+#   X...
+#   Cn...
+#   bar_width...
+#   ... # everything, that is an array element in one line
+# kann dann als csv gespeichert werden, oder gepicklet, oder gejsont?
 
+# just a code sniplet, that could be used to automatically import multiple datasets at once
+#   naming variables automatically and getting them out of a function does not work though
+#   input_name = input("Enter a name for the data you are importing (has to start with a letter)")
+#   locals()[input_name] = data
 
 if __name__ == "__main__":
 
@@ -463,6 +480,7 @@ if __name__ == "__main__":
     # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
     # print(dg)
     # print(sigma_g)
+    # x_mean, x_std = mean_and_std(sel_data["dg"][:])
 
     # plt.ioff()
     # plt.show() # if plot doesnt show!
