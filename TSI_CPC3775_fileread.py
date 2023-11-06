@@ -21,8 +21,9 @@ def import_data(filename):
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
     to work, the data has to be exported in rows"""
 
-    data = pd.read_table(filename, sep='\t', header=2, index_col=0,
-                         engine='python')
+    data = pd.read_table(filename, sep=',', header=2, index_col=0,
+                         engine='python', encoding='ANSI')  # dropped utf-8 error as file is ANSI encoded
+    #changed separator to "," from "/t" as i exported data with , separation
 
     timepoints = data.iloc[0, 2] / data.iloc[0, 3]
     el_time = np.array(range(data.iloc[0, 3], data.iloc[0, 2]+data.iloc[0, 3], data.iloc[0, 3]))  # elapsed time
