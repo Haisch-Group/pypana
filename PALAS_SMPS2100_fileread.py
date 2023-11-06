@@ -74,8 +74,8 @@ def import_data_and_comments(filename):
             Xu[i, k-2] = data[int(1 + i * 6)][int(k)]
         for k in range(2, data_len[int(2 + i * 6)]):
             X[i, k-2] = data[int(2 + i * 6)][int(k)]
-        for k in range(2, data_len[int(5 + i * 6)]):  # 5 is based on the inverted diff corrected data, 3 on the raw data
-            Cn[i, k-2] = data[int(5 + i * 6)][int(k)]  # 4 is the inverted but not diff corrected data
+        for k in range(2, data_len[int(3 + i * 6)]):  # 5 is based on the inverted diff corrected data, 3 on the raw data
+            Cn[i, k-2] = data[int(3 + i * 6)][int(k)]  # 4 is the inverted but not diff corrected data
 
     labels = np.genfromtxt(fname=filename, delimiter='\t', usecols=(0, 1, 2), dtype=str)
     # imports the first thre columns containing the labels, the date, the time, and the comment from that create time
