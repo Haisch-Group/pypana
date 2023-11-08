@@ -35,12 +35,14 @@ def plot_hist(diameters):
     ax.set(xlabel='particle diameter / nm', ylabel='prevalence of particles with given diameter', xlim=(0, 40))
     sample_size = len(diameters)
     median_dp = statistics.median(diameters)
-    plt.title(f"n = {sample_size}, median = {round(median_dp, 2)} nm")
+    stdev_dp = statistics.stdev(diameters)
+    plt.title(f"n = {sample_size}, median = {round(median_dp, 2)} \u00B1 {round(stdev_dp, 2)} nm")
     plt.show()
     return ax
 
 
 if __name__ == "__main__":
+
     areas = import_data()
     diameters = calculate_d(areas)
     ax = plot_hist(diameters)
