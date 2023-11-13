@@ -41,7 +41,13 @@ def fileread(filename, used_device):
 def get_data():
     filename = get_filename()
     used_device = input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100, 2 for "
-                        "TSI LAS 3340A and 3 for TSI APS 3321")
+                        "TSI LAS 3340A and 3 for TSI APS 3321, enter as int.")
+    #while user_input := input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100, 2 for "
+    #                        "TSI LAS 3340A and 3 for TSI APS 3321, enter as int.") not in [0, 1, 2, 3]:
+    #    print(f"{user_input} is not a valid input.")
+    #    continue
+    #used_device = user_input
+
     X, bar_width, Cn, time = fileread(filename, used_device)
     scan_nr = []
     [scan_nr.append(k+1) for k in range(len(X))]
@@ -333,13 +339,15 @@ def cut_dist(X, C, bar_width, lowerbound, upperbound, scan_nrs):  # merge with s
     cut_X = np.zeros((len(cut_nrs), len(X[0, strt_idx:end_idx])))
     cut_C = np.zeros((len(cut_nrs), len(C[0, strt_idx:end_idx])))
     cut_bar_width = np.zeros((len(cut_nrs), len(bar_width[0, strt_idx:end_idx])))
+    cut_conc = []
     ct = 0
     for k in cut_nrs:
         cut_X[ct, :] = X[k, strt_idx:end_idx]
         cut_C[ct, :] = C[k, strt_idx:end_idx]
         cut_bar_width[ct, :] = bar_width[k, strt_idx:end_idx]
+        cut_conc = np.nansum(cut_C[ct, :])
         ct += 1
-    return cut_X, cut_C, cut_bar_width, cut_conc# write into dict
+    return cut_X, cut_C, cut_bar_width, cut_conc # write into dict
 
 
 def py_logic_converter(nr_list):
