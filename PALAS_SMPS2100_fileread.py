@@ -88,8 +88,9 @@ def import_data_and_comments(filename):
     # %p is the identifier for AM or PM in a 12 hour format
 
     bar_width = np.subtract(Xu, Xl)
-    dlogDp = np.log10(Xu/Xl)
+    #dlogDp = np.log10(Xu/Xl)
     #Cn = Cn/dlogDp  # calculate dC/dlogDp from known interval width
+    #Cn = Cn*128  # calculate dC/dlogDp from channels/decade
 
     return X, bar_width, Cn, time, comments
 
