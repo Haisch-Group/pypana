@@ -63,7 +63,7 @@ def select_data(data, sel_nrs):  # merge with cut_dist ?
     scan_nrs = py_logic_converter(sel_nrs)
     sel_Cn = np.zeros((len(scan_nrs), data["Cn"].shape[1]))
     # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
-    sel_X = np.zeros_like(sel_Cn)
+    sel_X = np.zeros_like(sel_Cn)  # maybe nan is needed to avoid zeros on the right of the x-data?
     sel_bar_width = np.zeros_like(sel_Cn)
     sel_time = []
     sel_scan_nr = []
@@ -159,7 +159,7 @@ def format_plot(fig, ax, used_device):
     else:
         ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
                xlabel='Particle Diameter / nm',
-               ylabel='dN/dlogD$_{p}$ / $\mathregular{1/cm^3}$')
+               ylabel='Number Concentration / $\mathregular{1/cm^3}$') # dN/dlogD$_{p}$
     # yscale='log', xscale='log', xlabel='$\mathregular{dlog D_p}$ / nm', ylabel='dN / $\mathregular{P/cm^3}$'
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
@@ -374,27 +374,26 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
     return
 
 
-# def merge_data():
-#     sel_data_20230710 = select_data(data_20230710, [3])
-#     sel_data_20230711 = select_data(data_20230711, [6, 60])
-#     sel_data_20230713 = select_data(data_20230713, [3])
-#     merged_data = {}
-#     merged_data["X"] = sel_data_20230710["X"]
-#     merged_data["Cn"] = sel_data_20230710["Cn"]
-#     merged_data["bar_width"] = sel_data_20230710["bar_width"]
-#     merged_data["time"] = sel_data_20230710["time"]
-#     merged_data["scan_nr"] = sel_data_20230710["scan_nr"]
-#     merged_data["origin"] = []
-#     [merged_data["origin"].append(sel_data_20230710["filename"]) for k in range(len(sel_data_20230710["scan_nr"]))]
-#     # following carried out for each file to add
-#     merged_data["X"] = np.append(merged_data["X"], sel_data_20230713["X"], axis=0)
-#     merged_data["Cn"] = np.append(merged_data["Cn"], sel_data_20230713["Cn"], axis=0)
-#     merged_data["bar_width"] = np.append(merged_data["bar_width"], sel_data_20230713["bar_width"], axis=0)
-#     for k in range(len(sel_data_20230713["scan_nr"])):
-#         merged_data["time"].append(sel_data_20230713["time"][k])
-#         merged_data["scan_nr"].append(sel_data_20230713["scan_nr"][k])
-#         merged_data["origin"].append(sel_data_20230713["filename"])
-#     return
+def merge_data(sel_data_list):
+    """merges dictionaries of data, should best be used with selected data dicts
+    currently also writes into the first dict it takes data from???"""
+    merged_data = {}
+    merged_data["X"] = sel_data_list[0]["X"]
+    merged_data["Cn"] = sel_data_list[0]["Cn"]
+    merged_data["bar_width"] = sel_data_list[0]["bar_width"]
+    merged_data["time"] = sel_data_list[0]["time"]
+    merged_data["scan_nr"] = sel_data_list[0]["scan_nr"]
+    merged_data["origin"] = []
+    [merged_data["origin"].append(sel_data_list[0]["filename"]) for k in range(len(sel_data_list[0]["scan_nr"]))]
+    for i in sel_data_list[1:]:
+        merged_data["X"] = np.append(merged_data["X"], i["X"], axis=0)
+        merged_data["Cn"] = np.append(merged_data["Cn"], i["Cn"], axis=0)
+        merged_data["bar_width"] = np.append(merged_data["bar_width"], i["bar_width"], axis=0)
+        for k in range(len(i["scan_nr"])):  # somehow also changes sel_data_list[0]["time"] and ...["scan_nr"]
+            merged_data["time"].append(i["time"][k])
+            merged_data["scan_nr"].append(i["scan_nr"][k])
+            merged_data["origin"].append(i["filename"])
+    return merged_data
 
 
 """ToDo:"""
