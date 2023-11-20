@@ -187,7 +187,7 @@ def plot_singledata(X, bar_width, Cn, calc_conc_n, used_device, scan_nrs):
     format_plot(fig, ax, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
-    plt.legend(legend_entries)
+    plt.legend(legend_entries, loc='upper left')
     plt.show()
     return ax
 
