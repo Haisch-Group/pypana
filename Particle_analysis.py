@@ -112,10 +112,13 @@ def get_conc(C):
     return calc_conc
 
 
-def mean_of_n(C, X, bar_width, nr_mean):
+def mean_of_n(data, nr_mean):
     """calculates a mean of every n consecutive measurements and also gives the standard deviation
     select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
     only works with more than 3 measurements"""
+    C = data["Cn"]
+    X = data["X"]
+    bar_width = data["bar_width"]
     n = nr_mean
     size = C.shape
     nth_len = int(size[0]/n)
@@ -133,7 +136,9 @@ def mean_of_n(C, X, bar_width, nr_mean):
         mean_bar_width[k, :] = np.mean(bar_width[(k * n):((k + 1) * n), :], axis=0)
         mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
         std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
-    return mean_C, std_C, mean_X, mean_bar_width, mean_conc, std_conc
+    mean_data = {"X": mean_X, "mean_C": mean_C, "std_C": std_C, "bar_width": mean_bar_width,
+                 "mean_conc": mean_conc, "std_conc": std_conc}
+    return mean_data
 
 
 def mean_and_std(data):
@@ -192,15 +197,21 @@ def plot_singledata(X, bar_width, Cn, calc_conc_n, used_device, scan_nrs):
     return ax
 
 
-def plot_meandata(mean_X, mean_bar_width, mean_Cn, std_Cn, mean_conc_n, std_conc_n, used_device, scan_nrs):
+def plot_meandata(mean_data, used_device, scan_nrs):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     # at a mean of n in a corner of the plot
+    mean_X = mean_data["X"]
+    mean_bar_width = mean_data["bar_width"]
+    mean_C = mean_data["mean_C"]
+    std_C = mean_data["std_C"]
+    mean_conc_n = mean_data["mean_conc"]
+    std_conc_n = mean_data["std_conc"]
     plot_nrs = py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     legend_entries = []
     for k in plot_nrs:
-        ax.bar(mean_X[k, :], mean_Cn[k, :], width=mean_bar_width[k, :], yerr=std_Cn[k, :], edgecolor='black')
+        ax.bar(mean_X[k, :], mean_C[k, :], width=mean_bar_width[k, :], yerr=std_C[k, :], edgecolor='black')
         legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[k]}"))
         # scan_nrs is used here on purpose
     [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
