@@ -427,6 +427,7 @@ def merge_data(sel_data_list):
 if __name__ == "__main__":
 
     # 1. run particle_analysis.py
+    # Hallo
 
     """data import - imports one file at a time to a dictionary"""
 
