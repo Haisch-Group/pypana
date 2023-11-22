@@ -136,7 +136,7 @@ def mean_of_n(data, nr_mean):
         mean_bar_width[k, :] = np.mean(bar_width[(k * n):((k + 1) * n), :], axis=0)
         mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
         std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
-    mean_data = {"X": mean_X, "mean_C": mean_C, "std_C": std_C, "bar_width": mean_bar_width,
+    mean_data = {"mean_X": mean_X, "mean_C": mean_C, "std_C": std_C, "bar_width": mean_bar_width,
                  "mean_conc": mean_conc, "std_conc": std_conc}
     return mean_data
 
@@ -171,8 +171,12 @@ def format_plot(fig, ax, used_device):
     return
 
 
-def plot_singledata(X, bar_width, Cn, calc_conc_n, used_device, scan_nrs):
+def plot_singledata(data, used_device, scan_nrs):
     """plots the given data, specify measurement to use from sel_Cn array"""
+    X = data["X"]
+    bar_width = data["bar_width"]
+    Cn = data["Cn"]
+    calc_conc_n = data["calc_conc_n"]
     plot_nrs = py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     if len(plot_nrs) == 1:
@@ -201,7 +205,7 @@ def plot_meandata(mean_data, used_device, scan_nrs):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     # at a mean of n in a corner of the plot
-    mean_X = mean_data["X"]
+    mean_X = mean_data["mean_X"]
     mean_bar_width = mean_data["bar_width"]
     mean_C = mean_data["mean_C"]
     std_C = mean_data["std_C"]
