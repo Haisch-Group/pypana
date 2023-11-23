@@ -231,15 +231,15 @@ def plot_meandata(mean_data, used_device, scan_nrs):
     for k in plot_nrs:
         ax.bar(mean_X[k, :], mean_C[k, :], width=mean_bar_width[k, :], yerr=std_C[k, :], edgecolor='black')
         user_input = input(f"Please enter the legend entry for scan {scan_nrs[k]}")
-        legend_entries.append(user_input + float(mean_dg[k]) + u"\u00B1" +
-           float(std_dg[k]) + " nm")
+        legend_entries.append(user_input + " " + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
+           str("{:.2f}".format(float(std_dg[k]))) + " nm")
         # legend_entries.append(user_input) # scan_nrs is used here on purpose
     [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
            "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
     format_plot(fig, ax, used_device)
 
-    plt.legend(legend_entries)
+    plt.legend(legend_entries, loc='upper left')
     plt.show()
     return ax
 
@@ -443,6 +443,8 @@ def merge_mean_data(mean_data_list):
     merged_mean_data["bar_width"] = mean_data_list[0]["bar_width"]
     merged_mean_data["mean_conc"] = mean_data_list[0]["mean_conc"][:]
     merged_mean_data["std_conc"] = mean_data_list[0]["std_conc"][:]
+    merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:]
+    merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:]
     for i in mean_data_list[1:]:
         merged_mean_data["mean_X"] = np.append(merged_mean_data["mean_X"], i["mean_X"], axis=0)
         merged_mean_data["mean_C"] = np.append(merged_mean_data["mean_C"], i["mean_C"], axis=0)
@@ -450,6 +452,8 @@ def merge_mean_data(mean_data_list):
         merged_mean_data["bar_width"] = np.append(merged_mean_data["bar_width"], i["bar_width"], axis=0)
         merged_mean_data["mean_conc"].extend(i["mean_conc"])
         merged_mean_data["std_conc"].extend(i["std_conc"])
+        merged_mean_data["mean_dg"].extend(i["mean_dg"])
+        merged_mean_data["std_dg"].extend(i["std_dg"])
     return merged_mean_data
 
 
