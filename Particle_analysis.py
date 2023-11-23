@@ -231,8 +231,8 @@ def plot_meandata(mean_data, used_device, scan_nrs):
     for k in plot_nrs:
         ax.bar(mean_X[k, :], mean_C[k, :], width=mean_bar_width[k, :], yerr=std_C[k, :], edgecolor='black')
         user_input = input(f"Please enter the legend entry for scan {scan_nrs[k]}")
-        legend_entries.append(user_input + " " + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
-           str("{:.2f}".format(float(std_dg[k]))) + " nm")
+        legend_entries.append(user_input + " (" + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
+           str("{:.2f}".format(float(std_dg[k]))) + " nm)")
         # legend_entries.append(user_input) # scan_nrs is used here on purpose
     [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
            "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
