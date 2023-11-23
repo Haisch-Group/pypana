@@ -422,7 +422,7 @@ def merge_data(sel_data_list):
         merged_data["X"] = np.append(merged_data["X"], i["X"], axis=0)
         merged_data["Cn"] = np.append(merged_data["Cn"], i["Cn"], axis=0)
         merged_data["bar_width"] = np.append(merged_data["bar_width"], i["bar_width"], axis=0)
-        for k in range(len(i["scan_nr"])):  # somehow also changes sel_data_list[0]["time"] and ...["scan_nr"]
+        for k in range(len(i["scan_nr"])):
             merged_data["time"].append(i["time"][k])
             merged_data["scan_nr"].append(i["scan_nr"][k])
             merged_data["origin"].append(i["filename"])
