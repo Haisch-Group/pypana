@@ -78,6 +78,7 @@ def select_data(data, sel_nrs):  # merge with cut_dist ?
         sel_scan_nr.append(data["scan_nr"][scan_nrs[k]])
     sel_data = {"X": sel_X, "Cn": sel_Cn, "bar_width": sel_bar_width, "time": sel_time, "scan_nr": sel_scan_nr,
                 "filename": sel_filename, "used_device": sel_used_device}
+    typical_calculations(sel_data)
     return sel_data
 
 
@@ -119,6 +120,9 @@ def mean_of_n(data, nr_mean):
     C = data["Cn"]
     X = data["X"]
     bar_width = data["bar_width"]
+    calc_conc = data["calc_conc_n"]
+    dg = data["dg"]
+    sigma = data["sigma"]
     n = nr_mean
     size = C.shape
     nth_len = int(size[0]/n)
@@ -126,9 +130,12 @@ def mean_of_n(data, nr_mean):
     std_C = np.zeros_like(mean_C)
     mean_X = np.zeros_like(mean_C)
     mean_bar_width = np.zeros_like(mean_C)
-    calc_conc = get_conc(C)
     mean_conc = []
     std_conc = []
+    mean_dg = []
+    mean_sigma = []
+    std_dg = []
+    std_sigma = []
     for k in range(nth_len):
         mean_C[k, :] = np.mean(C[(k*n):((k+1)*n), :], axis=0)
         std_C[k, :] = np.std(C[(k*n):((k+1)*n), :], axis=0)
@@ -136,8 +143,13 @@ def mean_of_n(data, nr_mean):
         mean_bar_width[k, :] = np.mean(bar_width[(k * n):((k + 1) * n), :], axis=0)
         mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
         std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
+        mean_dg.append(np.mean(dg[(k * n):((k + 1) * n)], axis=0))
+        std_dg.append(np.std(dg[(k * n):((k + 1) * n)], axis=0))
+        mean_sigma.append(np.mean(sigma[(k * n):((k + 1) * n)], axis=0))
+        std_sigma.append(np.std(sigma[(k * n):((k + 1) * n)], axis=0))
     mean_data = {"mean_X": mean_X, "mean_C": mean_C, "std_C": std_C, "bar_width": mean_bar_width,
-                 "mean_conc": mean_conc, "std_conc": std_conc}
+                 "mean_conc": mean_conc, "std_conc": std_conc, "mean_dg": mean_dg,"std_dg":std_dg,
+                 "mean_sigma": mean_sigma, "std_sigma": std_sigma}
     return mean_data
 
 
@@ -280,7 +292,7 @@ def geometric_std(X, C, conc, dg):
     for k in range(0, len(conc)):  # gave a math error for conc < 1 because conc-1 in sigma_g is < 0 then, so division
         #  is not possible
         if conc[k] < 1:
-            sigma_g.append(np.inf)
+            sigma_g.append(np.inf) # is infinity correct here? should it just be a massiv value?
         else:
             sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
                                                                    - np.log(dg[k]))*C[k]))/(conc[k]-1))))
@@ -376,10 +388,12 @@ def typical_calculations(data):
     data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["bar_width"])
     return data
 
+
 def typical_calculation_mean(data):
     data["calc_conc_n"] = get_conc(data["mean_C"])
     data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data["mean_C"], data["calc_conc_n"], data["bar_width"])
     return data
+
 
 def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
     """saves selected variables to a csv file, select variables to save in variable_list as list of strings,
