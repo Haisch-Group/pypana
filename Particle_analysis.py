@@ -223,13 +223,17 @@ def plot_meandata(mean_data, used_device, scan_nrs):
     std_C = mean_data["std_C"]
     mean_conc_n = mean_data["mean_conc"]
     std_conc_n = mean_data["std_conc"]
+    mean_dg = mean_data["mean_dg"]
+    std_dg = mean_data["std_dg"]
     plot_nrs = py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     legend_entries = []
     for k in plot_nrs:
         ax.bar(mean_X[k, :], mean_C[k, :], width=mean_bar_width[k, :], yerr=std_C[k, :], edgecolor='black')
-        legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[k]}"))
-        # scan_nrs is used here on purpose
+        user_input = input(f"Please enter the legend entry for scan {scan_nrs[k]}")
+        legend_entries.append(user_input + float(mean_dg[k]) + u"\u00B1" +
+           float(std_dg[k]) + " nm")
+        # legend_entries.append(user_input) # scan_nrs is used here on purpose
     [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
            "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
