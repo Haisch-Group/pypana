@@ -433,6 +433,9 @@ def merge_data(sel_data_list):
     return merged_data
 
 
+
+#Test Kommentar
+
 def merge_mean_data(mean_data_list):
     """merges dictionaries of data, should best be used with mean data dicts
     currently also writes into the first dict it takes data from???"""
