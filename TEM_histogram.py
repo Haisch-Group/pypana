@@ -28,6 +28,9 @@ def calculate_d(areas):
 
 
 def plot_hist(diameters):
+    """if other particles, than some between 0 and 40 nm are measured, change bins = np.arange to (lower size lim,
+    upper size lim, width of bins in nm) and in ax.st(..., xlim(lower size lim, upper size lim) according to the
+    measured sizes - this could be automated"""
     bins = np.arange(0, 40, 0.5)
     cm = 1 / 2.54  # inches to cm
     fig, ax = plt.subplots(figsize=(18.5 * cm, 10 * cm))  # height with title 12, without 10
