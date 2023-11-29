@@ -15,6 +15,7 @@ import numpy as np
 import math
 from scipy import optimize
 import pandas as pd
+from py_logic_converter import py_logic_converter, normal_logic_converter
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
 
@@ -82,28 +83,6 @@ def select_data(data, sel_nrs):  # merge with cut_dist ?
     return sel_data
 
 
-def volume_dist(Cn, X):
-    """gives volume concentration per bin in micrometer^3 / m^3
-    can be used on data directly, or on data selected with select_data()"""
-    Cv = np.zeros_like(Cn)
-    mum_D = np.divide(X, 1000)
-    # convert sel_X from nm to micrometers by dividing by 1000
-    percubicmeter_Cn = np.multiply(Cn, 10 ** 6)
-    # convert sel_Cn to P/m^3
-    for k in np.arange(Cn.shape[0]):
-        for j in np.arange(Cn.shape[1]):
-            Cv[k, j] = (percubicmeter_Cn[k, j] * ((1 / 6) * math.pi * (mum_D[k, j]) ** 3))
-    return Cv
-
-
-def mass_dist(Cv, density):
-    """gives mass concentration per bin in mg/m^3, takes g/cm^3 as density input, Cv in micrometer/m^3 must be
-    calculated before! - can be used on data directly, or on data selected with select_data()"""
-    densitymgpermum = density*(10**(-9))  # convert the density from g/cm^3 to milligram per cubic micrometer
-    Cm = np.multiply(Cv, densitymgpermum)  # last part converts from per cm^3 to per m^3
-    return Cm # check
-
-
 def get_conc(C):
     """calculate the total concentration for each selected measurement, can be applied to Cn, Cv, or Cm
     call for example as data["calc_conc_n"] = get_conc(data["Cn"]) to specify (or Cv, or Cm)"""
@@ -111,6 +90,146 @@ def get_conc(C):
     for k in range(C.shape[0]):  # iteratively fill the array with the sum of all size concentrations
         calc_conc[k, ] = np.nansum(C[k, :])  # np.nansum counts NaN as 0
     return calc_conc
+
+
+def cut_dist(X, C, bar_width, lowerbound, upperbound, scan_nrs):  # merge with select_data
+    """to cut a part of the spectrum"""
+    cut_nrs = py_logic_converter(scan_nrs)
+    strt_idx = np.where(X[0] > lowerbound)[0][0]
+    end_idx = np.where(X[0] < upperbound)[-1][-1] + 1
+    cut_X = np.zeros((len(cut_nrs), len(X[0, strt_idx:end_idx])))
+    cut_C = np.zeros((len(cut_nrs), len(C[0, strt_idx:end_idx])))
+    cut_bar_width = np.zeros((len(cut_nrs), len(bar_width[0, strt_idx:end_idx])))
+    cut_conc = []
+    ct = 0
+    for k in cut_nrs:
+        cut_X[ct, :] = X[k, strt_idx:end_idx]
+        cut_C[ct, :] = C[k, strt_idx:end_idx]
+        cut_bar_width[ct, :] = bar_width[k, strt_idx:end_idx]
+        cut_conc = np.nansum(cut_C[ct, :])
+        ct += 1
+    return cut_X, cut_C, cut_bar_width, cut_conc # write into dict
+
+
+def merge_data(sel_data_list):
+    """merges dictionaries of data, should best be used with selected data dicts
+    currently also writes into the first dict it takes data from???"""
+    merged_data = {}
+    merged_data["X"] = sel_data_list[0]["X"]
+    merged_data["Cn"] = sel_data_list[0]["Cn"]
+    merged_data["bar_width"] = sel_data_list[0]["bar_width"]
+    merged_data["time"] = sel_data_list[0]["time"][:]
+    merged_data["scan_nr"] = sel_data_list[0]["scan_nr"][:]
+    merged_data["origin"] = []
+    [merged_data["origin"].append(sel_data_list[0]["filename"]) for k in range(len(sel_data_list[0]["scan_nr"]))]
+    for i in sel_data_list[1:]:
+        merged_data["X"] = np.append(merged_data["X"], i["X"], axis=0)
+        merged_data["Cn"] = np.append(merged_data["Cn"], i["Cn"], axis=0)
+        merged_data["bar_width"] = np.append(merged_data["bar_width"], i["bar_width"], axis=0)
+        for k in range(len(i["scan_nr"])):
+            merged_data["time"].append(i["time"][k])
+            merged_data["scan_nr"].append(i["scan_nr"][k])
+            merged_data["origin"].append(i["filename"])
+    return merged_data
+
+
+def geometric_mean(X, C, conc):
+    """calculates the geometric mean from given X, C and conc, can be used with mean_C, or sel_C,
+    call mean_dg = geometric_mean(mean_X, mean_C, mean_conc then, or sel_dg = geometric_mean(sel_X, sel_C, calc_conc)"""
+    # for lognormal, count median diameter = geometric mean diameter
+    # maybe add a check for lognormal
+    dg = []
+    for k in np.arange(0, C.shape[0]):
+        if conc[k] == 0:
+            dg.append(0)
+        else:
+            dg.append(math.exp((1/conc[k]) * np.nansum(np.log(X[k])*C[k])))
+            # gives seemingly correct results
+            # dg.append(math.pow(10, ((1 / mean_conc_n[k]) * np.nansum(np.log10(mean_X[k]) * mean_Cn[k]))))
+            # same result as above
+            # dg.append(np.nansum(np.multiply(mean_Cn[k], mean_X[k])) / np.nansum(mean_Cn[k]))
+            # gives bit higher dg that seems wrong
+    return dg  # seems to work
+
+
+def geometric_std(X, C, conc, dg):
+    """calculates the geometric standard deviation from given X, C and conc, can be used with mean_C, or sel_C,
+        call mean_sigma_g = geometric_std(mean_X, mean_C, mean_conc, mean_dg then,
+        or sel_sigma_g = geometric_std(sel_X, sel_C, calc_conc, sel_dg)"""
+    sigma_g = []
+    for k in range(0, len(conc)):  # gave a math error for conc < 1 because conc-1 in sigma_g is < 0 then, so division
+        #  is not possible
+        if conc[k] < 1:
+            sigma_g.append(np.inf) # is infinity correct here? should it just be a massiv value?
+        else:
+            sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
+                                                                   - np.log(dg[k]))*C[k]))/(conc[k]-1))))
+            # 22-13 in aerosol measurement, Kulkarni et.al.  # 20230705 changed /conc to /np.nansum(C[k]-1)
+        #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
+        #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
+        # same result as above
+    return sigma_g
+
+
+def lognormal_dist(conc, sigma_g, dg, X, bar_width):
+    """calculates a normal distribution based on the concentration, the median diameter and the geometric standard
+    deviation"""
+    fit = np.zeros_like(X)
+    for k in np.arange(0, X.shape[0]):
+        #fit[k, :] = (mean_conc_n[k] / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
+        #            np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
+        # is roughly 28 times higher than the histogram
+        fit[k, :] = ((conc[k]/bar_width[k])/(math.sqrt(2 * math.pi) * np.log(sigma_g[k])))*\
+                    np.exp((-np.square(np.log(X[k, :])-np.log(dg[k])))/(2*(math.log(sigma_g[k]))**2))
+        # did not do what i wanted it to
+        # fit[k, :] = ((mean_conc_n[k] / mean_X.shape[0]) / (math.sqrt(2 * math.pi) * np.log10(sigma_g[k]))) * \
+        #            np.power(10, ((-np.square(np.log10(mean_X[k, :]) - np.log10(dg[k]))) /
+        #                          (2 * (math.log10(sigma_g[k])) ** 2)))
+        # gives more narrow distribution than with natural base
+        # fit[k, :] = (1 / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
+        #             np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
+
+    return fit
+
+
+def lognormal_function(x, A, m, sigma):
+    """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
+    standard deviation"""
+    return A*(np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))/(np.log(sigma)*x*np.sqrt(2*math.pi)))
+
+
+def normal_function(x, A, mu, sigma):
+    """definition of a normal function with A being a scale factor, mu being the median and sigma being the geometric
+    standard deviation"""
+    return A*np.exp(-((x-mu)**2)/(2*sigma**2))/(sigma*np.sqrt(2*math.pi))
+
+
+def lognormal_fit(X, C):
+    """fit of a lognormal peak"""
+    p0=[1000, 100, 1.2]
+    lowerbounds=[0, 10, 0.2]
+    upperbounds=[np.inf, 1000, 5]
+    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(lognormal_function, X, C, p0=p0,
+                                                            bounds=(lowerbounds, upperbounds), maxfev=1000)
+    A_fit=popt_lognorm_fit[0]
+    m_fit=popt_lognorm_fit[1]
+    sigma_fit=popt_lognorm_fit[2]
+    Cn_fit=lognormal_function(X, *popt_lognorm_fit)
+    return A_fit, m_fit, sigma_fit ,Cn_fit
+
+
+def calc_geometry(X, C, conc, bar_width):
+    """calculates geometric parameters of the distributions"""
+    dg = geometric_mean(X, C, conc)   # spectra by using sel_X, sel_Cn, calc_conc_n, sel_bar_width
+    sigma_g = geometric_std(X, C, conc, dg)
+    #fit = lognormal_dist(conc, sigma_g, dg, X, bar_width)
+    return dg, sigma_g#, fit
+
+
+def typical_calculations(data):
+    data["calc_conc_n"] = get_conc(data["Cn"])
+    data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["bar_width"])
+    return data
 
 
 def mean_of_n(data, nr_mean):
@@ -151,6 +270,63 @@ def mean_of_n(data, nr_mean):
                  "mean_conc": mean_conc, "std_conc": std_conc, "mean_dg": mean_dg,"std_dg":std_dg,
                  "mean_sigma": mean_sigma, "std_sigma": std_sigma}
     return mean_data
+
+
+def merge_mean_data(mean_data_list):
+    """merges dictionaries of data, should best be used with mean data dicts
+    currently also writes into the first dict it takes data from???"""
+    merged_mean_data = {}
+    merged_mean_data["mean_X"] = mean_data_list[0]["mean_X"]
+    merged_mean_data["mean_C"] = mean_data_list[0]["mean_C"]
+    merged_mean_data["std_C"] = mean_data_list[0]["std_C"]
+    merged_mean_data["bar_width"] = mean_data_list[0]["bar_width"]
+    merged_mean_data["mean_conc"] = mean_data_list[0]["mean_conc"][:]
+    merged_mean_data["std_conc"] = mean_data_list[0]["std_conc"][:]
+    merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:]
+    merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:]
+    for i in mean_data_list[1:]:
+        merged_mean_data["mean_X"] = np.append(merged_mean_data["mean_X"], i["mean_X"], axis=0)
+        merged_mean_data["mean_C"] = np.append(merged_mean_data["mean_C"], i["mean_C"], axis=0)
+        merged_mean_data["std_C"] = np.append(merged_mean_data["std_C"], i["std_C"], axis=0)
+        merged_mean_data["bar_width"] = np.append(merged_mean_data["bar_width"], i["bar_width"], axis=0)
+        merged_mean_data["mean_conc"].extend(i["mean_conc"])
+        merged_mean_data["std_conc"].extend(i["std_conc"])
+        merged_mean_data["mean_dg"].extend(i["mean_dg"])
+        merged_mean_data["std_dg"].extend(i["std_dg"])
+    return merged_mean_data
+
+
+def typical_calculation_mean(data):
+    data["calc_conc_n"] = get_conc(data["mean_C"])
+    data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data["mean_C"], data["calc_conc_n"], data["bar_width"])
+    return data
+
+
+def volume_dist(data):
+    """gives volume concentration per bin in micrometer^3 / m^3
+    can be used on data directly, or on data selected with select_data()"""
+    Cn = data["Cn"]
+    X = data["X"]
+    Cv = np.zeros_like(Cn)
+    mum_D = np.divide(X, 1000)
+    # convert sel_X from nm to micrometers by dividing by 1000
+    percubicmeter_Cn = np.multiply(Cn, 10 ** 6)
+    # convert sel_Cn to P/m^3
+    for k in np.arange(Cn.shape[0]):
+        for j in np.arange(Cn.shape[1]):
+            Cv[k, j] = (percubicmeter_Cn[k, j] * ((1 / 6) * math.pi * (mum_D[k, j]) ** 3))
+    data["Cv"] = Cv
+    return data
+
+
+def mass_dist(data, density):
+    """gives mass concentration per bin in mg/m^3, takes g/cm^3 as density input, Cv in micrometer/m^3 must be
+    calculated before! - can be used on data directly, or on data selected with select_data()"""
+    Cv = data["Cv"]
+    densitymgpermum = density*(10**(-9))  # convert the density from g/cm^3 to milligram per cubic micrometer
+    Cm = np.multiply(Cv, densitymgpermum)  # last part converts from per cm^3 to per m^3
+    data["Cm"] = Cm
+    return data # check
 
 
 def mean_and_std(data):
@@ -269,136 +445,6 @@ def plot_meandata(mean_data, used_device, scan_nrs):
 #     return ax
 
 
-def geometric_mean(X, C, conc):
-    """calculates the geometric mean from given X, C and conc, can be used with mean_C, or sel_C,
-    call mean_dg = geometric_mean(mean_X, mean_C, mean_conc then, or sel_dg = geometric_mean(sel_X, sel_C, calc_conc)"""
-    # for lognormal, count median diameter = geometric mean diameter
-    # maybe add a check for lognormal
-    dg = []
-    for k in np.arange(0, C.shape[0]):
-        if conc[k] == 0:
-            dg.append(0)
-        else:
-            dg.append(math.exp((1/conc[k]) * np.nansum(np.log(X[k])*C[k])))
-            # gives seemingly correct results
-            # dg.append(math.pow(10, ((1 / mean_conc_n[k]) * np.nansum(np.log10(mean_X[k]) * mean_Cn[k]))))
-            # same result as above
-            # dg.append(np.nansum(np.multiply(mean_Cn[k], mean_X[k])) / np.nansum(mean_Cn[k]))
-            # gives bit higher dg that seems wrong
-    return dg  # seems to work
-
-
-def geometric_std(X, C, conc, dg):
-    """calculates the geometric standard deviation from given X, C and conc, can be used with mean_C, or sel_C,
-        call mean_sigma_g = geometric_std(mean_X, mean_C, mean_conc, mean_dg then,
-        or sel_sigma_g = geometric_std(sel_X, sel_C, calc_conc, sel_dg)"""
-    sigma_g = []
-    for k in range(0, len(conc)):  # gave a math error for conc < 1 because conc-1 in sigma_g is < 0 then, so division
-        #  is not possible
-        if conc[k] < 1:
-            sigma_g.append(np.inf) # is infinity correct here? should it just be a massiv value?
-        else:
-            sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
-                                                                   - np.log(dg[k]))*C[k]))/(conc[k]-1))))
-            # 22-13 in aerosol measurement, Kulkarni et.al.  # 20230705 changed /conc to /np.nansum(C[k]-1)
-        #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
-        #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
-        # same result as above
-    return sigma_g
-
-
-def lognormal_dist(conc, sigma_g, dg, X, bar_width):
-    """calculates a normal distribution based on the concentration, the median diameter and the geometric standard
-    deviation"""
-    fit = np.zeros_like(X)
-    for k in np.arange(0, X.shape[0]):
-        #fit[k, :] = (mean_conc_n[k] / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
-        #            np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
-        # is roughly 28 times higher than the histogram
-        fit[k, :] = ((conc[k]/bar_width[k])/(math.sqrt(2 * math.pi) * np.log(sigma_g[k])))*\
-                    np.exp((-np.square(np.log(X[k, :])-np.log(dg[k])))/(2*(math.log(sigma_g[k]))**2))
-        # did not do what i wanted it to
-        # fit[k, :] = ((mean_conc_n[k] / mean_X.shape[0]) / (math.sqrt(2 * math.pi) * np.log10(sigma_g[k]))) * \
-        #            np.power(10, ((-np.square(np.log10(mean_X[k, :]) - np.log10(dg[k]))) /
-        #                          (2 * (math.log10(sigma_g[k])) ** 2)))
-        # gives more narrow distribution than with natural base
-        # fit[k, :] = (1 / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
-        #             np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
-
-    return fit
-
-
-def lognormal_function(x, A, m, sigma):
-    """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
-    standard deviation"""
-    return A*(np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))/(np.log(sigma)*x*np.sqrt(2*math.pi)))
-
-
-def normal_function(x, A, mu, sigma):
-    """definition of a normal function with A being a scale factor, mu being the median and sigma being the geometric
-    standard deviation"""
-    return A*np.exp(-((x-mu)**2)/(2*sigma**2))/(sigma*np.sqrt(2*math.pi))
-
-
-def lognormal_fit(X, C):
-    """fit of a lognormal peak"""
-    p0=[1000, 100, 1.2]
-    lowerbounds=[0, 10, 0.2]
-    upperbounds=[np.inf, 1000, 5]
-    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(lognormal_function, X, C, p0=p0,
-                                                            bounds=(lowerbounds, upperbounds), maxfev=1000)
-    A_fit=popt_lognorm_fit[0]
-    m_fit=popt_lognorm_fit[1]
-    sigma_fit=popt_lognorm_fit[2]
-    Cn_fit=lognormal_function(X, *popt_lognorm_fit)
-    return A_fit, m_fit, sigma_fit ,Cn_fit
-
-
-def calc_geometry(X, C, conc, bar_width):
-    """calculates geometric parameters of the distributions"""
-    dg = geometric_mean(X, C, conc)   # spectra by using sel_X, sel_Cn, calc_conc_n, sel_bar_width
-    sigma_g = geometric_std(X, C, conc, dg)
-    #fit = lognormal_dist(conc, sigma_g, dg, X, bar_width)
-    return dg, sigma_g#, fit
-
-
-def cut_dist(X, C, bar_width, lowerbound, upperbound, scan_nrs):  # merge with select_data
-    """to cut a part of the spectrum"""
-    cut_nrs = py_logic_converter(scan_nrs)
-    strt_idx = np.where(X[0] > lowerbound)[0][0]
-    end_idx = np.where(X[0] < upperbound)[-1][-1] + 1
-    cut_X = np.zeros((len(cut_nrs), len(X[0, strt_idx:end_idx])))
-    cut_C = np.zeros((len(cut_nrs), len(C[0, strt_idx:end_idx])))
-    cut_bar_width = np.zeros((len(cut_nrs), len(bar_width[0, strt_idx:end_idx])))
-    cut_conc = []
-    ct = 0
-    for k in cut_nrs:
-        cut_X[ct, :] = X[k, strt_idx:end_idx]
-        cut_C[ct, :] = C[k, strt_idx:end_idx]
-        cut_bar_width[ct, :] = bar_width[k, strt_idx:end_idx]
-        cut_conc = np.nansum(cut_C[ct, :])
-        ct += 1
-    return cut_X, cut_C, cut_bar_width, cut_conc # write into dict
-
-
-def py_logic_converter(nr_list):
-    py_nr_list = []
-    [py_nr_list.append(i - 1) for i in nr_list]
-    return py_nr_list
-
-
-def typical_calculations(data):
-    data["calc_conc_n"] = get_conc(data["Cn"])
-    data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["bar_width"])
-    return data
-
-
-def typical_calculation_mean(data):
-    data["calc_conc_n"] = get_conc(data["mean_C"])
-    data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data["mean_C"], data["calc_conc_n"], data["bar_width"])
-    return data
-
-
 def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
     """saves selected variables to a csv file, select variables to save in variable_list as list of strings,
      allways use a different fileaddition when saving anything else than the data input array data_identifier"""
@@ -409,55 +455,6 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
     print(f"wrote file with variables {variable_list} to csv with name {path}")
     dataframe.to_csv(path)
     return
-
-
-def merge_data(sel_data_list):
-    """merges dictionaries of data, should best be used with selected data dicts
-    currently also writes into the first dict it takes data from???"""
-    merged_data = {}
-    merged_data["X"] = sel_data_list[0]["X"]
-    merged_data["Cn"] = sel_data_list[0]["Cn"]
-    merged_data["bar_width"] = sel_data_list[0]["bar_width"]
-    merged_data["time"] = sel_data_list[0]["time"][:]
-    merged_data["scan_nr"] = sel_data_list[0]["scan_nr"][:]
-    merged_data["origin"] = []
-    [merged_data["origin"].append(sel_data_list[0]["filename"]) for k in range(len(sel_data_list[0]["scan_nr"]))]
-    for i in sel_data_list[1:]:
-        merged_data["X"] = np.append(merged_data["X"], i["X"], axis=0)
-        merged_data["Cn"] = np.append(merged_data["Cn"], i["Cn"], axis=0)
-        merged_data["bar_width"] = np.append(merged_data["bar_width"], i["bar_width"], axis=0)
-        for k in range(len(i["scan_nr"])):
-            merged_data["time"].append(i["time"][k])
-            merged_data["scan_nr"].append(i["scan_nr"][k])
-            merged_data["origin"].append(i["filename"])
-    return merged_data
-
-
-
-
-
-def merge_mean_data(mean_data_list):
-    """merges dictionaries of data, should best be used with mean data dicts
-    currently also writes into the first dict it takes data from???"""
-    merged_mean_data = {}
-    merged_mean_data["mean_X"] = mean_data_list[0]["mean_X"]
-    merged_mean_data["mean_C"] = mean_data_list[0]["mean_C"]
-    merged_mean_data["std_C"] = mean_data_list[0]["std_C"]
-    merged_mean_data["bar_width"] = mean_data_list[0]["bar_width"]
-    merged_mean_data["mean_conc"] = mean_data_list[0]["mean_conc"][:]
-    merged_mean_data["std_conc"] = mean_data_list[0]["std_conc"][:]
-    merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:]
-    merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:]
-    for i in mean_data_list[1:]:
-        merged_mean_data["mean_X"] = np.append(merged_mean_data["mean_X"], i["mean_X"], axis=0)
-        merged_mean_data["mean_C"] = np.append(merged_mean_data["mean_C"], i["mean_C"], axis=0)
-        merged_mean_data["std_C"] = np.append(merged_mean_data["std_C"], i["std_C"], axis=0)
-        merged_mean_data["bar_width"] = np.append(merged_mean_data["bar_width"], i["bar_width"], axis=0)
-        merged_mean_data["mean_conc"].extend(i["mean_conc"])
-        merged_mean_data["std_conc"].extend(i["std_conc"])
-        merged_mean_data["mean_dg"].extend(i["mean_dg"])
-        merged_mean_data["std_dg"].extend(i["std_dg"])
-    return merged_mean_data
 
 
 """ToDo:"""
@@ -477,7 +474,20 @@ def merge_mean_data(mean_data_list):
 #   input_name = input("Enter a name for the data you are importing (has to start with a letter)")
 #   locals()[input_name] = data
 
+# check, where Cn and where C makes sense as variable name
+# all processes , like select, merge, etc. can be done with Cn, then the data can be converted to Cv and Cm
+# -> change mean_C to "Cn" in mean function
+# after that, dg, sigma etc. can be calculated with Cn, Cv, or Cm alike
+# add plot option for Cv and Cm in format plot function depending on one variable
+
+# integrate CPC_analysis.py? -> make particle_analysis.py the master file that runs functions from CPC_analysis
+# (maybe renamed to count_analysis?) and the functions now used for SMPS analysis in a new file maybe named
+# dist_analysis
+
+
 if __name__ == "__main__":
+
+    # transfer this to wiki
 
     # 1. run particle_analysis.py
     # Hallo
