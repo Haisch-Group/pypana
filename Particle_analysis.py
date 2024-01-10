@@ -513,6 +513,8 @@ def plot_cummdata(data, used_device, scan_nrs):
 def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
     """saves selected variables to a csv file, select variables to save in variable_list as list of strings,
      allways use a different fileaddition when saving anything else than the data input array data_identifier"""
+    # umschreiben, sodass das file einfach in den Ordner gespeichert wird, man aber den filenamen noch eingeben muss um
+    # auch das speichern von merged und mean arrays zu vereinfachen
     path = data_dict["filename"][:-4]+fileaddition+".csv"
     dataframe = pd.DataFrame()
     for variable in variable_list:
@@ -532,7 +534,7 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
 #   Cn...
 #   bar_width...
 #   ... # everything, that is an array element in one line
-# kann dann als csv gespeichert werden, oder gepicklet, oder gejsont?
+# kann dann als csv gespeichert werden, oder gepicklet, oder gejsont? Evtl. mehrere Tabellenblätter in xlsx?
 
 # just a code sniplet, that could be used to automatically import multiple datasets at once
 #   naming variables automatically and getting them out of a function does not work though
@@ -620,6 +622,8 @@ if __name__ == "__main__":
     # 9. ax1 = plot_meandata(mean_X, mean_bar_width, mean_C, std_C, mean_conc, std_conc, used device, plot_nrs)
 
     # save_calc_to_csv(data_identifier, ["scan_nr", "time", "dg", "sigma", "calc_conc_n"], fileaddition="_particleDF")
+    # save_calc_to_csv(mean_identifier, ["mean_conc", "std_conc", "mean_dg", "std_dg", "mean_sigma", "std_sigma],
+    # fileaddition="_particleDF")  # dafür muss erst die funktion noch geändert werden
 
     """other calls"""
     # ax1.plot(mean_X[measurement_nr], fit[measurement_nr])
