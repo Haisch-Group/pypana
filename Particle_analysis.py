@@ -226,6 +226,34 @@ def calc_geometry(X, C, conc, bar_width):
     return dg, sigma_g#, fit
 
 
+def cumulative_distribution(C):
+    """calculates the cumulative distribution"""  # tested, first column = Cn[0], last column = calc_conc_n
+    cummC = np.zeros_like(C)
+    for scan in range(len(C)):
+        cummC[scan, 0] = C[scan, 0]
+        for k in range(1, len(C[scan])):
+            cummC[scan, k] = cummC[scan, k-1] + C[scan, k]
+    return cummC
+
+
+def cumulative_diameters(X, cummC):
+    """calculates the diameters below which 10, 16, 50, 84 and 90 % of all particles are"""
+    # seemingly works, at least X50 were similar to PDAnalyze X50 values, but slightly different, as i just give the
+    # middle X value of the bin, maybe PALAS does some other magic with it like calculating a discrete distribution
+    X10 = []
+    X16 = []
+    X50 = []
+    X84 = []
+    X90 = []
+    for k in range(len(cummC)):
+        X10.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.1), 0)])
+        X16.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.16), 0)])
+        X50.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.5), 0)])
+        X84.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.84), 0)])
+        X90.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.9), 0)])
+    return X10, X16, X50, X84, X90
+
+
 def typical_calculations(data):
     data["calc_conc_n"] = get_conc(data["Cn"])
     data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["bar_width"])
@@ -348,7 +376,7 @@ def format_plot(fig, ax, used_device):
     if used_device == 2 or used_device == 3:
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
                xlabel='Particle Diameter / $\mu$m',  # changed that to go with APS data for a moment
-               ylabel='dN/dlogD$_{p}$ / $\mathregular{1/cm^3}$')
+               ylabel='Number Concentration / $\mathregular{1/cm^3}$')
     else:
         ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
                xlabel='Particle Diameter / nm',
@@ -415,6 +443,43 @@ def plot_meandata(mean_data, used_device, scan_nrs):
 
     format_plot(fig, ax, used_device)
 
+    plt.legend(legend_entries, loc='upper left')
+    plt.show()
+    return ax
+
+
+def plot_cummdata(data, used_device, scan_nrs):
+    """plots the given data, specify measurement to use from sel_Cn array"""
+    # seems to work, just needs another axis label to indicate it is cummulative :D
+    X = data["X"]
+    bar_width = data["bar_width"]
+    cummCn = data["cummCn"]
+    calc_conc_n = data["calc_conc_n"]
+    normcummCn = np.zeros_like(cummCn)
+    for k in range(len(cummCn)):
+        if calc_conc_n[k] > 0:
+            normcummCn[k] = cummCn[k]/calc_conc_n[k]
+        else:
+            normcummCn[k] = cummCn[k]
+    plot_nrs = py_logic_converter(scan_nrs)
+    fig, ax = plt.subplots()  # height with title 12, without 10
+    if len(plot_nrs) == 1:
+        k = plot_nrs[0]
+        ax.bar(X[k, :], normcummCn[k, :], width=bar_width[k, :], edgecolor='black')
+        legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
+        # scan_nrs is used here on purpose
+        print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+    else:
+        legend_entries = []
+        ct = 0
+        for k in plot_nrs:
+            ax.bar(X[k, :], normcummCn[k, :], width=bar_width[k, :], edgecolor='black', alpha=0.5)
+            legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
+            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+            ct += 1
+    format_plot(fig, ax, used_device)
+    #plt.rcParams['figure.dpi'] = 600
+    #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries, loc='upper left')
     plt.show()
     return ax
