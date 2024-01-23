@@ -413,6 +413,11 @@ def plot_singledata(data, used_device, scan_nrs):
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries, loc='upper left')
+
+    fileaddition = input("Please enter a fileaddition")
+    path = data["filename"][:-4] + fileaddition + ".png"
+    plt.savefig(path, transparent=True)
+
     plt.show()
     return ax
 
@@ -442,6 +447,8 @@ def plot_meandata(mean_data, used_device, scan_nrs):
            "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
     format_plot(fig, ax, used_device)
+
+    # maybe add savefig, but then filename must be entered differently as mean data can consist of different input files
 
     plt.legend(legend_entries, loc='upper left')
     plt.show()
@@ -630,6 +637,9 @@ if __name__ == "__main__":
     # print(dg)
     # print(sigma_g)
     # x_mean, x_std = mean_and_std(sel_data["dg"][:])
+
+    # from copy import deepcopy
+    # dict_copy = deepcopy(dict) gives flat copy that does not change original when changing copy
 
     # plt.ioff()
     # plt.show() # if plot doesnt show!
