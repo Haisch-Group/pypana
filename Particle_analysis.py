@@ -112,8 +112,7 @@ def cut_dist(X, C, bar_width, lowerbound, upperbound, scan_nrs):  # merge with s
 
 
 def merge_data(sel_data_list):
-    """merges dictionaries of data, should best be used with selected data dicts
-    currently also writes into the first dict it takes data from???"""
+    """merges dictionaries of data, should best be used with selected data dicts"""
     merged_data = {}
     merged_data["X"] = sel_data_list[0]["X"]
     merged_data["Cn"] = sel_data_list[0]["Cn"]
@@ -537,6 +536,8 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
 
 # Kommentar mit einlesen bei Dateiimport ?
 
+# filename in merged array aus filenames der gemergeten arrays zusammenschnetzeln
+
 # save funktion die dict zu einfacherer struktur macht, evtl. in form ähnlich zu PALAS Daten?
 #   filename, scan_nr ,time, used_device, calc_conc_n, dg, sigma # everything that is only one item per measurement
 #   X...
@@ -644,5 +645,5 @@ if __name__ == "__main__":
     # from copy import deepcopy
     # dict_copy = deepcopy(dict) gives flat copy that does not change original when changing copy
 
-    # plt.ioff()
+    plt.ioff()
     # plt.show() # if plot doesnt show!
