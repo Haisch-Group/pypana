@@ -563,6 +563,8 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
 
 # Add 2023-12-12 Eval to this script? -> comparison of 2 devices for calibration?
 
+# Add charge Distribution, maybe in a way that other distributions can be added (unipolar, X-ray, Kr)
+
 if __name__ == "__main__":
 
     # transfer this to wiki
