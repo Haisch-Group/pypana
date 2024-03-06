@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     """"""
     # data_identifier = get_data()
-    #conc_n, std_n = get_meanconc(Cn)
+    #get_meanconc(data)
     #save_calc_to_csv(data_identifier, ["scan_nr", "start_time", "conc_n", "std_n"],
     #                 fileaddition="_particleDF")
     # measurement_nr = [0]#np.arange(0, 3)
