@@ -20,9 +20,9 @@ from py_logic_converter import py_logic_converter, normal_logic_converter
 # from matplotlib import cm as colormap
 
 
-def fileread(filename, used_device):
-    """applying the correct import filter according to user choice and importing data as
-    X = np.array((nr_scans, nr_bins)), bar_width, Cn = X.shape, time = []"""
+def read_distribution(filename, used_device):
+    """function for importing distribution data, applying the correct import filter according to user choice and
+    importing data as X = np.array((nr_scans, nr_bins)), bar_width, Cn = X.shape, time = []"""
     if int(used_device) == 0:
         import TSI_SMPS3071_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last
         # column P/cm^3 does not work sometimes, just change the ^3 to 3 in the data txt then
@@ -32,28 +32,44 @@ def fileread(filename, used_device):
         import TSI_LAS3340A_fileread as fr
     elif int(used_device) == 3:
         import TSI_APS3321_fileread as fr
-    else:
-        print(f"Device {used_device} is not a viable option")  # could be integrated after the input(used_device)
 
     X, bar_width, Cn, time = fr.import_data(filename)
     return X, bar_width, Cn, time
 
 
+def read_concentration(filename, used_device):
+    """function for importing concentration data, applying the correct import filter according to user choice and
+    importing data as Cn, el_time = np.array((nr_scans, nr_times)), start_time = []"""
+    if int(used_device) == 4:
+        import TSI_CPC3775_fileread as fr
+    elif int(used_device) == 5:
+        import PALAS_UFCPC_fileread as fr
+
+    Cn, el_time, start_time = fr.import_data(filename)
+    return Cn, el_time, start_time
+
+
 def get_data():
     filename = get_filename()
     used_device = input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100, 2 for "
-                        "TSI LAS 3340A and 3 for TSI APS 3321, enter as int.")
-    #while user_input := input("Which instrument did you use, type 0 for TSI SMPS 3081, 1 for PALAS SMPS 2100, 2 for "
-    #                        "TSI LAS 3340A and 3 for TSI APS 3321, enter as int.") not in [0, 1, 2, 3]:
-    #    print(f"{user_input} is not a valid input.")
-    #    continue
-    #used_device = user_input
+                        "TSI LAS 3340A, 3 for TSI APS 3321, 4 for TSI CPC 3775 and 5 for PALAS UFCPC, enter as int.")
+    if used_device = 0:
+        X, bar_width, Cn, time = read_distribution(filename, used_device)
+        scan_nr = []
+        [scan_nr.append(k + 1) for k in range(len(X))]
+        data = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time, "scan_nr": scan_nr, "filename": filename,
+                "used_device": used_device}
 
-    X, bar_width, Cn, time = fileread(filename, used_device)
-    scan_nr = []
-    [scan_nr.append(k+1) for k in range(len(X))]
-    data = {"X": X, "Cn": Cn, "bar_width": bar_width,
-            "time": time, "scan_nr": scan_nr, "filename": filename, "used_device": used_device}
+    elif used_device = 4:
+        Cn, el_time, start_time = read_concentration(filename, used_device)
+        scan_nr = []
+        [scan_nr.append(k + 1) for k in range(len(Cn))]
+        data = {"Cn": Cn, "el_time": el_time,
+                "start_time": start_time, "scan_nr": scan_nr, "filename": filename, "used_device": used_device}
+
+    else:
+        print(f"Device {used_device} is not a viable option")  # could be integrated after the input(used_device)
+
     return data
 
 
@@ -295,7 +311,7 @@ def mean_of_n(data, nr_mean):
         std_sigma.append(np.std(sigma[(k * n):((k + 1) * n)], axis=0))
     mean_data = {"mean_X": mean_X, "mean_C": mean_C, "std_C": std_C, "bar_width": mean_bar_width,
                  "mean_conc": mean_conc, "std_conc": std_conc, "mean_dg": mean_dg,"std_dg":std_dg,
-                 "mean_sigma": mean_sigma, "std_sigma": std_sigma}
+                 "mean_sigma": mean_sigma, "std_sigma": std_sigma, "used_device": data["used_device"]}
     return mean_data
 
 
@@ -386,12 +402,13 @@ def format_plot(fig, ax, used_device):
     return
 
 
-def plot_singledata(data, used_device, scan_nrs):
+def plot_singledata(data, scan_nrs):
     """plots the given data, specify measurement to use from sel_Cn array"""
     X = data["X"]
     bar_width = data["bar_width"]
     Cn = data["Cn"]
     calc_conc_n = data["calc_conc_n"]
+    used_device = data["used_device"]
     plot_nrs = py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     if len(plot_nrs) == 1:
@@ -414,14 +431,15 @@ def plot_singledata(data, used_device, scan_nrs):
     plt.legend(legend_entries, loc='upper left')
 
     fileaddition = input("Please enter a fileaddition")
-    path = data["filename"][:-4] + fileaddition + ".png"
+    data_identifier = get_variable_name(data)
+    path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
     plt.savefig(path, transparent=True)
 
     plt.show()
     return ax
 
 
-def plot_meandata(mean_data, used_device, scan_nrs):
+def plot_meandata(mean_data, scan_nrs):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     # add a mean of n in a corner of the plot
@@ -433,6 +451,7 @@ def plot_meandata(mean_data, used_device, scan_nrs):
     std_conc_n = mean_data["std_conc"]
     mean_dg = mean_data["mean_dg"]
     std_dg = mean_data["std_dg"]
+    used_device = mean_data["used_device"]
     plot_nrs = py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     legend_entries = []
@@ -516,12 +535,13 @@ def plot_cummdata(data, used_device, scan_nrs):
 #     return ax
 
 
-def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
+def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
     """saves selected variables to a csv file, select variables to save in variable_list as list of strings,
      allways use a different fileaddition when saving anything else than the data input array data_identifier"""
     # umschreiben, sodass das file einfach in den Ordner gespeichert wird, man aber den filenamen noch eingeben muss um
     # auch das speichern von merged und mean arrays zu vereinfachen
-    path = data_dict["filename"][:-4]+fileaddition+".csv"
+    data_identifier = get_variable_name(data_dict)
+    path = data_dict["filename"][:-4]+"_"+data_identifier+"_"+fileaddition+".csv"
     dataframe = pd.DataFrame()
     for variable in variable_list:
         dataframe[variable] = data_dict[variable]
@@ -530,7 +550,20 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
     return
 
 
+def get_variable_name(var):
+    for name, value in globals().items():
+        if value is var:
+            return name
+
+
 """ToDo:"""
+
+# Put together with CPC_analyis:
+#   - Collect all size-distribution functions in SizeDist_analysis
+#   - Collect all concentration functions in Conc_analysis
+#   - Create file for SMPS specific functions (charge distribution correction, internal diffusion loss)
+#   - Collect all calls and Dokumentation in Wiki
+#   - Collect all shared functions in Particle_analysis
 
 # Vorschlag Nico: Median als senkrechte Linie / Marker in den Plot einbauen
 
@@ -570,7 +603,6 @@ if __name__ == "__main__":
     # transfer this to wiki
 
     # 1. run particle_analysis.py
-    # Hallo
 
     """data import - imports one file at a time to a dictionary"""
 
@@ -649,3 +681,9 @@ if __name__ == "__main__":
 
     plt.ioff()
     # plt.show() # if plot doesnt show!
+
+    """to save"""
+    # import dill
+    # filename = "Z:/Projects/AeroCal/Measurements/whatever.dill"
+    # dill.dump_session(filename)
+    # dill.load_session(filename
