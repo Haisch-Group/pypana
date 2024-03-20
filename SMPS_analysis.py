@@ -30,7 +30,7 @@ Possible changes:
     write concentration data to csv automatically
 """
 
-from get_filename import get_filename
+from Sup import get_filename
 from matplotlib import ticker
 from matplotlib import pyplot as plt
 import numpy as np

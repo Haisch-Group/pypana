@@ -16,7 +16,7 @@ Import of Data and Plot
 
 import numpy as np
 from datetime import datetime
-from get_filename import get_filename
+from Sup import get_filename
 
 
 def import_data_and_comments(filename):

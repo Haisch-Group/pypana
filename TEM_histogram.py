@@ -6,7 +6,7 @@ Created 2022-04-21
 @written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
-from get_filename import get_filename
+from Sup import get_filename
 import pandas as pd
 import math
 import matplotlib.pyplot as plt

@@ -12,7 +12,7 @@ Created 2022-06-20
 import csv
 import os
 import PALAS_SMPS2100_fileread
-from get_filename import get_filename
+from Sup import get_filename
 
 
 filename = get_filename()

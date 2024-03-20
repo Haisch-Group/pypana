@@ -1,55 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-Script for CPC Data Evaluation
-Data has to be imported by the import function suitable for the used CPC
+Script for Evaluation of Concentration Data
+Run from Particle_analysis.py
 
 Created 2022-03-24
 @written by Kevin Maier (kevin.r.maier@tum.de)
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
+2024-03-20: integrated in Particle_analysis.py
 """
 
 from matplotlib import ticker
 from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
-from get_filename import get_filename
 import pandas as pd
-from py_logic_converter import py_logic_converter, normal_logic_converter
-#import mpldatacursor
+from Sup import py_logic_converter, normal_logic_converter
+# import mpldatacursor
 
 
-def fileread(filename, used_device):
-    """just a very fast function for applying the correct import filter according to user choice"""
+def select_data(Cn, msmt_nrs):
+    # !!! has to be changed to dictionary logic
+    """select specific CPC msmts from the imported raw data, msmt_nrs defines, which measurements to take
+    in normal non-pythonian logic (starting count at 1)"""
+    sel_Cn = np.zeros((len(msmt_nrs), Cn.shape[1]))
+    # preallocate the sel_Cn array with shape = (n_msmts, n_timepoints)
+    for k in np.arange(len(msmt_nrs)):  # fill the arrays with the selected data
+        sel_Cn[k, :] = Cn[msmt_nrs[k]-1, :]
 
-    if int(used_device) == 0:
-        import TSI_CPC3775_fileread as fr
-    else:
-        import PALAS_UFCPC_fileread as fr
-
-    Cn, el_time, start_time = fr.import_data(filename)
-    return Cn, el_time, start_time
-
-
-def get_data():
-    filename = get_filename()
-    used_device = input("Which instrument did you use, type 0 for TSI 3775, or 1 for PALAS CPC")
-    Cn, el_time, start_time = fileread(filename, used_device)
-    scan_nr = []
-    [scan_nr.append(k + 1) for k in range(len(Cn))]
-    data = {"Cn": Cn, "el_time": el_time,
-            "start_time": start_time, "scan_nr": scan_nr, "filename": filename, "used_device": used_device}
-    return data
-
-# def select_data(Cn, msmt_nrs):
-#     """select specific CPC msmts from the imported raw data, msmt_nrs defines, which measurements to take
-#     in normal non-pythonian logic (starting count at 1)"""
-#     sel_Cn = np.zeros((len(msmt_nrs), Cn.shape[1]))
-#     # preallocate the sel_Cn array with shape = (n_msmts, n_timepoints)
-#     for k in np.arange(len(msmt_nrs)):  # fill the arrays with the selected data
-#         sel_Cn[k, :] = Cn[msmt_nrs[k]-1, :]
-#
-#    return sel_Cn
+    return sel_Cn
 
 
 def cut_time(data, start, end):
@@ -126,18 +105,6 @@ def plot_timeline(conc_n, std_n, start_time, start, end):
 
     plt.show()
     return ax
-
-
-def save_calc_to_csv(data_dict, variable_list, fileaddition="_particleDF"):
-    """saves selected variables to a csv file, select variables to save in variable_list as list of strings,
-     allways use a different fileaddition when saving anything else than the data input array data_identifier"""
-    path = data_dict["filename"][:-4]+fileaddition+".csv"
-    dataframe = pd.DataFrame()
-    for variable in variable_list:
-        dataframe[variable] = data_dict[variable]
-    print(f"wrote file with variables {variable_list} to csv with name {path}")
-    dataframe.to_csv(path)
-    return
 
 # Maybe add D50 eval function?
 

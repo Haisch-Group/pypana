@@ -11,7 +11,7 @@ Created 2023-05-15 from TSI_SMPS3071_fileread.py
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from get_filename import get_filename
+from Sup import get_filename
 
 
 def import_data(filename):

@@ -12,7 +12,7 @@ Created 2022-03-10
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from get_filename import get_filename
+from Sup import get_filename
 
 
 def import_data(filename):
