@@ -287,7 +287,7 @@ def merge_mean_data(mean_data_list):
     return merged_mean_data
 
 
-def typical_calculation_mean(data):
+def typical_calculations_mean(data):
     data["calc_conc_n"] = get_conc(data["mean_C"])
     data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data["mean_C"], data["calc_conc_n"], data["bar_width"])
     return data
@@ -378,6 +378,7 @@ def plot_singledata(data, scan_nrs):
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries, loc='upper left')
 
+    # move this into format_plot ?
     fileaddition = input("Please enter a fileaddition")
     data_identifier = Sup.get_variable_name(data)
     path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
