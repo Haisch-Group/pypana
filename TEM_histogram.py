@@ -22,7 +22,7 @@ def import_data():
     return areas
 
 
-def calculate_d(areas):
+def calc_d(areas):
     diameters = [2 * math.sqrt(x/math.pi) for x in areas]
     return diameters
 
@@ -53,7 +53,7 @@ def plot_hist(diameters, sample_size, median_dp, stdev_dp):
 if __name__ == "__main__":
 
     areas = import_data()
-    diameters = calculate_d(areas)
+    diameters = calc_d(areas)
     sample_size, median_dp, mean_dp, stdev_dp, CV = calc_geometry(diameters)
     ax = plot_hist(diameters, sample_size, median_dp, stdev_dp)
     print(f"median = {median_dp}, mean = {mean_dp}, sigma = {stdev_dp}, CV = {CV}, sample size = {sample_size}")

@@ -380,8 +380,9 @@ def plot_singledata(data, scan_nrs):
 
     # move this into format_plot ?
     fileaddition = input("Please enter a fileaddition")
-    data_identifier = Sup.get_variable_name(data)
-    path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
+    #data_identifier = Sup.get_variable_name(data)
+    path = data["filename"][:-4] + "_" + fileaddition + ".png"
+    # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
     plt.savefig(path, transparent=True)
 
     plt.show()

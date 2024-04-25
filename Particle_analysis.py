@@ -126,6 +126,8 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
 
 # Add 2023-12-12 Eval to this script? -> comparison of 2 devices for calibration?
 
+# get ELPI data into this file too?
+
 if __name__ == "__main__":
 
     # run particle_analysis.py
