@@ -44,7 +44,7 @@ def get_meanconc(data):
     return data
 
 
-def plot_singledata(data, scan_nr):
+def plot_singledata(data, scan_nr):  # does not work to plot cut cn anymore
     """plots complete data"""
     Cn, el_time, conc_n, std_n = data["Cn"], data["el_time"], data["conc_n"], data["std_n"]
     plot_nr = py_logic_converter(scan_nr)
@@ -76,10 +76,10 @@ def plot_singledata(data, scan_nr):
     plt.legend(legend_entries)
 
     fileaddition = input("Please enter a fileaddition")
-    path = data["filename"][:-4] + fileaddition + ".png"
+    path = data["filename"][:-4] + "_" + fileaddition + ".png"
     plt.savefig(path, transparent=True)
 
-    #plt.show()
+    plt.show()
     return ax
 
 
@@ -114,8 +114,6 @@ if __name__ == "__main__":
     """"""
     # data_identifier = get_data()
     #get_meanconc(data)
-    #save_calc_to_csv(data_identifier, ["scan_nr", "start_time", "conc_n", "std_n"],
-    #                 fileaddition="_particleDF")
     # measurement_nr = [0]#np.arange(0, 3)
     # ax = plot_singledata(Cn, el_time, conc_n, std_n, measurement_nr)
     # ax = plot_timeline(conc_n, std_n, start_time, start, end) # start end are measurement numbers in conc array

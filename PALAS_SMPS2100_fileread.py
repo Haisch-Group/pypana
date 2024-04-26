@@ -76,7 +76,7 @@ def import_data_and_comments(filename):
         for k in range(2, data_len[int(1 + i * 6)]):
             Xu[i, k-2] = data[int(1 + i * 6)][int(k)]
         for k in range(2, data_len[int(2 + i * 6)]):
-            X[i, k-2] = data[int(2 + i * 6)][int(k)]
+            X[i, k-2] = data[int(2 + i * 6)][int(k)]  # should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
         for k in range(2, data_len[int(int(conc_data) + i * 6)]):  # 5 is based on the inverted diff corrected data, 3
             # on the raw data
             Cn[i, k-2] = data[int(int(conc_data) + i * 6)][int(k)]  # 4 is the inverted but not diff corrected data

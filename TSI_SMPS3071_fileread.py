@@ -40,12 +40,22 @@ def import_data(filename):
     #conc_data = conc_data.to_numpy()
     n_bins = len(x_axis)
 
-    delta_x = np.zeros(n_bins)
+    delta_x = np.zeros(n_bins)  # only gives the delta between the midpoint diameters, but nor the real bin min and max
     for k in range(n_bins):
         if k < n_bins - 1:
             delta_x[k] = x_axis[k + 1] - x_axis[k]
         else:
             delta_x[k] = x_axis[k] - x_axis[k - 1]
+
+    # log_delta_x = np.zeros(n_bins)  # attempt to convert from dCn/dlog(dp)
+    # for k in range(n_bins):
+    #     if k < n_bins - 1:
+    #         log_delta_x[k] = np.log(x_axis[k + 1]/x_axis[k])
+    #     else:
+    #         delta_x[k] = np.log(x_axis[k]/x_axis[k - 1])
+    #
+    # for k in range(len(Cn)):
+    #     Cn[k] = Cn[k]*log_delta_x[k]
 
     X = np.zeros(Cn.shape)
     bar_width = np.zeros(Cn.shape)

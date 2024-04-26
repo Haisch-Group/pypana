@@ -376,7 +376,7 @@ def plot_singledata(data, scan_nrs):
     format_plot(fig, ax, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
-    plt.legend(legend_entries, loc='upper left')
+    plt.legend(legend_entries)  # , loc='upper left')
 
     # move this into format_plot ?
     fileaddition = input("Please enter a fileaddition")
@@ -418,7 +418,7 @@ def plot_meandata(mean_data, scan_nrs):
 
     # maybe add savefig, but then filename must be entered differently as mean data can consist of different input files
 
-    plt.legend(legend_entries, loc='upper left')
+    plt.legend(legend_entries)  # , loc='upper left')
     plt.show()
     return ax
 
@@ -455,7 +455,7 @@ def plot_cummdata(data, used_device, scan_nrs):
     format_plot(fig, ax, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
-    plt.legend(legend_entries, loc='upper left')
+    plt.legend(legend_entries)  # , loc='upper left')
     plt.show()
     return ax
 
