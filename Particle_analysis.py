@@ -82,6 +82,7 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
      allways use a different fileaddition when saving anything else than the data input array data_identifier"""
     # data_identifier = Sup.get_variable_name(data_dict)
     path = data_dict["filename"][:-4]+"_"+fileaddition+".csv"
+    # path = data_dict["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".csv"
     dataframe = pd.DataFrame()
     for variable in variable_list:
         dataframe[variable] = data_dict[variable]
@@ -125,8 +126,6 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
 # add plot option for Cv and Cm in format plot function depending on one variable
 
 # Add 2023-12-12 Eval to this script? -> comparison of 2 devices for calibration?
-
-# get ELPI data into this file too?
 
 if __name__ == "__main__":
 
@@ -198,7 +197,6 @@ if __name__ == "__main__":
     # for mean Dist
     # save_calc_to_csv(mean_identifier, ["mean_conc", "std_conc", "mean_dg", "std_dg", "mean_sigma", "std_sigma],
     # fileaddition="particleDF")  # dafür muss erst die funktion noch geändert werden
-
     # for Conc
     # save_calc_to_csv(data_identifier, ["scan_nr", "start_time", "conc_n", "std_n"], fileaddition="particleDF")
 
@@ -218,4 +216,4 @@ if __name__ == "__main__":
     # import dill
     # filename = "Z:/Projects/AeroCal/Measurements/whatever.dill"
     # dill.dump_session(filename)
-    # dill.load_session(filename=
+    # dill.load_session(filename

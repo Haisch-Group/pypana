@@ -32,9 +32,9 @@ def get_filenames():
     return filenames
 
 
-def get_variable_name(var):
+def get_variable_name(some_variable):
     for name, value in globals().items():
-        if value is var:
+        if value is some_variable:
             return name
 
 
