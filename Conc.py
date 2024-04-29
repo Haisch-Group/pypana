@@ -83,6 +83,48 @@ def plot_singledata(data, scan_nr):  # does not work to plot cut cn anymore
     return ax
 
 
+# change plot single_data and plot_cutdata, so that they just call a bigger plot function and give it different input
+
+
+def plot_cutdata(data, scan_nr):  # does not work to plot cut cn anymore
+    """plots complete data"""
+    Cn, el_time, conc_n, std_n = data["cut_Cn"], data["cut_time"], data["cut_conc_n"], data["cut_std_n"]
+    plot_nr = py_logic_converter(scan_nr)
+    cm = 1/2.54  # inches to cm
+    fig, ax = plt.subplots(figsize=(18.5*cm, 10*cm))  # height with title 12, without 10
+    if len(plot_nr) == 1:
+        k = plot_nr[0]
+        ax.scatter(el_time, Cn[k, :], edgecolor='black')
+    else:
+        for k in plot_nr:
+            ax.scatter(el_time, Cn[k, :], edgecolor='black')
+    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    ax.set(xlabel='Elapsed Time / s',
+           ylabel='Particle Number Concentration / $\mathregular{1/cm^3}$')
+    # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
+    fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
+    if len(plot_nr) == 1:
+        k = plot_nr[0]
+        legend_entries = [input(f"Please enter the legend entry for measurement {k+1}")]
+        # print(f"measurement {k} conc. = " + "{:e}".format(float(conc_n[k])) + u"\u00B1" +
+        #       "{:e}".format(float(std_n[k])) + " P/cm" + u"\u00B3")
+    else:
+        legend_entries = []
+        for k in plot_nr:
+            legend_entries.append(input(f"Please enter the legend entry for measurement {k+1}"))
+    # [print(f"measurement {k+1} conc. = " + "{:e}".format(float(conc_n[k])) + u"\u00B1" +
+    #        "{:e}".format(float(std_n[k])) + " P/cm" + u"\u00B3") for k in plot_nr]
+    # mpldatacursor.datacursor(ax)
+    plt.legend(legend_entries)
+
+    fileaddition = input("Please enter a fileaddition")
+    path = data["filename"][:-4] + "_" + fileaddition + ".png"
+    plt.savefig(path, transparent=True)
+
+    plt.show()
+    return ax
+
+
 def plot_timeline(conc_n, std_n, start_time, start, end):
     """plots concentration timeline with mean conc of chosen single CPC scans
     only works with more than 1 datapoints"""
