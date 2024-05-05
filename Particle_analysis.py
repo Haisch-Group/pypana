@@ -93,6 +93,7 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
 
 """ToDo:"""
 
+# SMPS scans are transparent background pngs, conc has to be update to also have that
 
 # Add Multiple Charge Correction
 
