@@ -94,10 +94,6 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
 """ToDo:"""
 
 
-# Add Multiple Charge Correction
-
-# Add Diffusion Loss calculator
-
 # Add Extrapolation of peaks for Dist
 
 # Add mixed plot of Conc and Dist data
