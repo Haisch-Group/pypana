@@ -95,10 +95,6 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
 
 # SMPS scans are transparent background pngs, conc has to be update to also have that
 
-# Add Multiple Charge Correction
-
-# Add Diffusion Loss calculator
-
 # Add Extrapolation of peaks for Dist
 
 # Add mixed plot of Conc and Dist data
