@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Script for Data Evaluation of the TSI SMPS consisting of Classifier 3082, DMA 3081 and CPC 3775
+Script for Data Evaluation of the TSI SMPS consisting of Classifier 3082 and CPC 3775
 Data has to be exported in rows and plot is written, so that it displays the dW/logDp
 Mean and std of three consecutive measurements is calculated, so triplicates should be measured
 
-Created 2024-05-01 as copy of TSI_SMPS3082_fileread.py
+Created 2024-05-01 as copy of TSI_SMPS3938_fileread.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
@@ -19,13 +19,13 @@ def import_data(filename):
     statistical values calculated by the TSI program
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
     to work, the data has to be exported in rows"""
-    data = pd.read_table(filename, sep='\t', header=16, index_col=0, skiprows=1,
+    data = pd.read_table(filename, sep='\t', header=25, index_col=0, skiprows=0,
                          engine='python', encoding='ansi')
     # 20230515 - added encoding = ansi as this might solve an import error off cm^3 due to wrong encoding setting
 
-    Cn = data.iloc[:, list(range(7, 114))] #extracts the data by column location
+    Cn = data.iloc[:, list(range(8, 103))] #extracts the data by column location
     Cn = Cn.to_numpy()
-    x_axis = data.columns.values[list(range(7, 114))] #extracts the midpoint diameter from the pd.dataframe header
+    x_axis = data.columns.values[list(range(8, 103))] #extracts the midpoint diameter from the pd.dataframe header
     x_axis = x_axis.astype(float)
     #conc_data = data.iloc[:, -2]
     #conc_data = conc_data.to_numpy()
@@ -54,7 +54,7 @@ def import_data(filename):
     for i in np.arange(len(Cn)):
         X[i] = x_axis
         bar_width[i] = delta_x
-        time.append(datetime.strptime(data.iloc[i, 0] + " " + data.iloc[i, 1], '%m/%d/%y %H:%M:%S'))
+        time.append(datetime.strptime(data.iloc[i, 0] + " " + data.iloc[i, 1], '%m/%d/%Y %H:%M:%S'))
 
     return X, bar_width, Cn, time
 
@@ -63,3 +63,4 @@ if __name__ == "__main__":
 
     filename = get_filename()
     X, bar_width, Cn, time = import_data(filename)
+
