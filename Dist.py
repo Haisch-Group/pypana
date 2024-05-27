@@ -336,11 +336,11 @@ def format_plot(fig, ax, used_device):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    if used_device == 2 or used_device == 3:
+    if used_device in [3, 4, 5]:  # for micrometer instruments TSI LAS + APS, PALAS WELAS
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
-               xlabel='Particle Diameter / $\mu$m',  # changed that to go with APS data for a moment
+               xlabel='Particle Diameter / $\mu$m',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$')
-    else:
+    else:  # for nanometer instruments SMPS
         ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
                xlabel='Particle Diameter / nm',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$') # dN/dlogD$_{p}$
