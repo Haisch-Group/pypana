@@ -20,12 +20,13 @@ def import_data(filename):
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
     to work, the data has to be exported in rows"""
     data = pd.read_table(filename, sep='\t', header=25, index_col=0, skiprows=0,
-                         engine='python', encoding='ansi')
-    # 20230515 - added encoding = ansi as this might solve an import error off cm^3 due to wrong encoding setting
+                         engine='python', encoding='iso-8859-1')  # originally ansi which is superset of iso
+    # smps file is in encoding = ansi which caused an import error off cm^3 due to wrong encoding setting
+    # changed to iso as ansi is windows only and iso also works on linux
 
-    Cn = data.iloc[:, list(range(8, 103))] #extracts the data by column location
+    Cn = data.iloc[:, list(range(8, 94))] #extracts the data by column location
     Cn = Cn.to_numpy()
-    x_axis = data.columns.values[list(range(8, 103))] #extracts the midpoint diameter from the pd.dataframe header
+    x_axis = data.columns.values[list(range(8, 94))] #extracts the midpoint diameter from the pd.dataframe header
     x_axis = x_axis.astype(float)
     #conc_data = data.iloc[:, -2]
     #conc_data = conc_data.to_numpy()
@@ -63,4 +64,5 @@ if __name__ == "__main__":
 
     filename = get_filename()
     X, bar_width, Cn, time = import_data(filename)
+    print(f"imported {filename}")
 

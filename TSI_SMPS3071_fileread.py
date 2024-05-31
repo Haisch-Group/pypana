@@ -29,8 +29,9 @@ def import_data(filename):
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
     to work, the data has to be exported in rows"""
     data = pd.read_table(filename, sep='\t', header=16, index_col=0, skiprows=1,
-                         engine='python', encoding='ansi')
-    # 20230515 - added encoding = ansi as this might solve an import error off cm^3 due to wrong encoding setting
+                         engine='python', encoding='iso-8859-1')  # originally ansi which is superset of iso
+    # smps file is in encoding = ansi which caused an import error off cm^3 due to wrong encoding setting
+    # changed to iso as ansi is windows only and iso also works on linux
 
     Cn = data.iloc[:, list(range(7, 114))] #extracts the data by column location
     Cn = Cn.to_numpy()
