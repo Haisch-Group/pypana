@@ -43,10 +43,9 @@ def typical_calculations(data):
     return data
 
 
-def cut_time(data, scan_nrs, start, end):
+def cut_time(data, start, end):
     """can be used to cut conc array time wise"""
-    for k in scan_nrs:
-        data["cut_Cn"][k] = data["Cn"][k, start:end]
+    data["cut_Cn"] = data["Cn"][:, start:end]
     data["cut_time"] = data["el_time"][start:end]
     return data
 
@@ -60,7 +59,7 @@ def plot_fulldata(data, scan_nr):
 
 def plot_cutdata(data, scan_nr):
     Cn, el_time, mean_Cn, std_Cn, filename = (data["cut_Cn"], data["cut_time"], data["mean_cut_Cn"],
-                                            data["mean_cut_std_Cn"], data["filename"])
+                                            data["std_cut_Cn"], data["filename"])
     ax = plot_singledata(Cn, el_time, mean_Cn, std_Cn, filename, scan_nr)
     return ax
 
@@ -133,7 +132,7 @@ if __name__ == "__main__":
 
     """"""
     # data_identifier = get_data()
-    #get_meanconc(data)
+    # get_meanconc(data)
     # measurement_nr = [0]#np.arange(0, 3)
     # ax = plot_singledata(Cn, el_time, conc_n, std_n, measurement_nr)
     # ax = plot_timeline(conc_n, std_n, start_time, start, end) # start end are measurement numbers in conc array
