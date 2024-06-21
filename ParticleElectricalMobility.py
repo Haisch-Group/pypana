@@ -12,14 +12,14 @@ from matplotlib import pyplot as plt
 
 # values for mean free path and viscosity taken from jennings 1988
 
-dp = 10*10**(-9) # initial particle size in m
+dp = 55*10**(-9) # initial particle size in m
 # l = 66*10**(-9) # mean free path in m, nicos value
 l = 65.43*10**(-9)
 # eta = 1.81*10**(-5) # dynamic viscosity of air in kg/ms, nico
 eta = 1.8192*10**(-5)
 el = 1.602*10**(-19) # elementary charge in C = J/V = kg*m^2/s^2*V
 n1 = 1 # number of charges initial particle
-n2 = 3 # number of charges new particle different size
+n2 = 2 # number of charges new particle different size
 # a = 2.514 # nico
 # b = 0.8 # nico
 # c = -0.55 # nico
@@ -28,18 +28,19 @@ b = 0.399
 c = -1.1
 
 Ccini = 1+(2*l/dp)*(a+b*math.exp(c*(dp/(2*l)))) # cunningham factor of particle with dp
-# Z = (n1*el*Ccini)/(3*math.pi*eta*dp) # electrical mobility of particle wit dp and n in m^2/Vs
+Z = (n1*el*Ccini)/(3*math.pi*eta*dp) # electrical mobility of particle wit dp and n in m^2/Vs
 # Z = 1.03*10**(-7) # For set value of Z, just activate this
 # when calculating centroid mobility in a DMA for set values, activate below
 
 # for DMA calculation:
-Vsheath = 15 # in L/min
-Vexhaust = 15 # in L/min
-Router = 1.9095 # in cm
-Rinner = 0.9985 # in cm
-Length = 0.05 # in m
-Voltage = 5000 # in V
-Z = (((Vsheath+Vexhaust)/2)/60000)*(math.log(Router/Rinner)/(2*math.pi*Voltage*Length))
+Vsheath = 20 # in L/min
+Vexhaust = 20 # in L/min
+Router = 1.961 # in cm # TSI 3081A: 1.961 # PALAS DEMC 2000:
+Rinner = 0.937 # in cm # TSI 3081A: 0.937 # PALAS DEMC 2000:
+Length = 0.44369 # in m # TSI 3081A: 0.44369 # PALAS DEMC 2000:
+# Voltage = 5000 # in V
+# Z = (((Vsheath+Vexhaust)/2)/60000)*(math.log(Router/Rinner)/(2*math.pi*Voltage*Length))
+Voltage = (((Vsheath+Vexhaust)/2)/60000)*(math.log(Router/Rinner)/(2*math.pi*Z*Length)) # wo kommt die Formel her?
 
 ct_list = []
 C_list = []
@@ -64,6 +65,7 @@ print(f'Ccini = {Ccini}')
 print(f'Z = {Z}')
 print(f'dp = {dp}')
 print(f'Cc = {Cc}')
+print(f'Voltage = {Voltage}')
 fig, axs = plt.subplots(2)
 axs[0].scatter(ct_list, [i*(10**9) for i in dp_list])
 #axs[0].set_title("Particle Diameter over Iterations")
