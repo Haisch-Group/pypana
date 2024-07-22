@@ -51,10 +51,11 @@ def import_data(filenames):
         Cn = np.concatenate((Cn, Cn_i))
         time.append(time_i)
         n_scans.append(n_scans_i)
-    return X, bar_width, Cn, time, n_scans
+    return X, bar_width, Cn, time # , n_scans
 
 
 if __name__ == "__main__":
 
     filenames = get_filenames()
-    X, bar_width, Cn, time, n_scans = import_data(filenames)
+    X, bar_width, Cn, time = import_data(filenames)
+    # X, bar_width, Cn, time, n_scans = import_data(filenames)

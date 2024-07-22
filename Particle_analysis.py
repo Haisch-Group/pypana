@@ -33,11 +33,11 @@ def read_distribution(filename, used_device):
     elif used_device == 2:
         import PALAS_SMPS2100_fileread as fr
     elif used_device == 3:
-        import TSI_LAS3340A_fileread as fr
-    elif used_device == 4:
         import TSI_APS3321_fileread as fr
-    elif used_device == 5:
+    elif used_device == 4:
         import PALAS_Welas_fileread as fr
+    elif used_device == 5:
+        import TSI_LAS3340A_fileread as fr
 
     X, bar_width, Cn, time = fr.import_data(filename)
     return X, bar_width, Cn, time
@@ -68,10 +68,12 @@ def get_data():
         data = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time, "scan_nr": scan_nr, "filename": filename,
                 "used_device": used_device}
 
-    elif used_device in [5]:
+    elif used_device == 5:
         filenames = Sup.get_filenames()
-        X, bar_width, Cn, time, n_scans = read_distribution(filenames, used_device)
+        X, bar_width, Cn, time = read_distribution(filenames, used_device)
+        # X, bar_width, Cn, time, n_scans = read_distribution(filenames, used_device)
         scan_nr = []
+        n_scans = input("How many scans did you accquire per measurement? Give as int!")
         for k in range(len(filenames)):
             [scan_nr.append(k + 1) for i in range(n_scans[k])]
         data = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time, "scan_nr": scan_nr, "filename": filenames,
