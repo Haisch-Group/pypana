@@ -94,6 +94,7 @@ def import_data_and_comments(filename):
     bar_width = np.subtract(Xu, Xl)
     # dlogDp = np.log10(Xu/Xl)
     # Cn = Cn/dlogDp  # calculate dC/dlogDp from known interval width
+    # Cn = Cn/bar_width  # normalizes Cn by the width of the interval
     # Cn = Cn*128  # calculate dC/dlogDp from channels/decade
 
     return X, bar_width, Cn, time, comments
