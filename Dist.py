@@ -32,18 +32,19 @@ def select_data(data, sel_nrs):  # merge with cut_dist ?
     sel_bar_width = np.zeros_like(sel_Cn)
     sel_time = []
     sel_scan_nr = []
-    sel_filename = data["filename"]  # should be defined as list or array, when making a function to select from
+    sel_filename = []
     # different datasets
-    sel_used_device = data["used_device"]
+    sel_used_device = []
     for k in np.arange(len(scan_nrs)):  # fill the arrays with the selected data
         sel_Cn[k, :] = data["Cn"][scan_nrs[k], :]
         sel_X[k, :] = data["X"][scan_nrs[k], :]
         sel_bar_width[k, :] = data["bar_width"][scan_nrs[k], :]
         sel_time.append(data["time"][scan_nrs[k]])
         sel_scan_nr.append(data["scan_nr"][scan_nrs[k]])
+        sel_filename.append(data["filename"])
+        sel_used_device.append(data["used_device"])
     sel_data = {"X": sel_X, "Cn": sel_Cn, "bar_width": sel_bar_width, "time": sel_time, "scan_nr": sel_scan_nr,
                 "filename": sel_filename, "used_device": sel_used_device}
-    typical_calculations(sel_data)
     return sel_data
 
 
@@ -94,6 +95,18 @@ def merge_data(sel_data_list):
             merged_data["scan_nr"].append(i["scan_nr"][k])
             merged_data["origin"].append(i["filename"])
     return merged_data
+
+
+def select_multiple_data(list_of_tuples):
+    """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
+    in normal non-pythonian logic (starting count at 1)
+    can only easily select data from one day for comparison
+    import as list of tuples: [(data_identifier_1, [scan_nrs_1]),(data_identifier_2, [scan_nrs_2]),...]"""
+    sel_data_list = []
+    for tuple in list_of_tuples:
+        sel_data_list.append(select_data(tuple[0], tuple[1]))
+    sel_merged_data = merge_data(sel_data_list)
+    return sel_merged_data
 
 
 def geometric_mean(X, C, conc):
@@ -337,8 +350,12 @@ def format_plot(fig, ax, used_device):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    if used_device in [3, 4, 5]:  # for micrometer instruments TSI LAS + APS, PALAS WELAS
+    if used_device in [3, 4]:  # for micrometer instruments TSI APS, PALAS WELAS
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
+               xlabel='Particle Diameter / $\mu$m',
+               ylabel='Number Concentration / $\mathregular{1/cm^3}$')
+    elif used_device ==5:  # for micrometer instruments with nm x-axis
+        ax.set(xscale='log', xticks=[100, 300, 800, 2000, 8000], xticklabels=[100, 300, 800, 2000, 8000],
                xlabel='Particle Diameter / $\mu$m',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$')
     else:  # for nanometer instruments SMPS
@@ -382,7 +399,7 @@ def plot_singledata(data, scan_nrs):
     # move this into format_plot ?
     fileaddition = input("Please enter a fileaddition")
     #data_identifier = Sup.get_variable_name(data)
-    path = data["filename"][:-4] + "_" + fileaddition + ".png"
+    path = data["filename"][0][:-4] + "_" + fileaddition + ".png"
     # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
     plt.savefig(path, transparent=True)
 
