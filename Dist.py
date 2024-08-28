@@ -156,7 +156,7 @@ def lognormal_dist(conc, sigma_g, dg, X, bar_width):
         #fit[k, :] = (mean_conc_n[k] / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
         #            np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
         # is roughly 28 times higher than the histogram
-        fit[k, :] = ((conc[k]/bar_width[k])/(math.sqrt(2 * math.pi) * np.log(sigma_g[k])))*\
+        fit[k, :] = ((conc[k])/(math.sqrt(2 * math.pi) * np.log(sigma_g[k])))*\
                     np.exp((-np.square(np.log(X[k, :])-np.log(dg[k])))/(2*(math.log(sigma_g[k]))**2))
         # did not do what i wanted it to
         # fit[k, :] = ((mean_conc_n[k] / mean_X.shape[0]) / (math.sqrt(2 * math.pi) * np.log10(sigma_g[k]))) * \
@@ -182,7 +182,8 @@ def normal_function(x, A, mu, sigma):
 
 
 def lognormal_fit(X, C):
-    """fit of a lognormal peak"""
+    """fit of a lognormal peak - works only for one measurement at a time"""
+    ## work this through
     p0=[1000, 100, 1.2]
     lowerbounds=[0, 10, 0.2]
     upperbounds=[np.inf, 1000, 5]
