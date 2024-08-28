@@ -25,6 +25,7 @@ from scipy import optimize
 def read_distribution(filename, used_device):
     """function for importing distribution data, applying the correct import filter according to user choice and
     importing data as X = np.array((nr_scans, nr_bins)), bar_width, Cn = X.shape, time = []"""
+    # when the numbers are changed here, they also have to be changed in Dist.format_plot() and further down in get_data
     if used_device == 0:
         import TSI_SMPS3071_fileread as fr  # ! utf-8 encoding for 3-superscript in the header second to last
         # column P/cm^3 does not work sometimes, just change the ^3 to 3 in the data txt then
