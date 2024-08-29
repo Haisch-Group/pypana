@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Script for Data Evaluation of the TSI SMPS consisting of Classifier 3071, DMA 3081 and CPC 3775
-Data has to be exported in rows and plot is written, so that it displays the dW/logDp
-Mean and std of three consecutive measurements is calculated, so triplicates should be measured
+TSI_SMPS3071_fileread.py
 
-Created v0 2021-10-22 - 2021-10-26
+Script for Data Evaluation of the TSI SMPS consisting of Classifier 3071, DMA 3081 and CPC 3775
+Data has to be exported in rows
+
+Created 2021-10-22 - 2021-10-26
 @written by Kevin Maier (kevin.r.maier@tum.de)
 2021-11-17: title of the produced figures now in two lines, added concentration to be extracted, averaged, printed
 2022-01-18: started to modify it, to work with SMPS_analysis_v0 -> continue this later on, shifted bar_width from
@@ -14,7 +15,6 @@ Created v0 2021-10-22 - 2021-10-26
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
 2023-01-19: filename is retrieved from SMPS_analysis now
-
 """
 
 import numpy as np
@@ -29,7 +29,9 @@ def import_data(filename):
     statistical values calculated by the TSI program
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
     to work, the data has to be exported in rows"""
-    data = pd.read_table(filename, sep='\t', header=16, index_col=0, skiprows=1,
+    device_info = pd.read_table(filename, sep='\t', nrows=17,  engine='python', encoding='iso-8859-1')
+    # read device_info from txt file to maybe extract something later
+    data = pd.read_table(filename, sep='\t', header=17, index_col=0,
                          engine='python', encoding='iso-8859-1')  # originally ansi which is superset of iso
     # smps file is in encoding = ansi which caused an import error off cm^3 due to wrong encoding setting
     # changed to iso as ansi is windows only and iso also works on linux

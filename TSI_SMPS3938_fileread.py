@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+TSI_SMPS3938_fileread.py
+
 Script for Data Evaluation of the TSI SMPS consisting of Classifier 3082 and CPC 3775
 Data has to be exported in rows and plot is written, so that it displays the dW/logDp
 
@@ -12,6 +14,7 @@ import pandas as pd
 from datetime import datetime
 from Sup import get_filename
 from Def import device_list
+import Dist
 
 
 def import_data(filename):
@@ -19,17 +22,19 @@ def import_data(filename):
     statistical values calculated by the TSI program
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
     to work, the data has to be exported in rows"""
-    data = pd.read_table(filename, sep='\t', header=25, index_col=0, skiprows=0,
+    device_info = pd.read_table(filename, sep='\t', nrows=25, engine='python', encoding='iso-8859-1')
+    # read device_info from txt file to maybe extract something later
+    data = pd.read_table(filename, sep='\t', header=25, index_col=0,
                          engine='python', encoding='iso-8859-1')  # originally ansi which is superset of iso
     # smps file is in encoding = ansi which caused an import error off cm^3 due to wrong encoding setting
     # changed to iso as ansi is windows only and iso also works on linux
 
-    Cn = data.iloc[:, list(range(8, 94))] #extracts the data by column location
+    Cn = data.iloc[:, list(range(8, 94))] # extracts the data by column location
     Cn = Cn.to_numpy()
-    x_axis = data.columns.values[list(range(8, 94))] #extracts the midpoint diameter from the pd.dataframe header
+    x_axis = data.columns.values[list(range(8, 94))] # extracts the midpoint diameter from the pd.dataframe header
     x_axis = x_axis.astype(float)
-    #conc_data = data.iloc[:, -2]
-    #conc_data = conc_data.to_numpy()
+    # conc_data = data.iloc[:, -2]
+    # conc_data = conc_data.to_numpy()
     n_bins = len(x_axis)
 
     delta_x = np.zeros(n_bins)  # only gives the delta between the midpoint diameters, but nor the real bin min and max

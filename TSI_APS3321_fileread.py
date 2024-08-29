@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+TSI_APS3321_fileread.py
+
 Script for Data Evaluation of the TSI APS 3321
 Data has to be exported in rows and plot is written, so that it displays the dW/logDp
 

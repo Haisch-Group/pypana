@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+TSI_EM3068_fileread.py
+
 Script for Data Evaluation of the TSI EM 3068 DAta acquired via NI-Card and Self-Written Labview Script
 
 Created 2024-08-29

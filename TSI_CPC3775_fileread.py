@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+TSI_CPC3775_fileread.py
+
 Script for Data import of the TSI CPC 3775
 Data has to be exported in rows
 

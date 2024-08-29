@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+PALAS_UFCPC_fileread.py
+
 Script for Data import of the PALAS CPC 100
 
 Created v0 2022-03-10 to 2022-04-04

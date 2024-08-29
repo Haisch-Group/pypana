@@ -1,4 +1,6 @@
 """
+ParticleElectricalMobility.py
+
 calculation of the particle size of a particle with different charge, but same mobility as another particle
 with that also calculation of Cunningham factor and electrical mobility of the initial particle
 

@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+TSI_LAS3340A_fileread.py
+
+Script for Data Import of the TSI LAS 3340A Data
+
+Created 2023
+@written by Nico Chrisam (nico.chrisam@tum.de)
+"""
+
 import numpy as np
 import pandas as pd
 from datetime import datetime

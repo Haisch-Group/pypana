@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+PALAS_USMPS_csv_convert.py
+
 writing of SMPS data to Excel for student internship
 
 Created 2022-06-20

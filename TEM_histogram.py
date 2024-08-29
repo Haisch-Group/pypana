@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+TEM_histogram.py
+
 Script for creating TEM histograms from a list of particle areas
 
 Created 2022-04-21

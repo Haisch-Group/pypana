@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+PALAS_USMPS_fileread.py
+
 Created 2020-09-14
 @written by Karin Wieland
 Import of Data and Plot

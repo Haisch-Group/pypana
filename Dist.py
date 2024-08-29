@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Dist.py
+
 Script for Evaluation of Particle Size Distributions
 Run from Particle_analysis.py
 

@@ -1,4 +1,6 @@
 """
+ParticleMechanics.py
+
 calculation of terminal settling velocity, Re(settling), relaxation time, Stopping distance, root mean square
 displacement along axis, Diffusion coefficient and Cunningham correction factor of a particle with given diameter
 

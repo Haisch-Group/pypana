@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Sup.py
+
 Functions for running Particle_analysis.py
 
 Created 2024-03-20 from get_filenames.py and other small scripts
