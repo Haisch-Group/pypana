@@ -12,6 +12,7 @@ Created v0 2022-03-10 to 2022-04-04
 import numpy as np
 from datetime import datetime
 from Sup import get_filename
+from Def import device_list
 
 
 def import_data(filename):
@@ -71,6 +72,17 @@ def import_data(filename):
             start_time.append(datetime.strptime(data[indexlist[k-1]+1, 0] + " " + data[indexlist[k-1]+1, 1], '%m/%d/%Y %I:%M:%S %p'))
 
     return Cn, el_time, start_time
+
+
+def import_data_dict():
+    filename = get_filename()
+    Cn, el_time, start_time = import_data(filename)
+    scan_nr = []
+    [scan_nr.append(k + 1) for k in range(len(Cn))]
+    used_device = device_list.query("Import_Script=='PALAS_UFCPC_fileread'")["Device_Identifier"].values[0]
+    data_dict = {"Cn": Cn, "el_time": el_time, "start_time": start_time, "scan_nr": scan_nr, "filename": filename,
+                 "used_device": used_device}
+    return data_dict
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ Import of Data and Plot
 import numpy as np
 from datetime import datetime
 from Sup import get_filename
+from Def import device_list
 
 
 def import_data_and_comments(filename):
@@ -104,13 +105,24 @@ def import_data(filename):
     """renamed the old import data_function, to also import the comments from the SMPS directly in the already working
     import function, but in order to still have it work with the particle_analysis file, the function for importing X,
     bar_width, Cn and time must be named import_data, so the new import_data function now cuts the named values from
-    import_data_and_comments, import_data_and_comments is directly used in PALAS_SMPS2100_csv_convert.py to generate
+    import_data_and_comments, import_data_and_comments is directly used in PALAS_USMPS_csv_convert.py to generate
     files for students"""
     X, bar_width, Cn, time, comments = import_data_and_comments(filename)
     return X, bar_width, Cn, time
 
 # could actually do X just as a list with only the longest X axis in it - no couldn't as when changing the settings
 # during one day, the x-axis will also change
+
+
+def import_data_dict():
+    filename = get_filename()
+    X, bar_width, Cn, time = import_data(filename)
+    scan_nr = []
+    [scan_nr.append(k + 1) for k in range(len(Cn))]
+    used_device = device_list.query("Import_Script=='PALAS_USMPS_fileread'")["Device_Identifier"].values[0]
+    data_dict = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time, "scan_nr": scan_nr, "filename": filename,
+                 "used_device": used_device}
+    return data_dict
 
 
 if __name__ == "__main__":

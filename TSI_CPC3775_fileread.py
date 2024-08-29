@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from Sup import get_filename
+from Def import device_list
 
 
 def import_data(filename):
@@ -21,7 +22,7 @@ def import_data(filename):
     then extract the actual measuring data from the dataframe and give X, bar_width, Cn and time
     to work, the data has to be exported in rows"""
 
-    data = pd.read_table(filename, sep=',', header=2, index_col=0,
+    data = pd.read_table(filename, sep='\t', header=2, index_col=0,
                          engine='python', encoding='iso-8859-1')  # originally ansi which is superset of iso
     # smps file is in encoding = ansi which caused an import error off cm^3 due to wrong encoding setting
     # changed to iso as ansi is windows only and iso also works on linux
@@ -35,10 +36,21 @@ def import_data(filename):
     for i in range(len(data)):
         start_time.append(datetime.strptime(data.iloc[i, 0] + " " + data.iloc[i, 1], '%m/%d/%y %H:%M:%S'))
         for k in range(int(timepoints)):
-            #Cn[i, k] = data.iloc[i, 11+k*2] # for tab separatore used before
-            Cn[i, k] = data.iloc[i, 11 + k * 4] # for currently used eport, as analog outputs were saved there too
+            Cn[i, k] = data.iloc[i, 11+k*2] # for tab separatore used before
+            #Cn[i, k] = data.iloc[i, 11 + k * 4] # for currently used export, as analog outputs were saved there too
 
     return Cn, el_time, start_time
+
+
+def import_data_dict():
+    filename = get_filename()
+    Cn, el_time, start_time = import_data(filename)
+    scan_nr = []
+    [scan_nr.append(k + 1) for k in range(len(Cn))]
+    used_device = device_list.query("Import_Script=='TSI_CPC3775_fileread'")["Device_Identifier"].values[0]
+    data_dict = {"Cn": Cn, "el_time": el_time, "start_time": start_time, "scan_nr": scan_nr, "filename": filename,
+                 "used_device": used_device}
+    return data_dict
 
 
 if __name__ == "__main__":

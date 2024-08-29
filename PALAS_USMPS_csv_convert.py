@@ -11,14 +11,14 @@ Created 2022-06-20
 
 import csv
 import os
-import PALAS_SMPS2100_fileread
+import PALAS_USMPS_fileread
 from Sup import get_filename
 
 
 filename = get_filename()
 
 
-X, bar_width, Cn, time, comments = PALAS_SMPS2100_fileread.import_data_and_comments(filename)
+X, bar_width, Cn, time, comments = PALAS_USMPS_fileread.import_data_and_comments(filename)
 
 with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='UTF8', newline="") as f:
     writer = csv.writer(f)

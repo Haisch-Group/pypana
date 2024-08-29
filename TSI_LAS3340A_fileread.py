@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 from Sup import get_filename
 from Sup import get_filenames
+from Def import device_list
 
 
 def import_single_data(filename):
@@ -60,6 +61,19 @@ def import_data(filenames):
         time.append(time_i)
         n_scans.append(n_scans_i)
     return X, bar_width, Cn, time # , n_scans
+
+
+def import_data_dict():
+    filenames = get_filenames()
+    X, bar_width, Cn, time = import_data(filenames)
+    scan_nr = []
+    n_scans = int(input("How many scans did you accquire per measurement? Give as int!"))
+    for k in range(len(filenames)):
+        [scan_nr.append(k + 1) for i in range(n_scans)]
+    used_device = device_list.query("Import_Script=='TSI_LAS3340A_fileread'")["Device_Identifier"].values[0]
+    data_dict = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time, "scan_nr": scan_nr, "filename": filenames,
+                 "n_scans": n_scans, "used_device": used_device}
+    return data_dict
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@
 """
 Script for Data Evaluation of the TSI SMPS consisting of Classifier 3082 and CPC 3775
 Data has to be exported in rows and plot is written, so that it displays the dW/logDp
-Mean and std of three consecutive measurements is calculated, so triplicates should be measured
 
 Created 2024-05-01 as copy of TSI_SMPS3938_fileread.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
@@ -12,6 +11,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from Sup import get_filename
+from Def import device_list
 
 
 def import_data(filename):
@@ -58,6 +58,17 @@ def import_data(filename):
         time.append(datetime.strptime(data.iloc[i, 0] + " " + data.iloc[i, 1], '%m/%d/%Y %H:%M:%S'))
 
     return X, bar_width, Cn, time
+
+
+def import_data_dict():
+    filename = get_filename()
+    X, bar_width, Cn, time = import_data(filename)
+    scan_nr = []
+    [scan_nr.append(k + 1) for k in range(len(Cn))]
+    used_device = device_list.query("Import_Script=='TSI_SMPS3938_fileread'")["Device_Identifier"].values[0]
+    data_dict = {"X": X, "Cn": Cn, "bar_width": bar_width, "time": time, "scan_nr": scan_nr, "filename": filename,
+                 "used_device": used_device}
+    return data_dict
 
 
 if __name__ == "__main__":
