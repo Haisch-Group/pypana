@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from tkinter import Tk
 from tkinter.filedialog import askopenfilenames #plural here
+from Def import device_list
 
 
 def import_data(filenames):

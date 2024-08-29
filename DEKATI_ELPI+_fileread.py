@@ -25,6 +25,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename, askopenfilenames
 from math import pi
 from scipy import signal
+from Def import device_list
 
 
 def file_reader(filename):
