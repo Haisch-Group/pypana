@@ -89,7 +89,8 @@ if __name__ == "__main__":
     
     ## For Distributionss
     
-    save_calc_to_csv(data_identifier, ["scan_nr", "time", "dg", "sigma", "calc_conc_n"], fileaddition="particleDF")
+    save_calc_to_csv(data_identifier, ["scan_nr", "time", "dg", "sigma", "calc_conc_n", "X10", "X16", "X50", "X84", 
+    "X90"], fileaddition="particleDF")
     
     ## For Concentrations
     
@@ -143,11 +144,11 @@ if __name__ == "__main__":
     calling it on its own is not usually necessary. Also works for selected data. In mean data, the dg and sigma are
     calculated from the values given in the selected data set
     
-    ## Calculation of cummulative distribution
+    ## Calculation of cumulative distribution
     
-    data_identifier["cummC"] = cummulative_distribution(data_identifier["Cn"])
+    data_identifier["cumC"] = cumulative_distribution(data_identifier["Cn"])
     data_identifier["X10"], data_identifier["X16"], data_identifier["X50"], data_identifier["X84"], 
-        data_identifier["X90"] = Dist.cumulative_diameters(data_identifier["X"], data_identifier["cummC"]
+        data_identifier["X90"] = Dist.cumulative_diameters(data_identifier["X"], data_identifier["cumC"]
     
     calculated the cumulative distributions and the particle diameters below which 10, 16, 50, 84 and 90 % of all 
     particles are
@@ -179,7 +180,7 @@ if __name__ == "__main__":
     start and end are times in s of the measurements
     new column with ["cut_Cn"] is created
     
-    ## ploting of data
+    ## plotting of data
     
     ### plot normal data
     

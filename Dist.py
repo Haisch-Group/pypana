@@ -48,6 +48,16 @@ def select_data(data, sel_nrs):  # merge with cut_dist ?
     return sel_data
 
 
+def convert_cn_to_cn_dlogx(data):
+    data["Cn_dlogX"] = data["Cn"]/data["dlogX"]
+    return data
+
+
+def convert_cn_dlogx_to_cn(data):
+    data["Cn"] = data["Cn_dlogX"]*data["dlogX"]
+    return data
+
+
 def get_conc(C):
     """calculate the total concentration for each selected measurement, can be applied to Cn, Cv, or Cm
     call for example as data["calc_conc_n"] = get_conc(data["Cn"]) to specify (or Cv, or Cm)"""
@@ -206,15 +216,15 @@ def calc_geometry(X, C, conc, bar_width):
 
 def cumulative_distribution(C):
     """calculates the cumulative distribution"""  # tested, first column = Cn[0], last column = calc_conc_n
-    cummC = np.zeros_like(C)
+    cumC = np.zeros_like(C)
     for scan in range(len(C)):
-        cummC[scan, 0] = C[scan, 0]
+        cumC[scan, 0] = C[scan, 0]
         for k in range(1, len(C[scan])):
-            cummC[scan, k] = cummC[scan, k-1] + C[scan, k]
-    return cummC
+            cumC[scan, k] = cumC[scan, k-1] + C[scan, k]
+    return cumC
 
 
-def cumulative_diameters(X, cummC):
+def cumulative_diameters(X, cumC):
     """calculates the diameters below which 10, 16, 50, 84 and 90 % of all particles are"""
     # seemingly works, at least X50 were similar to PDAnalyze X50 values, but slightly different, as i just give the
     # middle X value of the bin, maybe PALAS does some other magic with it like calculating a discrete distribution
@@ -223,18 +233,21 @@ def cumulative_diameters(X, cummC):
     X50 = []
     X84 = []
     X90 = []
-    for k in range(len(cummC)):
-        X10.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.1), 0)])
-        X16.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.16), 0)])
-        X50.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.5), 0)])
-        X84.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.84), 0)])
-        X90.append(X[k][next((index for index, val in enumerate(cummC[k]) if val > cummC[k][-1]*0.9), 0)])
-    return X10, X16, X50, X84, X90
+    for k in range(len(cumC)):
+        X10.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.1), 0)])
+        X16.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.16), 0)])
+        X50.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.5), 0)])
+        X84.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.84), 0)])
+        X90.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.9), 0)])
+    # cumDiameters = pd.DataFrame({"X10": X10, "X16": X16, "X50": X50, "X84": X84, "X90": X90})
+    return X10, X16, X50, X84, X90  # cumDiameters
 
 
 def typical_calculations(data):
     data["calc_conc_n"] = get_conc(data["Cn"])
     data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["bar_width"])
+    data["cumC"] = cumulative_distribution(data["Cn"])
+    data["X10"], data["X16"], data["X50"], data["X84"], data["X90"] = cumulative_diameters(data["X"], data["cumC"])
     return data
 
 
