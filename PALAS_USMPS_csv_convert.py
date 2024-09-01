@@ -20,17 +20,23 @@ from Sup import get_filename
 filename = get_filename()
 
 
-X, bar_width, Cn, time, comments = PALAS_USMPS_fileread.import_data_and_comments(filename)
+X, dX, dlogX, Cn, Cn_dlogX, add_info = PALAS_USMPS_fileread.import_data(filename)
 
 with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='UTF8', newline="") as f:
     writer = csv.writer(f)
 
     for msmt in range((len(Cn))):
         scan_nr = msmt+1
-        x_row = [scan_nr, "X", "nm"]
+        x_row = ["Scan Nr", "X", "nm"]
         [x_row.append(i) for i in X[msmt]]
         writer.writerow(x_row)
-        Cn_row = [f"{comments[msmt]}", "Conc.", "1/cm^3"]
+        dx_row= [scan_nr, "dX", "nm"]
+        [dx_row.append(i) for i in dX[msmt]]
+        writer.writerow(dx_row)
+        dlogx_row = ["Comment", "dlogX", "nm"]
+        [dlogx_row.append(i) for i in dlogX[msmt]]
+        writer.writerow(dlogx_row)
+        Cn_row = [f"{add_info['Comment'][msmt]}", "Conc.", "1/cm^3"]
         [Cn_row.append(i) for i in Cn[msmt]]
         writer.writerow(Cn_row)
 
