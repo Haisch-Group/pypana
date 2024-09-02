@@ -26,6 +26,8 @@ device_list = pd.DataFrame([
 ], columns=["Device_Identifier", "Device", "Manufacturer", "Accquired_Data", "Working_Principle", "Measuring_Range",
             "Import_Script"])
 
+elementary_charge = 1.602176634*10**(-19)  # in Coulomb = As https://physics.nist.gov/cgi-bin/cuu/Value?e
+
 if __name__ == "__main__":
 
     print(device_list.to_string(index=False, justify="left"))
