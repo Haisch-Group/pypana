@@ -6,7 +6,6 @@ Script for Evaluation of Particle Size Distributions
 Run from Particle_analysis.py
 
 Created 2024-03-20 by moving functions from Particle_analysis.py
-Modified 2024-03-20 to also run CPC_analysis.py which was renamed to Conc.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 """
