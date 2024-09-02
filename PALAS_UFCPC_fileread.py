@@ -19,7 +19,6 @@ from Def import device_list
 
 def import_data(filename):
     """"""
-
     with open(filename) as f_in:  # open file and keep open
         lines = f_in.readlines()  # read the file in line by line
         len_file = len(lines)  # determine the length of the file
@@ -37,7 +36,7 @@ def import_data(filename):
 
     # determine the number of measurements saved in one file from the comments and save the index of the last measuring
     # point per measurement in an indexlist
-    msmt_counter = 1
+    msmt_counter = 1  # start at 1, as the file is only written, when a measurement is taken
     indexlist = []
     for k in range(1, len_file):
         if data[k, 2] == data[k - 1, 2]:
@@ -71,17 +70,18 @@ def import_data(filename):
             start_time.append(datetime.strptime(data[0, 0] + " " + data[0, 1], '%m/%d/%Y %I:%M:%S %p'))
         else:
             Cn[k, 0:msmt_len_list[k]] = data[indexlist[k-1]+1:indexlist[k]+1, 3].T
-            start_time.append(datetime.strptime(data[indexlist[k-1]+1, 0] + " " + data[indexlist[k-1]+1, 1], '%m/%d/%Y %I:%M:%S %p'))
+            start_time.append(datetime.strptime(data[indexlist[k-1]+1, 0] + " " + data[indexlist[k-1]+1, 1],
+                                                '%m/%d/%Y %I:%M:%S %p'))
 
     return Cn, el_time, start_time
 
 
-def import_data_dict():
+def import_data_dict(used_device):
     filename = get_filename()
     Cn, el_time, start_time = import_data(filename)
     scan_nr = []
     [scan_nr.append(k + 1) for k in range(len(Cn))]
-    used_device = device_list.query("Import_Script=='PALAS_UFCPC_fileread'")["Device_Identifier"].values[0]
+    # used_device = device_list.query("Import_Script=='PALAS_UFCPC_fileread'")["Device_Identifier"].values[0]
     data_dict = {"Cn": Cn, "el_time": el_time, "start_time": start_time, "scan_nr": scan_nr, "filename": filename,
                  "used_device": used_device}
     return data_dict

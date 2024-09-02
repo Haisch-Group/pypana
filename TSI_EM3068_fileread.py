@@ -117,10 +117,10 @@ def import_data(filename):
     return Cn, el_time, add_info
 
 
-def import_data_dict():
+def import_data_dict(used_device):
     filename = get_filename()
     Cn, el_time, add_info = import_data(filename)
-    used_device = device_list.query("Import_Script=='TSI_EM3068_fileread'")["Device_Identifier"].values[0]
+    # used_device = device_list.query("Import_Script=='TSI_EM3068_fileread'")["Device_Identifier"].values[0]
     data_dict = {"Cn": Cn, "el_time": el_time, "filename": filename, "used_device": used_device, "add_info": add_info}
     return data_dict
 

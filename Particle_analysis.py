@@ -33,7 +33,7 @@ def get_data():
 
     if used_device in Def.device_list["Device_Identifier"]:  # Size Distribution Instruments
         fr = __import__(Def.device_list["Import_Script"][used_device])
-        data = fr.import_data_dict()
+        data = fr.import_data_dict(used_device)
 
     else:
         print(f"Device {used_device} is not a viable option")

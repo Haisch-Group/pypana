@@ -22,19 +22,11 @@ def import_data(filename):
     statistical values calculated by the TSI program
     then extract the actual measuring data from the dataframe and give X, dX, Cn and time
     to work, the data has to be exported in rows"""
-    data = pd.read_table(filename, sep='\t', header=25, engine='python', encoding='iso-8859-1')
-    # originally ansi which is superset of iso; smps file is in encoding = ansi which caused an import error off cm^3
-    # due to wrong encoding setting changed to iso as ansi is windows only and iso also works on linux
-
-    # data = data.reset_index(drop=True)  # resetting index, anecessary, when Sample # column is used as index col in
-    # pd.read_table -> removed as Sample # is used to directly generate Scan Nr
-
-    nr_scans = len(data)
 
     # data file has variable number of data columns depending on measuring range set so conc data has to be constructed
     # from difference of all columns and the non conc columns
 
-    nonconccolumns = ['Sample #', 'Date', 'Start Time', 'Sample Temp (C)', 'Sample Pressure (kPa)',
+    TSI_SMPS3938_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp (C)', 'Sample Pressure (kPa)',
                       'Relative Humidity (%)', 'Mean Free Path (m)', 'Gas Viscosity (Pa*s)', 'Diameter Midpoint (nm)',
                       'Scan Time (s)', 'Retrace Time (s)', 'Scan Resolution (Hz)', 'Scans Per Sample',
                       'Sheath Flow (L/min)', 'Aerosol Flow (L/min)', 'Bypass Flow (L/min)', 'Low Voltage (V)',
@@ -47,6 +39,27 @@ def import_data(filename):
     # added the following part to avoid the KeyError - key not found in files that do not contain this column
     # seems to work also for other fields that are not contained in the data :D Only when new fields are in the data,
     # but not in the list above, they should be addded to the list.
+
+    TSI_SMPS3071_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp (C)', 'Sample Pressure (kPa)',
+                         'Relative Humidity (%)', 'Mean Free Path (m)', 'Gas Viscosity (Pa*s)',
+                         'Diameter Midpoint (nm)',
+                         'Scan Time (s)', 'Retrace Time (s)', 'Scan Resolution (Hz)', 'Scans Per Sample',
+                         'Sheath Flow (L/min)', 'Aerosol Flow (L/min)', 'Bypass Flow (L/min)', 'Low Voltage (V)',
+                         'High Voltage (V)', 'Lower Size (nm)', 'Upper Size (nm)', 'Density (g/cm³)', 'td + 0.5 (s)',
+                         'tf (s)', 'D50 (nm)', 'Neutralizer Status ', 'Median (nm)', 'Mean (nm)', 'Geo. Mean (nm)',
+                         'Mode (nm)', 'Geo. Std. Dev.', 'Total Conc. (#/cm³)', 'Title', 'User Name', 'Sample ID',
+                         'Instrument ID', 'Lab ID', 'Leak Test and Leakage Rate', 'Instrument Errors', 'Comment']
+
+    nonconccolumns
+
+    data = pd.read_table(filename, sep='\t', header=25, engine='python', encoding='iso-8859-1')
+    # originally ansi which is superset of iso; smps file is in encoding = ansi which caused an import error off cm^3
+    # due to wrong encoding setting changed to iso as ansi is windows only and iso also works on linux
+
+    # data = data.reset_index(drop=True)  # resetting index, anecessary, when Sample # column is used as index col in
+    # pd.read_table -> removed as Sample # is used to directly generate Scan Nr
+
+    nr_scans = len(data)
 
     for k in nonconccolumns:
         if k in data:
@@ -141,10 +154,10 @@ def import_data(filename):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict():
+def import_data_dict(used_device):
     filename = get_filename()
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
-    used_device = device_list.query("Import_Script=='TSI_SMPS3938_fileread'")["Device_Identifier"].values[0]
+    # used_device = device_list.query("Import_Script=='TSI_SMPS3938_fileread'")["Device_Identifier"].values[0]
     data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
                  "used_device": used_device, "add_info":add_info}
     return data_dict
@@ -153,6 +166,7 @@ def import_data_dict():
 if __name__ == "__main__":
 
     filename = get_filename()
-    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
+    used_device = int(input("Which instrument did you use? Enter as int. 0 for TSI SMPS 3938, 1 for TSI SMPS 3071"))
+    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
     print(f"imported {filename}")
 
