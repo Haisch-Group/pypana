@@ -29,7 +29,7 @@ from scipy import optimize
 def get_data():
 
     print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
-    used_device = int(input("Which instrument did you use? Enter as int."))
+    used_device = int(input("Which instrument do you want to import data from? Enter as int."))
 
     if used_device in Def.device_list["Device_Identifier"]:  # Size Distribution Instruments
         fr = __import__(Def.device_list["Import_Script"][used_device])
