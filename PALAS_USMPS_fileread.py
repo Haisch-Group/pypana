@@ -81,15 +81,16 @@ def import_data(filename):
                            "inverted, 5 for inverted and diffusion corrected")
 
     for i in range(nr_scans):  # filling the arrays with the values from the data list of lists
-        for k in range(2, data_len[int(0 + i * 6)]):
-            Xl[i, k-2] = data[int(0 + i * 6)][int(k)]
-        for k in range(2, data_len[int(1 + i * 6)]):
-            Xu[i, k-2] = data[int(1 + i * 6)][int(k)]
-        for k in range(2, data_len[int(2 + i * 6)]):
+        for k in range(2, data_len[int(0 + i * 6)]):  # lower bin boundary values contained in each second line in the
+            Xl[i, k-2] = data[int(0 + i * 6)][int(k)]  # file, or first line in data list of lists created before
+        for k in range(2, data_len[int(1 + i * 6)]):  # upper bin boundary values contained in each third line in the
+            Xu[i, k-2] = data[int(1 + i * 6)][int(k)]  # file, or second line in data list of lists created before
+        for k in range(2, data_len[int(2 + i * 6)]):  # bin midpoints from firth line in file or third in data listslist
             X[i, k-2] = data[int(2 + i * 6)][int(k)]  # should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
-        for k in range(2, data_len[int(int(conc_data) + i * 6)]):  # 5 is based on the inverted diff corrected data, 3
-            # on the raw data
-            Cn[i, k-2] = data[int(int(conc_data) + i * 6)][int(k)]  # 4 is the inverted but not diff corrected data
+        for k in range(2, data_len[int(int(conc_data) + i * 6)]):  # Cn is filled from conc array contained in different
+            # stages of processing chosen from file or data list of lists according to user input conc_data above
+            # 5 is based on the inverted diff corrected data, 3 on the raw data, 4 is inverted but not diff corrected
+            Cn[i, k-2] = data[int(int(conc_data) + i * 6)][int(k)]
 
     parameter_list = ["Date", "Time", "Comment", "Sheath Temp (C)", "Sample Pressure (mbar)", "Sheath Flow (L/min)",
                       "Aerosol Flow (L/min)", "Relative Humidity Aerosol (%)", "Relative Humidity Sheath (%)",
@@ -101,8 +102,22 @@ def import_data(filename):
                       "Pre Scan Stabilisation Time (s)", "Neutralizer Type (0=Kr-85, 1=X-Ray)",
                       "HV Polarity (0=positive, 1=negative)"]
 
-    parametersDF = pd.DataFrame(parameters, columns = parameter_list)
-    # parameters given in PALAS SMPS manual 6787-de_V2.1_08/21
+    # parameters given in PALAS SMPS manual 6787-de_V2.1_08/21, newer SMPS has 2 columns more in each header row, so for
+    # these files, additional headers have to be added to header list
+
+    if len(parameters[0]) == 28:
+        pass
+    elif len(parameters[0]) == 30:
+        parameter_list.extend(["", ""])  # asked PALAS what info they contain, add when reply comes
+    else:
+        parameter_list.extend(["", ""])  # added to avoid the error when there are more columns coming. :D
+        count = 2
+        while len(parameter_list) < len(parameters[0]):
+            parameter_list.append("")  # if parameters have less than 28 columns, still an error will occur
+            count += 1
+        print(f"Added {count} column headers as parameters line contains {28+count} columns")
+
+    parametersDF = pd.DataFrame(parameters, columns=parameter_list)
 
     time = []  # defining time list
     for i in range(nr_scans):
