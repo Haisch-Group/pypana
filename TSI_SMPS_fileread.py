@@ -199,7 +199,7 @@ def import_data_dict(used_device):
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
     # used_device = device_list.query("Import_Script=='TSI_SMPS3938_fileread'")["Device_Identifier"].values[0]
     data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
-                 "used_device": used_device, "add_info":add_info}
+                 "used_device": used_device, "add_info": add_info}
     return data_dict
 
 

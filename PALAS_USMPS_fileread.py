@@ -102,8 +102,8 @@ def import_data(filename):
                       "Pre Scan Stabilisation Time (s)", "Neutralizer Type (0=Kr-85, 1=X-Ray)",
                       "HV Polarity (0=positive, 1=negative)"]
 
-    # parameters given in PALAS SMPS manual 6787-de_V2.1_08/21, newer SMPS has 2 columns more in each header row, so for
-    # these files, additional headers have to be added to header list
+    # parameters given in PALAS SMPS manual 6787-de_V2.1_08/21 page 66, newer SMPS has 2 columns more in each header row
+    # so for these files, additional headers have to be added to header list
 
     if len(parameters[0]) == 28:
         pass
