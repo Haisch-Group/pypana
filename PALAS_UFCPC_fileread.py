@@ -31,13 +31,16 @@ def import_data(filename):
     # parameters given in PALAS CPC manual 4597-de_V1.0_06/17 page 23, Operating Mode to T Aerosol Inlet only relevant
     # for ENVI CPC
 
-    nonusedcolumns = ["Empty Field", "Operating Mode DSI (0=off, 1=Humidity, 2=Diiferential Pressure)",
+    nonusedcolumns = ["Date", "Time", "Comment", u"1s Mean Particle Concentration (1/cm\u00B3)", "Empty Field",
+                      "Operating Mode DSI (0=off, 1=Humidity, 2=Diiferential Pressure)",
                       "Target Relative Humidity (%)", "Target Differential Pressure (Pa)",
                       "Actual Differential Pressure (Pa)",  "Relative Humidity (%)", "T Aerosol Inlet (C)",
                       "Position of Valve in MSS 08 (1-8)"]
-    # currently not giving meaningful data for UFCPC, so they are not used
+    # first four columns are rearranged in the following script and are in this list as they should be excluded from the
+    # add_info dataframe, the rest of the columns is currently not giving meaningful data for UFCPC, so they are also
+    # not to be included in the add_info dataframe in the end
 
-    data = pd.read_table(filename, sep='\t', names=parameter_list, engine='python')
+    data = pd.read_table(filename, sep='\t',index_col=False, names=parameter_list, engine='python')
     # load the entire file as pd dataframe
 
     # determine the number of measurements saved in one file from the comments and save the index of the last measuring
@@ -45,58 +48,78 @@ def import_data(filename):
     len_file = len(data)
 
     msmt_counter = 1  # start at 1, as the file is only written, when a measurement is taken
-    indexlist = []  # create list for indices of each last measuring point
+    indexlist = [0]  # create list for indices of each last measuring point, first index = 0
+    comment_list =[data["Comment"][0]]  # also create list for all comments starting with first
     # measurement works by ticking a checkbox, then the current measurement is saved, when unticking, saving stops until
-    # next time the box is ticked, then the new measurement is just appended, so last index of first point in next
-    # measurement is index+1 of the last point in the previous measurement
+    # next time the box is ticked, then the new measurement is just appended, so last index of a measurement is
+    # index-1 of the next measurement
     for k in range(1, len_file):
         if data["Comment"][k] == data["Comment"][k - 1]:  # comment needs to be entered before ticking the checkbox for
             continue  # this selection process to work, then measurements are identified by change of the comment
         else:
             msmt_counter += 1
-            indexlist.append(k-1)  # this appends last point before comment changed = last point of previous measurement
-    indexlist.append(len_file-1)
+            indexlist.append(k)  # this appends first point of each measurement
+            comment_list.append(data["Comment"][k])
 
     # determine the length of each measurement
     msmt_len_list = []  # calculate the length of each scan from the first and the last index of each measurement
-    for k in range(len(indexlist)):  # defined
-        if k == 0:
-            msmt_len_list.append(indexlist[k]+1)  # as index follows python logic, length is index+1 also counting 0
+    for k in range(msmt_counter):  # go through all entries in indexlist and calculate lengths of each msmt from indices
+        if k == msmt_counter-1:  # k starts from 0, so msmt_conter-1 is last entry in indexlist
+            msmt_len_list.append(len_file-indexlist[k])  # len of file - start index of last measurement = len
         else:
-            msmt_len_list.append(indexlist[k]-indexlist[k-1])  # last point of current - last point of previous msmt
+            msmt_len_list.append(indexlist[k+1]-indexlist[k])  # first point of next - last point of current msmt
 
-    # produce and fill the concentration array with the data and leave the non filled cells as nan, so no bullshit
+    # produce and fill the concentration array with the data and leave the non-filled cells as nan, so no bullshit
     # is plotted/calculated, also create and fill the start_time list
     Cn = np.zeros((msmt_counter, max(msmt_len_list)))
     Cn[:] = np.nan
     start_time = []  # defining start_time list
 
-    for k in range(0, msmt_counter):
-        if k == 0:
-            Cn[k, 0:indexlist[k]+1] = data[u"1s Mean Particle Concentration (1/cm\u00B3)"][k:indexlist[k]+1]
-
-            start_time.append(datetime.strptime(data["Date"][0] + " " + data["Time"][0], '%m/%d/%Y %I:%M:%S %p'))
+    for k in range(msmt_counter):  # go through all measurements and fill Cn array from 0 to length of the measurement
+        # with data from indexlist (startindex of msmt till startindex of next msmt -1 )
+        if k == msmt_counter-1:  # for last msmt, no startindex of next is available so end of file is used
+            Cn[k, 0:msmt_len_list[k]] = \
+                data[u"1s Mean Particle Concentration (1/cm\u00B3)"][indexlist[k]:len_file]
+            start_time.append(datetime.strptime(data["Date"][indexlist[k]] + " " + data["Time"][indexlist[k]],
+                                                '%m/%d/%Y %I:%M:%S %p'))
         else:
-            Cn[k, 0:msmt_len_list[k]] = data[u"1s Mean Particle Concentration (1/cm\u00B3)"][indexlist[k-1]+1:indexlist[k]+1]
-            start_time.append(datetime.strptime(data["Date"][indexlist[k-1]+1] + " " + data["Time"][indexlist[k-1]+1, 1],
+            Cn[k, 0:msmt_len_list[k]] = \
+                data[u"1s Mean Particle Concentration (1/cm\u00B3)"][indexlist[k]:indexlist[k+1]]
+            start_time.append(datetime.strptime(data["Date"][indexlist[k]] + " " + data["Time"][indexlist[k]],
                                                 '%m/%d/%Y %I:%M:%S %p'))
 
 
-    # produce the elapsed time scale from the shape of the cn array
-    el_time = np.zeros_like(Cn)
-    el_time[:] = np.nan
-    for k in range(len(el_time)):
-        for i in range(msmt_len_list[k]):
-            el_time[k, i] = indexlist[k]+i
+    # calculate elapsed time array from each time point - start point of the measurement (done this way because PALAS
+    # SMPS sometimes had a hanger and just assigning an elapsed_time array with 1s intervals might lead to wrong axis)
+    el_time = np.zeros_like(Cn)  # preallocation of array
+    el_time[:] = np.nan  # filling with NaN to not have wrong numbers in there
+    for k in range(msmt_counter):  # goint through all measurements
+        for i in range(0, msmt_len_list[k]):  # and in that through all entries to calculate elapsed time for each
+            dt = datetime.strptime(data["Date"][indexlist[k]+i] + " " + data["Time"][indexlist[k]+i],
+                                   '%m/%d/%Y %I:%M:%S %p') - start_time[k]
+            el_time[k, i] = dt.total_seconds()  # assign calculated time in seconds to el_time array
 
+    # create scan numbers as list from msmt_counter with +1 as range is exclusive on right side
+    scan_nr = []
+    [scan_nr.append(k) for k in range(1, msmt_counter+1)]
 
+    # get all additionally available info and pack it in a dataframe that has the same size as the Cn array
+    # must be made to lists of lists to pack it in the dataframe
+    usedcolumns = data[data.columns.difference(nonusedcolumns)].columns.values  # get column names from difference of
+    # all column headers and the nonusedcolumns headers
+    add_info = pd.DataFrame()  # create empty dataframe
+    for data_column in usedcolumns:  # go through all columns in the original dataframe
+        listoflists = []  # create a list for each column that will include lists for each measurement
+        for i in range(msmt_counter):  # go through all measurements in each column
+            list = []  # create a list, that will contain all values of one measurement
+            for k in range(msmt_len_list[i]):  # go through all datapoints in each measurement in each column
+                list.append(data[data_column][indexlist[i]+k])  # append these values to the list of one measurement
+            listoflists.append(list)  # append the list of values to the list representing one column
+        add_info[data_column] = listoflists  # add the list of lists as column to new dataframe
 
-
-
-
-    scan_nr = indexlist
-
-
+    add_info.insert(loc=0, column="Comment", value=comment_list)  # insert the comment, start_time and scan_nr lists
+    add_info.insert(loc=0, column="Time", value=start_time)  # in the dataframe too
+    add_info.insert(loc=0, column="Scan Nr", value=scan_nr)
 
     return Cn, el_time, add_info
 
