@@ -110,7 +110,7 @@ def import_data(filename):
         start_time.append(start+timedelta(0, tot_el_time[k][0]))  # add elapsed time at beginning of the
         # measurement to the start and by that fill the start_time list with times since the start of the measurement
 
-    add_info = pd.DataFrame({"Scan Nr": scan_nr, "Time": start_time, "Flow (L/min)": list(flow_lpm)})
+    add_info = pd.DataFrame({"Scan Nr": scan_nr, "Time": start_time, "Aerosol Flow (L/min)": list(flow_lpm)})
     # passed flow_lpm in add_info as list, when more actions should be done with flow rate, I would move it out of
     # add_info and make it a dictionary entry on its own
 
