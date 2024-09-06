@@ -17,13 +17,13 @@ device_list = pd.DataFrame([
     [2, "U-SMPS", "PALAS", "Number Distribution", "Electrodynamic", "nm", "PALAS_USMPS_fileread"],
     [3, "APS 3321", "TSI", "Number Distribution", "Aerodynamic", u"\xb5m", "TSI_APS3321_fileread"],
     [4, "WELAS", "PALAS", "Number Distribution", "Optical", u"\xb5m", "PALAS_WELAS_fileread"],
-    [5, "LAS 3340A", "TSI", "Number Distribution", "Optical", u"\xb5m", "TSI_LAS3340A_fileread"],
-    [6, "CPC 3775", "TSI", "Number Concentration", "Condensation", u"nm-\xb5m", "TSI_CPC3775_fileread"],
-    [7, "UF-CPC", "PALAS", "Number Concentration", "Condensation", u"nm-\xb5m", "PALAS_UFCPC_fileread"],
-    [8, "ELPI+", "DEKATI", "Number Distribution", "Aerodynamic", u"nm-\xb5m", "DEKATI_ELPI+_fileread"],
-    [9, "APS 3310", "TSI", "Number Concentration", "Aerodynamic", u"nm-\xb5m", "TSI_APS3310_fileread"],
+    [5, "LAS 3340A", "TSI", "Number Distribution", "Optical", u"\xb5m in nm", "TSI_LAS3340A_fileread"],
+    [6, "CPC 3775", "TSI", "Number Concentration", "Condensation", u"\xb5m", "TSI_CPC3775_fileread"],
+    [7, "UF-CPC", "PALAS", "Number Concentration", "Condensation", u"\xb5m", "PALAS_UFCPC_fileread"],
+    [8, "ELPI+", "DEKATI", "Number Distribution", "Aerodynamic", u"\xb5m", "DEKATI_ELPI+_fileread"],
+    [9, "APS 3310", "TSI", "Number Concentration", "Aerodynamic", u"\xb5m", "TSI_APS3310_fileread"],
     [10, "EM 3068", "TSI", "Number Concentration", "Electrical Charge", "nm", "TSI_EM3068_fileread"]
-], columns=["Device_Identifier", "Device", "Manufacturer", "Accquired_Data", "Working_Principle", "Measuring_Range",
+], columns=["Device_Identifier", "Device", "Manufacturer", "Accquired_Data", "Working_Principle", "Size_Plot_Range",
             "Import_Script"])
 
 elementary_charge = 1.602176634*10**(-19)  # in Coulomb = As https://physics.nist.gov/cgi-bin/cuu/Value?e
