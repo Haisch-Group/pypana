@@ -16,38 +16,73 @@ from Sup import get_filename
 from Def import device_list
 
 
+def rename_columns(df, used_device):
+    """rename the colums, so they follow the same schematic for all devices"""
+    if used_device == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]:
+        mapping = {'Sample Temp (C)': 'Sample Temp / °C', 'Sample Pressure (kPa)': 'Sample Pressure / kPa',
+                            'Relative Humidity (%)': 'Relative Humidity %', 'Mean Free Path (m)': 'Mean Free Path / m',
+                            'Gas Viscosity (Pa*s)': u'Gas Viscosity / Pa\u00B7s', 'Diameter Midpoint (nm)':
+                            'Diameter Midpoint / nm', 'Scan Time (s)': 'Scan Time / s', 'Retrace Time (s)':
+                            'Retrace Time / s', 'Scan Resolution (Hz)': 'Scan Resolution / Hz', 'Sheath Flow (L/min)':
+                            'Sheath Flow / L/min', 'Aerosol Flow (L/min)': 'Aerosol Flow / L/min',
+                            'Bypass Flow (L/min)': 'Bypass Flow / L/min', 'Low Voltage (V)': 'Low Voltage / V',
+                            'High Voltage (V)': 'High Voltage / V', 'Lower Size (nm)': 'Lower Size / nm',
+                            'Upper Size (nm)': 'Upper Size / nm', 'Density (g/cm³)': u'Density / g/cm\u00B3',
+                            'td + 0.5 (s)': 'td + 0.5 / s', 'tf (s)': 'tf / s', 'D50 (nm)': 'D50 / nm',
+                            'Neutralizer Status ': 'Neutralizer Status', 'Median (nm)': 'Median / nm', 'Mean (nm)':
+                            'Mean / nm', 'Geo. Mean (nm)': 'Geo. Mean / nm', 'Mode (nm)': 'Mode / nm',
+                            'Total Conc. (#/cm³)': u'Total Conc. / 1/cm\u00B3'}
+        df.rename(columns=mapping, inplace=True)
+    elif used_device == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]:
+        mapping = {'Sample Temp (C)': 'Sample Temp / °C', 'Sample Pressure (kPa)': 'Sample Pressure / kPa',
+                    'Mean Free Path (m)': 'Mean Free Path / m', 'Gas Viscosity (Pa*s)': u'Gas Viscosity / Pa\u00B7s',
+                    'Diameter Midpoint': 'Diameter Midpoint / nm', 'Scan Up Time(s)': 'Scan Time / s',
+                    'Retrace Time(s)': 'Retrace Time / s', 'Impactor Type(cm)': 'Impactor Type / cm',
+                    'Sheath Flow(lpm)': 'Sheath Flow / L/min', 'Aerosol Flow(lpm)': 'Aerosol Flow / L/min',
+                    'CPC Inlet Flow(lpm)': 'CPC Inlet Flow / L/min', 'CPC Sample Flow(lpm)': 'CPC Sample Flow / L/min',
+                    'Low Voltage': 'Low Voltage / V', 'High Voltage': 'High Voltage / V',
+                    'Lower Size(nm)': 'Lower Size / nm', 'Upper Size(nm)': 'Upper Size / nm',
+                    'Density(g/cc)': u'Density / g/cm\u00B3', 'td(s)': 'td / s', 'tf(s)': 'tf / s',
+                    'D50(nm)': 'D50 / nm', 'Median(nm)': 'Median / nm', 'Mean(nm)': 'Mean / nm',
+                    'Geo. Mean(nm)': 'Geo. Mean / nm', 'Mode(nm)': 'Mode / nm',
+                    'Total Conc.(#/cm3)': u'Total Conc. / 1/cm\u00B3'}
+        df.rename(columns=mapping, inplace=True)
+    else:
+        pass
+
+    return df
+
+
 def def_used_smps(used_device):
-    """define parameters that are different between the different smps systems"""
+    """define parameters that are different between the different smps systems, here already renamed values are used, as
+    the following comparison of columns is done based upon general naming scheme of the whole script"""
 
     if used_device == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]:
         # compare the used_device parameter taken from particle_analysis.get_data() to the values defined in
         # Def.device_list - done this way, so device_list can be changed easily without having to rewrite everything
-        parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp (C)', 'Sample Pressure (kPa)',
-                            'Relative Humidity (%)', 'Mean Free Path (m)', 'Gas Viscosity (Pa*s)',
-                            'Diameter Midpoint (nm)', 'Scan Time (s)', 'Retrace Time (s)', 'Scan Resolution (Hz)',
-                            'Scans Per Sample', 'Sheath Flow (L/min)', 'Aerosol Flow (L/min)', 'Bypass Flow (L/min)',
-                            'Low Voltage (V)', 'High Voltage (V)', 'Lower Size (nm)', 'Upper Size (nm)',
-                            'Density (g/cm³)', 'td + 0.5 (s)', 'tf (s)', 'D50 (nm)', 'Neutralizer Status ',
-                            'Median (nm)', 'Mean (nm)', 'Geo. Mean (nm)', 'Mode (nm)', 'Geo. Std. Dev.',
-                            'Total Conc. (#/cm³)', 'Title', 'User Name', 'Sample ID', 'Instrument ID', 'Lab ID',
+        parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp / °C', 'Sample Pressure / kPa',
+                            'Relative Humidity %', 'Mean Free Path / m', u'Gas Viscosity / Pa\u00B7s',
+                            'Diameter Midpoint / nm', 'Scan Time / s', 'Retrace Time / s', 'Scan Resolution / Hz',
+                            'Scans Per Sample', 'Sheath Flow / L/min', 'Aerosol Flow / L/min', 'Bypass Flow / L/min',
+                            'Low Voltage / V', 'High Voltage / V', 'Lower Size / nm', 'Upper Size / nm',
+                            u'Density / g/cm\u00B3', 'td + 0.5 / s', 'tf / s', 'D50 / nm', 'Neutralizer Status',
+                            'Median / nm', 'Mean / nm', 'Geo. Mean / nm', 'Mode / nm', 'Geo. Std. Dev.',
+                            u'Total Conc. / 1/cm\u00B3', 'Title', 'User Name', 'Sample ID', 'Instrument ID', 'Lab ID',
                             'Leak Test and Leakage Rate', 'Instrument Errors', 'Comment']
         header_pos = 25
         time_format = '%m/%d/%Y %H:%M:%S'
 
         # "Neutralizer Status " is not contained in every measurement file... additionally it has a space in the column
-        # added the following part to avoid the KeyError - key not found in files that do not contain this column
-        # seems to work also for other fields that are not contained in the data :D Only when new fields are in the
-        # data, but not in the list above, they should be addded to the list.
 
     elif used_device == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]:
-        parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp (C)', 'Sample Pressure (kPa)',
-                            'Relative Humidity (%)', 'Mean Free Path (m)', 'Gas Viscosity (Pa*s)',
-                            'Diameter Midpoint (nm)', 'Scan Time (s)', 'Retrace Time (s)', 'Down Scan First',
-                            'Scans Per Sample', 'Impactor Type (cm)', 'Sheath Flow (L/min)', 'Aerosol Flow (L/min)',
-                            'CPC Inlet Flow (L/min)', 'CPC Sample Flow (L/min)', 'Low Voltage (V)', 'High Voltage (V)',
-                            'Lower Size (nm)', 'Upper Size (nm)', 'Density (g/cm³)', 'td (s)', 'tf (s)', 'D50 (nm)',
-                            'Median (nm)', 'Mean (nm)', 'Geo. Mean (nm)', 'Mode (nm)', 'Geo. Std. Dev.',
-                            'Total Conc. (#/cm³)', 'Title', 'Status Flag', 'Comment']
+        parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp / °C', 'Sample Pressure / kPa',
+                            'Relative Humidity %', 'Mean Free Path / m', u'Gas Viscosity / Pa\u00B7s',
+                            'Diameter Midpoint / nm', 'Scan Time / s', 'Retrace Time / s', 'Down Scan First',
+                            'Scans Per Sample', 'Impactor Type / cm', 'Sheath Flow / L/min', 'Aerosol Flow / L/min',
+                            'CPC Inlet Flow / L/min', 'CPC Sample Flow / L/min', 'Low Voltage / V', 'High Voltage / V',
+                            'Lower Size / nm', 'Upper Size / nm', u'Density / g/cm\u00B3', 'td / s', 'tf / s',
+                            'D50 / nm', 'Median / nm', 'Mean / nm', 'Geo. Mean / nm', 'Mode / nm', 'Geo. Std. Dev.',
+                            u'Total Conc. / 1/cm\u00B3', 'Title', 'Status Flag', 'Comment']
         header_pos = 17
         time_format = '%m/%d/%y %H:%M:%S'
     else:
@@ -57,26 +92,6 @@ def def_used_smps(used_device):
         time_format = used_device
 
     return parameter_list, header_pos, time_format
-
-
-def rename_columns(df, used_device):
-    """rename the colums, so they follow the same scheme as the 3938 columns"""
-    if used_device == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]:
-        mapping = {'Diameter Midpoint': 'Diameter Midpoint (nm)', 'Scan Up Time(s)': 'Scan Time (s)',
-                    'Retrace Time(s)': 'Retrace Time (s)', 'Impactor Type(cm)': 'Impactor Type (cm)',
-                    'Sheath Flow(lpm)': 'Sheath Flow (L/min)', 'Aerosol Flow(lpm)': 'Aerosol Flow (L/min)',
-                    'CPC Inlet Flow(lpm)': 'CPC Inlet Flow (L/min)', 'CPC Sample Flow(lpm)': 'CPC Sample Flow (L/min)',
-                    'Low Voltage': 'Low Voltage (V)', 'High Voltage': 'High Voltage (V)',
-                    'Lower Size(nm)' : 'Lower Size (nm)', 'Upper Size(nm)': 'Upper Size (nm)',
-                    'Density(g/cc)': 'Density (g/cm³)', 'td(s)': 'td (s)', 'tf(s)': 'tf (s)',
-                    'D50(nm)': 'D50 (nm)', 'Median(nm)': 'Median (nm)', 'Mean(nm)': 'Mean (nm)',
-                    'Geo. Mean(nm)': 'Geo. Mean (nm)', 'Mode(nm)': 'Mode (nm)',
-                    'Total Conc.(#/cm3)': 'Total Conc. (#/cm³)'}
-        df.rename(columns=mapping, inplace=True)
-    else:
-        pass
-
-    return df
 
 
 def import_data(filename, used_device):
@@ -100,6 +115,11 @@ def import_data(filename, used_device):
     data = rename_columns(data, used_device)
 
     nr_scans = len(data)
+
+    # added the following part to avoid the KeyError - key not found in files that do not contain some columns like
+    # "Neutralizer Status"
+    # seems to work also for other fields that are not contained in the data :D Only when new fields are in the
+    # data, but not in the list above, they should be added to the list.
 
     for k in parameter_list:
         if k in data:
@@ -164,9 +184,9 @@ def import_data(filename, used_device):
 
         # Method 3: constructing my own x-axis based on lower and upper limits given in measurement file
         # also the two less indented lines after this block for calculating X and assigning it to X are required
-        const_dlogX = np.log10(add_info["Upper Size (nm)"]/add_info["Lower Size (nm)"])/nr_bins
-        Xl[i, 0] = add_info["Lower Size (nm)"][i]
-        Xu[i, -1] = add_info["Upper Size (nm)"][i]
+        const_dlogX = np.log10(add_info["Upper Size / nm"]/add_info["Lower Size / nm"])/nr_bins
+        Xl[i, 0] = add_info["Lower Size / nm"][i]
+        Xu[i, -1] = add_info["Upper Size / nm"][i]
         for k in range(1, nr_bins):
             Xl[i, k] = Xl[i, k-1]*10**(const_dlogX[i])
             Xu[i, k-1] = Xl[i, k]

@@ -20,21 +20,21 @@ from Def import device_list
 
 def import_data(filename):
     """"""
-    parameter_list = ["Date", "Time", "Comment", u"1s Mean Particle Concentration (1/cm\u00B3)",
-                      u"10s Mean Particle Concentration (1/cm\u00B3)", u"Mean Droplet size (\u00B5m)",
-                      "Aerosol Flow (L/min)", "Empty Field", "T Condenser (C)", "T Saturator (C)",
+    parameter_list = ["Date", "Time", "Comment", u"1s Mean Particle Concentration / 1/cm\u00B3",
+                      u"10s Mean Particle Concentration / 1/cm\u00B3", u"Mean Droplet size / \u00B5m",
+                      "Aerosol Flow / L/min", "Empty Field", "T Condenser / °C", "T Saturator / °C",
                       "Operating Mode DSI (0=off, 1=Humidity, 2=Diiferential Pressure)",
-                      "Target Relative Humidity (%)", "Target Differential Pressure (Pa)",
-                      "Actual Differential Pressure (Pa)", "Power of Pump (%)", "Relative Humidity (%)",
-                      "Absolute Pressure (mbar)", "T Aerosol Inlet (C)", "Error Notification (0=no Error, 1 = Error",
+                      "Target Relative Humidity %", "Target Differential Pressure / Pa",
+                      "Actual Differential Pressure / Pa", "Power of Pump %", "Relative Humidity %",
+                      "Absolute Pressure / mbar", "T Aerosol Inlet / °C", "Error Notification (0=no Error, 1 = Error)",
                       "Position of Valve in MSS 08 (1-8)"]
     # parameters given in PALAS CPC manual 4597-de_V1.0_06/17 page 23, Operating Mode to T Aerosol Inlet only relevant
     # for ENVI CPC
 
-    nonusedcolumns = ["Date", "Time", "Comment", u"1s Mean Particle Concentration (1/cm\u00B3)", "Empty Field",
+    nonusedcolumns = ["Date", "Time", "Comment", u"1s Mean Particle Concentration / 1/cm\u00B3", "Empty Field",
                       "Operating Mode DSI (0=off, 1=Humidity, 2=Diiferential Pressure)",
-                      "Target Relative Humidity (%)", "Target Differential Pressure (Pa)",
-                      "Actual Differential Pressure (Pa)",  "Relative Humidity (%)", "T Aerosol Inlet (C)",
+                      "Target Relative Humidity %", "Target Differential Pressure / Pa",
+                      "Actual Differential Pressure / Pa",  "Relative Humidity %", "T Aerosol Inlet / °C",
                       "Position of Valve in MSS 08 (1-8)"]
     # first four columns are rearranged in the following script and are in this list as they should be excluded from the
     # add_info dataframe, the rest of the columns is currently not giving meaningful data for UFCPC, so they are also
@@ -79,12 +79,12 @@ def import_data(filename):
         # with data from indexlist (startindex of msmt till startindex of next msmt -1 )
         if k == msmt_counter-1:  # for last msmt, no startindex of next is available so end of file is used
             Cn[k, 0:msmt_len_list[k]] = \
-                data[u"1s Mean Particle Concentration (1/cm\u00B3)"][indexlist[k]:len_file]
+                data[u"1s Mean Particle Concentration / 1/cm\u00B3"][indexlist[k]:len_file]
             start_time.append(datetime.strptime(data["Date"][indexlist[k]] + " " + data["Time"][indexlist[k]],
                                                 '%m/%d/%Y %I:%M:%S %p'))
         else:
             Cn[k, 0:msmt_len_list[k]] = \
-                data[u"1s Mean Particle Concentration (1/cm\u00B3)"][indexlist[k]:indexlist[k+1]]
+                data[u"1s Mean Particle Concentration / 1/cm\u00B3"][indexlist[k]:indexlist[k+1]]
             start_time.append(datetime.strptime(data["Date"][indexlist[k]] + " " + data["Time"][indexlist[k]],
                                                 '%m/%d/%Y %I:%M:%S %p'))
 

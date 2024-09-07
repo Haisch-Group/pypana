@@ -92,14 +92,14 @@ def import_data(filename):
             # 5 is based on the inverted diff corrected data, 3 on the raw data, 4 is inverted but not diff corrected
             Cn[i, k-2] = data[int(int(conc_data) + i * 6)][int(k)]
 
-    parameter_list = ["Date", "Time", "Comment", "Sheath Temp (C)", "Sample Pressure (mbar)", "Sheath Flow (L/min)",
-                      "Aerosol Flow (L/min)", "Relative Humidity Aerosol (%)", "Relative Humidity Sheath (%)",
-                      "Sample Temp (C)", "Diff Pressure Impactor (Pa)", "Inner Diameter Column (mm)",
-                      "Outer Diameter Column (mm)", "Length Column (mm)", "Transfer-Function A", "Transfer-Function d",
-                      "Transfer-Function C", "Set Sheath Flow (L/min)", "Set Aerosol Flow (L/min)", "td (s)",
-                      "Counter Type (0=CPC, 1=Elektrometer)", "Lower Size (nm)", "Upper Size (nm)",
-                      "Scan Type (0=up, 1=down, 2=up+down_avg, 3=up+down_single)", "Scan Time (s)",
-                      "Pre Scan Stabilisation Time (s)", "Neutralizer Type (0=Kr-85, 1=X-Ray)",
+    parameter_list = ["Date", "Time", "Comment", "Sheath Temp / °C", "Sample Pressure / mbar", "Sheath Flow / L/min",
+                      "Aerosol Flow / L/min", "Relative Humidity Aerosol %", "Relative Humidity Sheath %",
+                      "Sample Temp / °C", "Diff Pressure Impactor / Pa", "Inner Diameter Column / mm",
+                      "Outer Diameter Column / mm", "Length Column / mm", "Transfer-Function A", "Transfer-Function d",
+                      "Transfer-Function C", "Set Sheath Flow / L/min", "Set Aerosol Flow / L/min", "td / s",
+                      "Counter Type (0=CPC, 1=Elektrometer)", "Lower Size / nm", "Upper Size / nm",
+                      "Scan Type (0=up, 1=down, 2=up+down_avg, 3=up+down_single)", "Scan Time / s",
+                      "Pre Scan Stabilisation Time / s", "Neutralizer Type (0=Kr-85, 1=X-Ray)",
                       "HV Polarity (0=positive, 1=negative)"]
 
     # parameters given in PALAS SMPS manual 6787-de_V2.1_08/21 page 66, newer SMPS has 2 columns more in each header row
