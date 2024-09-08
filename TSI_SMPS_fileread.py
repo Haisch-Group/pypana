@@ -209,6 +209,7 @@ def import_data(filename, used_device):
     for i in range(nr_scans):
         time.append(datetime.strptime(data["Date"][i] + " " + data["Start Time"][i], time_format))
 
+    # adding columns to the add_info dataframe in specific positions to match the common scheme
     add_info.insert(loc=add_info.columns.get_loc("Sample Pressure / kPa") + 1, column="Sample Pressure / mbar",
                     value=sample_p_mbar)
     add_info.insert(loc=0, column="Time", value=time)
