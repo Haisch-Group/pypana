@@ -229,11 +229,15 @@ def import_data_dict(used_device):
 
 if __name__ == "__main__":
 
-    filename = get_filename()
     SMPS_3071_id = device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]
     SMPS_3938_id = device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]
     print(f"{SMPS_3071_id} = SMPS 3071; {SMPS_3938_id} = SMPS 3938")
     used_device = int(input("Which instrument did you use? Enter as int."))
-    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
-    print(f"imported {filename}")
 
+    # filename = get_filename()
+    # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
+    # print(f"imported {filename}")
+
+
+    data_dict = import_data_dict(used_device)
+    print(f"imported {data_dict['filename']} as dictionary")

@@ -134,6 +134,10 @@ def import_data_dict(used_device):
 
 if __name__ == "__main__":
 
-    filename = get_filename()
-    Cn, el_time, start_time = import_data(filename)
-    print(f"imported {filename}")
+    # filename = get_filename()
+    # Cn, el_time, start_time = import_data(filename)
+    # print(f"imported {filename}")
+
+    data_dict = \
+        import_data_dict(device_list.query("Import_Script=='PALAS_UFCPC_fileread'")["Device_Identifier"].values[0])
+    print(f"imported {data_dict['filename']} as dictionary")

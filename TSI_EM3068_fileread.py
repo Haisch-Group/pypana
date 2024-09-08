@@ -130,3 +130,7 @@ if __name__ == "__main__":
     filename = get_filename()
     Cn, el_time, add_info = import_data(filename)
     print(f"imported {filename}")
+
+    # data_dict = \
+    #     import_data_dict(device_list.query("Import_Script=='TSI_EM3068_fileread'")["Device_Identifier"].values[0])
+    # print(f"imported {data_dict['filename']} as dictionary")
