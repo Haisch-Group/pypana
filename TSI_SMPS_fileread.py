@@ -238,6 +238,5 @@ if __name__ == "__main__":
     # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
     # print(f"imported {filename}")
 
-
     data_dict = import_data_dict(used_device)
     print(f"imported {data_dict['filename']} as dictionary")
