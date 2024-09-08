@@ -52,3 +52,12 @@ def normal_logic_converter(nr_list):
     normal_nr_list = []
     [normal_nr_list.append(i + 1) for i in nr_list]
     return normal_nr_list
+
+
+def convert_standard_to_volumetric_flow(standard_flow, T_flow, p_flow, T_standard, p_standard):
+    """converts standard flow rate given by mass flow controllers to volumetric flow rate as required for calculation
+    of aerosol concentrations based on ideal gas law
+    units must match, so T should be given in °C, p should be given in matching units, Pa, kPa, mbar, or bar
+    formula also given in TSI Application Note FLOW-004"""
+    volumetric_flow = standard_flow*((T_flow+273.15)/(T_standard+273.15)*(p_standard/p_flow))
+    return volumetric_flow
