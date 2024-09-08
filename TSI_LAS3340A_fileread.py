@@ -44,7 +44,7 @@ def import_single_data(filename):
     # parameters as given in the LASER AEROSOL SPECTROMETER MODEL 3340A Operation and service manual P/N 6012274
     # Revision C April 2019 Section B-10
 
-    # Ref. is the laser reference voltage for monitoring relative laser power, should be between 1 and 2.8 V ideal
+    # Ref. is the laser reference voltage for monitoring relative laser power, should be between 1 and 2.8 V, idealy
     # between 2.2 and 2.7 V
 
     usedcolumns = ['Accum. / s', 'Scatter / V', 'Current / V', u'Aerosol Flow / scm\u00B3/min',
