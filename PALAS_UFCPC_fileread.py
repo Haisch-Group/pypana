@@ -136,5 +136,4 @@ if __name__ == "__main__":
 
     filename = get_filename()
     Cn, el_time, start_time = import_data(filename)
-
-
+    print(f"imported {filename}")
