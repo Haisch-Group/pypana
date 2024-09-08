@@ -57,7 +57,8 @@ all_parameters = [['Absolute Pressure / mbar', 'Actual Differential Pressure / P
 
 elementary_charge = 1.602176634*10**(-19)  # in Coulomb = As https://physics.nist.gov/cgi-bin/cuu/Value?e
 
-TSI_standard_conditions = {'T / °C': 21.11, 'p / kPa': 101.3}  # values given in TSI Application Note FLOW-004
+TSI_standard_conditions = {'T / K': 294.26, 'Pressure / kPa': 101.3}  # values given in TSI Application Note FLOW-004 as
+# 21.11°C and 101.3 kPa
 
 if __name__ == "__main__":
 
