@@ -70,8 +70,8 @@ def import_single_data(filename):
 
     corr_aerosol_flow = convert_standard_to_volumetric_flow(add_info[u'Aerosol Flow / scm\u00B3/min'].astype(float),
                                                             add_info['Box / K'].astype(float),
-                                                            add_info['Pressure / kPa'].astype(float), \
-                                                            TSI_standard_conditions['T / K'], \
+                                                            add_info['Pressure / kPa'].astype(float),
+                                                            TSI_standard_conditions['T / K'],
                                                             TSI_standard_conditions['Pressure / kPa'], 'K')
 
     X = np.zeros(counts.shape)
@@ -128,6 +128,7 @@ def import_data(filenames):
 def import_data_dict(used_device):
     filenames = get_filenames()
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filenames)
+    data_dict = {}
     for k in range(len(filenames)):
         data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filenames,
                  "used_device": used_device, "add_info": add_info}
