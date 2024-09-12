@@ -18,6 +18,8 @@ import math
 from scipy import optimize
 import pandas as pd
 import Sup
+import Def
+import decimal
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
 
@@ -40,8 +42,8 @@ def select_data(data, sel_nrs):  # merge with cut_dist ?
         sel_Cn[k, :] = data["Cn"][scan_nrs[k], :]
         sel_X[k, :] = data["X"][scan_nrs[k], :]
         sel_dX[k, :] = data["dX"][scan_nrs[k], :]
-        sel_time.append(data["time"][scan_nrs[k]])
-        sel_scan_nr.append(data["scan_nr"][scan_nrs[k]])
+        sel_time.append(data["add_info"]["Time"][scan_nrs[k]])
+        sel_scan_nr.append(data["add_info"]["Scan Nr"][scan_nrs[k]])
         sel_filename.append(data["filename"])
         sel_used_device.append(data["used_device"])
     sel_data = {"X": sel_X, "Cn": sel_Cn, "dX": sel_dX, "time": sel_time, "scan_nr": sel_scan_nr,
@@ -89,18 +91,39 @@ def cut_dist(X, C, dX, lowerbound, upperbound, scan_nrs):  # merge with select_d
 
 def merge_data(sel_data_list):
     """merges dictionaries of data, should best be used with selected data dicts"""
+    merged_data_X = []  # create lists to fill with list of 1D arrays
+    merged_data_Cn = []
+    merged_data_dX =[]
+    n_scans = 0  # count measurements that are imported to the lists
+    x_len_list = []
+    for i in sel_data_list:  # append all imported lines to the lists
+        for k in range(len(i["scan_nr"])):
+            merged_data_X.append(i["X"][k])
+            merged_data_Cn.append(i["Cn"][k])
+            merged_data_dX.append(i["dX"][k])
+            n_scans += 1
+            x_len_list.append(len(i["X"][k]))
+    x_len = max(x_len_list)  # get maximum length of the x_axis elements -> longest x-axis is base for array
+    merged_array_X = np.zeros((n_scans, x_len))  # preallocate arrays for X, Cn, dX
+    merged_array_Cn = np.zeros((n_scans, x_len))
+    merged_array_dX = np.zeros((n_scans, x_len))
+    merged_array_X[:] = np.nan  # fill with nans so no weird zero values are plotted later
+    merged_array_Cn[:] = np.nan
+    merged_array_dX[:] = np.nan
+    for k in range((n_scans)):  # fill arrays row wise with data from list elements
+        merged_array_X[k, 0:len(merged_data_X[k])] = merged_data_X[k]
+        merged_array_Cn[k, 0:len(merged_data_Cn[k])] = merged_data_Cn[k]
+        merged_array_dX[k, 0:len(merged_data_dX[k])] = merged_data_dX[k]
+
     merged_data = {}
-    merged_data["X"] = sel_data_list[0]["X"]
-    merged_data["Cn"] = sel_data_list[0]["Cn"]
-    merged_data["dX"] = sel_data_list[0]["dX"]
+    merged_data["X"] = merged_array_X
+    merged_data["Cn"] = merged_array_Cn
+    merged_data["dX"] = merged_array_dX
     merged_data["time"] = sel_data_list[0]["time"][:]
     merged_data["scan_nr"] = sel_data_list[0]["scan_nr"][:]
     merged_data["origin"] = []
     [merged_data["origin"].append(sel_data_list[0]["filename"]) for k in range(len(sel_data_list[0]["scan_nr"]))]
     for i in sel_data_list[1:]:
-        merged_data["X"] = np.append(merged_data["X"], i["X"], axis=0)
-        merged_data["Cn"] = np.append(merged_data["Cn"], i["Cn"], axis=0)
-        merged_data["dX"] = np.append(merged_data["dX"], i["dX"], axis=0)
         for k in range(len(i["scan_nr"])):
             merged_data["time"].append(i["time"][k])
             merged_data["scan_nr"].append(i["scan_nr"][k])
@@ -130,13 +153,25 @@ def geometric_mean(X, C, conc):
         if conc[k] == 0:
             dg.append(0)
         else:
-            dg.append(math.exp((1/conc[k]) * np.nansum(np.log(X[k])*C[k])))
-            # gives seemingly correct results
-            # dg.append(math.pow(10, ((1 / mean_conc_n[k]) * np.nansum(np.log10(mean_X[k]) * mean_Cn[k]))))
-            # same result as above
-            # dg.append(np.nansum(np.multiply(mean_Cn[k], mean_X[k])) / np.nansum(mean_Cn[k]))
-            # gives bit higher dg that seems wrong
-    return dg  # seems to work
+            dg.append(math.pow(10, ((1 / conc[k]) * np.nansum(np.log10(X[k]) * C[k]))))
+            # dg.append(math.exp((1 / conc[k]) * np.nansum(np.log(X[k])*C[k])))
+            # both methods give the same result only varying by 10**-14 in some cases so negligible
+            # log10 is used, as data is also on log10 base
+    return dg
+
+
+def count_median_diameter(X, C, conc):
+    """does not work atm as all values are float and that only works until 10**308 which is reached with the first
+    power operation """
+    X_dummy = np.array(X.copy(), dtype=np.longdouble)
+    C_dummy = np.array(C.copy(), dtype=np.longdouble)
+    CMD = []
+    for k in np.arange(0, C.shape[0]):
+        if conc[k] == 0:
+            CMD.append(0)
+        else:
+            CMD.append(np.power(np.nanprod(np.power(X_dummy[k], C_dummy[k])), 1/conc[k]))
+    return CMD
 
 
 def geometric_std(X, C, conc, dg):
@@ -365,18 +400,25 @@ def format_plot(fig, ax, used_device):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    if used_device in [3, 4]:  # for micrometer instruments TSI APS, PALAS WELAS
+    if used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m'")["Device_Identifier"].values):
+        # for micrometer instruments TSI APS, PALAS WELAS
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
                xlabel='Particle Diameter / $\mu$m',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$')
-    elif used_device ==5:  # for micrometer instruments with nm x-axis
+    elif used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m in nm'")["Device_Identifier"].values):
+        # for micrometer instruments with nm x-axis
         ax.set(xscale='log', xticks=[100, 300, 800, 2000, 8000], xticklabels=[100, 300, 800, 2000, 8000],
                xlabel='Particle Diameter / $\mu$m',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$')
-    else:  # for nanometer instruments SMPS
+    elif used_device in list(Def.device_list.query("Size_Plot_Range=='nm'")["Device_Identifier"].values):
+        # for nanometer instruments SMPS
         ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
                xlabel='Particle Diameter / nm',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$') # dN/dlogD$_{p}$
+    else:
+        x_label = input("Please enter the desired x-label as string.")
+        y_label = input("Please enter the desired y-label as string.")
+        ax.set(xlabel=x_label, ylabel=y_label)
     # yscale='log', xscale='log', xlabel='$\mathregular{dlog D_p}$ / nm', ylabel='dN / $\mathregular{P/cm^3}$'
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
@@ -491,6 +533,9 @@ def plot_cummdata(data, used_device, scan_nrs):
     plt.legend(legend_entries)  # , loc='upper left')
     plt.show()
     return ax
+
+
+# def plot_add_data():
 
 
 # def plot_3Dsingledata(sel_X, sel_Cn, start, end):
