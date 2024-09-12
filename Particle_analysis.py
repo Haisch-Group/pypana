@@ -18,6 +18,7 @@ import Def
 import pandas as pd
 import numpy as np
 import math
+import dill
 from matplotlib import pyplot as plt
 from matplotlib import ticker
 from scipy import optimize
@@ -53,6 +54,19 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
         dataframe[variable] = data_dict[variable]
     print(f"wrote file with variables {variable_list} to csv with name {path}")
     dataframe.to_csv(path)
+    return
+
+
+def save_session():
+    filename = Sup.set_filename()
+    path = (f"{filename}" + ".dill")
+    dill.dump_session(path)
+    return
+
+
+def load_session():
+    path = Sup.get_filename()
+    dill.load_session(path)
     return
 
 
