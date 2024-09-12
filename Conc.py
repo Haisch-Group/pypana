@@ -130,10 +130,40 @@ def plot_timeline(mean_Cn, std_Cn, start_time, start, end):
 # Maybe add D50 eval function?
 
 
+def plot_calc_conc_n(data, scan_nrs):
+    """ function by Nico"""
+    plot_nrs = py_logic_converter(scan_nrs)
+    x_axis = range(1, len(scan_nrs) + 1)
+    calc_conc_n = data["calc_conc_n"]
+    fig, ax = plt.subplots()
+    if len(plot_nrs) == 1:
+        k = plot_nrs[0]
+        ax.scatter(x_axis[k], calc_conc_n[k], edgecolor="black")
+        print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+    else:
+        for k in range(len(plot_nrs)):
+            ax.scatter(x_axis[k], calc_conc_n[plot_nrs[k]], edgecolor="black")
+            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+    format_conc_plot(fig, ax, scan_nrs)
+    plt.show()
+    return ax
+
+
+def format_conc_plot(fig, ax, scan_nrs):
+    cm = 1 / 2.54  # inches to cm
+    fig.set_size_inches(18.5 * cm, 10 * cm)
+    xtick_entries = []
+    for k in scan_nrs:
+        xtick_entries.append(input(f"Please enter the xtick entries for measurement {k}"))
+    ax.set(xticks=range(1, len(scan_nrs)+1), xticklabels=xtick_entries,
+           ylabel='Number Concentration / $\mathregular{1/cm^3}$')
+    fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
+    return
+
+
 if __name__ == "__main__":
 
     """"""
-    # data_identifier = get_data()
     # get_meanconc(data)
     # measurement_nr = [0]#np.arange(0, 3)
     # ax = plot_singledata(Cn, el_time, conc_n, std_n, measurement_nr)
