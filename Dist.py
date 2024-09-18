@@ -372,7 +372,7 @@ def plot_singledata(data, scan_nrs):
         for k in plot_nrs:
             ax.bar(X[k, :], Cn[k, :], width=bar_width[k, :], edgecolor='black', alpha=0.5)
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3" )
             ct += 1
     format_plot(fig, ax, used_device)
     #plt.rcParams['figure.dpi'] = 600

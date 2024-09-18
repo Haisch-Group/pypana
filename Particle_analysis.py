@@ -18,6 +18,7 @@ import math
 from matplotlib import pyplot as plt
 from matplotlib import ticker
 from scipy import optimize
+import dill
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
 
@@ -107,6 +108,16 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
     dataframe.to_csv(path)
     return
 
+def save_session():
+    filename = Sup.set_filename()
+    path = (f"{filename}" + ".dill")
+    dill.dump_session(path)
+    return
+
+def load_session():
+    path = Sup.get_filename()
+    dill.load_session(path)
+    return
 
 if __name__ == "__main__":
 
@@ -199,7 +210,7 @@ if __name__ == "__main__":
     
     ## Calculation of cummulative distribution
     
-    data_identifier["cummC"] = cummulative_distribution(data_identifier["Cn"])
+    data_identifier["cummC"] = Dist.cumulative_distribution(data_identifier["Cn"])
     data_identifier["X10"], data_identifier["X16"], data_identifier["X50"], data_identifier["X84"], 
         data_identifier["X90"] = Dist.cumulative_diameters(data_identifier["X"], data_identifier["cummC"]
     
@@ -222,7 +233,7 @@ if __name__ == "__main__":
     
     ### plot cumulative data
     
-    ax = Dist.plot_cummdata(data_identifier, used_device, scan nrs)
+    ax = Dist.plot_cummdata(data_identifier, data_identifier["used_device"], scan_nrs)
     
     # Concentration specific calls
     
