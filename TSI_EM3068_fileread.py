@@ -53,6 +53,7 @@ def import_data(filename):
     scan_nr = []
     flow_list = []
     sub_flow_list = []
+    comment_list = []
     counter = 1
 
     # Filling sub_em_voltage and sub_el_time with values every time a new entry that is not zero is found in the sample
@@ -64,16 +65,18 @@ def import_data(filename):
         if data[k, 0] == 0:  # when the first column value in the line is 0, no sample was saved, so it is skipped
             continue
         elif data[k, 0] != 0 and data[k, 0] != data[k - 1, 0]:  # when the first column value is not zero and is
-            # different from the last first column value, a new value is started
+            # different from the last first column value, a new measurement is started
             if len(sub_el_time) == 0:  # if the length of the sub... list is 0, no measurement was saved in it before
                 sub_em_voltage.append(data[k, 2])  # so only the new measurement is appended to it
                 sub_el_time.append(data[k, 1])
                 sub_flow_list.append(flowrate)
+                comment_list.append(str(data[k, 0]))
             else:  # if the length is not zero, a measurement was saved in it before, so the data of the sub... lists is
                 em_voltage.append(sub_em_voltage)  # transferred to em_voltage and tot_el_time
                 tot_el_time.append(sub_el_time)
                 flow_list.append(sub_flow_list)
                 scan_nr.append(counter)  # also a scan number is added to the scan_nr list
+                comment_list.append((data[k, 0]))
                 counter += 1  # the new scan number for the next measurement is set
                 sub_em_voltage = []  # the sub... lists are reset for saving the next measurements
                 sub_el_time = []
@@ -110,7 +113,8 @@ def import_data(filename):
         start_time.append(start+timedelta(0, tot_el_time[k][0]))  # add elapsed time at beginning of the
         # measurement to the start and by that fill the start_time list with times since the start of the measurement
 
-    add_info = pd.DataFrame({"Scan Nr": scan_nr, "Time": start_time, "Aerosol Flow (L/min)": list(flow_lpm)})
+    add_info = pd.DataFrame({"Scan Nr": scan_nr, "Time": start_time, "Comment": comment_list,
+                             "Aerosol Flow (L/min)": list(flow_lpm)})
     # passed flow_lpm in add_info as list, when more actions should be done with flow rate, I would move it out of
     # add_info and make it a dictionary entry on its own
 
