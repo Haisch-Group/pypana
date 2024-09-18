@@ -439,14 +439,14 @@ def plot_singledata(data, scan_nrs):
         ax.bar(X[k, :], Cn[k, :], width=dX[k, :], edgecolor='black')
         legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
         # scan_nrs is used here on purpose
-        print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+        print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
     else:
         legend_entries = []
         ct = 0
         for k in plot_nrs:
             ax.bar(X[k, :], Cn[k, :], width=dX[k, :], edgecolor='black', alpha=0.5)
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+            print(f"scan {scan_nrs[k]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
             ct += 1
     format_plot(fig, ax, used_device)
     #plt.rcParams['figure.dpi'] = 600
@@ -486,7 +486,7 @@ def plot_meandata(mean_data, scan_nrs):
         legend_entries.append(user_input + " (" + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
            str("{:.2f}".format(float(std_dg[k]))) + " nm)")
         # legend_entries.append(user_input) # scan_nrs is used here on purpose
-    [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
+    [print(f"measurement {scan_nrs[k]} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
            "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
     format_plot(fig, ax, used_device)
@@ -518,14 +518,14 @@ def plot_cummdata(data, used_device, scan_nrs):
         ax.bar(X[k, :], normcummCn[k, :], width=dX[k, :], edgecolor='black')
         legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
         # scan_nrs is used here on purpose
-        print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+        print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
     else:
         legend_entries = []
         ct = 0
         for k in plot_nrs:
             ax.bar(X[k, :], normcummCn[k, :], width=dX[k, :], edgecolor='black', alpha=0.5)
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+            print(f"scan {scan_nrs[k]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
             ct += 1
     format_plot(fig, ax, used_device)
     #plt.rcParams['figure.dpi'] = 600
