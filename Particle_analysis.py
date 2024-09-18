@@ -51,7 +51,12 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
     # path = data_dict["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".csv"
     dataframe = pd.DataFrame()
     for variable in variable_list:
-        dataframe[variable] = data_dict[variable]
+        if variable in data_dict:
+            dataframe[variable] = data_dict[variable]
+        elif variable in data_dict["add_info"]:
+            dataframe[variable] = data_dict["add_info"][variable]
+        else:
+            print(f"{variable} is neither in the top level of the data, nor in the add_info dataframe")
     print(f"wrote file with variables {variable_list} to csv with name {path}")
     dataframe.to_csv(path)
     return
@@ -105,12 +110,12 @@ if __name__ == "__main__":
     
     ## For Distributionss
     
-    save_calc_to_csv(data_identifier, ["scan_nr", "time", "dg", "sigma", "calc_conc_n", "X10", "X16", "X50", "X84", 
+    save_calc_to_csv(data_identifier, ["Scan Nr", "Time", "dg", "sigma", "calc_conc_n", "X10", "X16", "X50", "X84", 
     "X90"], fileaddition="particleDF")
     
     ## For Concentrations
     
-    save_calc_to_csv(data_identifier, ["scan_nr", "start_time", "conc_n", "std_n"], fileaddition="particleDF")
+    save_calc_to_csv(data_identifier, ["Scan Nr", "Time", "conc_n", "std_n"], fileaddition="particleDF")
     
     # Distribution-specific Functions
     
@@ -227,10 +232,8 @@ if __name__ == "__main__":
     ## Save and load session
     ### Save
     
-    import dill
-    filename = "Z:/Projects/AeroCal/Measurements/whatever.dill"
-    dill.dump_session(filename)
+    save_session()
     
     ### Load
-    dill.load_session(filename)
+    load_session()
     """
