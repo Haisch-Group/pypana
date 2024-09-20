@@ -32,11 +32,20 @@ def select_data(Cn, msmt_nrs):
     return sel_Cn
 
 
-def get_meanconc(data, conc_key):
+def calc_meanconc(data, used_C="Cn"):
     """gives mean and std of a concentration array based on the key given as str
+    call: mean_C, std_C = calc_meanconc(data, "Cn") """
+    mean_C = np.nanmean(data[used_C], 1)
+    std_C = np.nanstd(data[used_C], 1)
+    return mean_C, std_C
+
+
+def get_meanconc(data, used_C="Cn"):
+    """gives mean and std of a concentration array based on the key given as str and writes them into data dictionary
     call: get_meanconc(data, "Cn") """
-    data["mean_"+conc_key] = np.nanmean(data[conc_key], 1)
-    data["std_"+conc_key] = np.nanstd(data["Cn"], 1)
+    mean_C, std_C = calc_meanconc(data, used_C)
+    data["mean_"+used_C] = mean_C
+    data["std_"+used_C] = std_C
     return data
 
 
@@ -48,35 +57,28 @@ def typical_calculations(data):
 def cut_time(data, start, end):
     """can be used to cut conc array time wise"""
     data["cut_Cn"] = data["Cn"][:, start:end]
-    data["cut_time"] = data["el_time"][start:end]
+    data["cut_time"] = data["el_time"][:, start:end]
     return data
 
 
-def plot_fulldata(data, scan_nr):
-    Cn, el_time, mean_Cn, std_Cn, filename = (data["Cn"], data["el_time"], data["mean_Cn"], data["std_Cn"],
-                                              data["filename"])
-    ax = plot_singledata(Cn, el_time, mean_Cn, std_Cn, filename, scan_nr)
-    return ax
-
-
-def plot_cutdata(data, scan_nr):
-    Cn, el_time, mean_Cn, std_Cn, filename = (data["cut_Cn"], data["cut_time"], data["mean_cut_Cn"],
-                                            data["std_cut_Cn"], data["filename"])
-    ax = plot_singledata(Cn, el_time, mean_Cn, std_Cn, filename, scan_nr)
-    return ax
-
-
-def plot_singledata(Cn, el_time, mean_Cn, std_Cn, filename, scan_nr):  # does not work to plot cut cn anymore
+def plot_singledata(data, scan_nr, used_C="Cn"):
     """plots scan data"""
+    C = data[used_C]
+    if used_C == "cut_Cn":
+        el_time = data["cut_time"]
+    else:
+        el_time = data["el_time"]
+    mean_C, std_C = calc_meanconc(data, used_C)
+    filename = data["filename"]
     plot_nr = py_logic_converter(scan_nr)
     cm = 1/2.54  # inches to cm
     fig, ax = plt.subplots(figsize=(18.5*cm, 10*cm))  # height with title 12, without 10
     if len(plot_nr) == 1:
         k = plot_nr[0]
-        ax.scatter(el_time, Cn[k, :], edgecolor='black')
+        ax.scatter(el_time[k, :], C[k, :], edgecolor='black')
     else:
         for k in plot_nr:
-            ax.scatter(el_time, Cn[k, :], edgecolor='black')
+            ax.scatter(el_time[k, :], C[k, :], edgecolor='black')
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set(xlabel='Elapsed Time / s',
            ylabel='Particle Number Concentration / $\mathregular{1/cm^3}$')
@@ -91,8 +93,8 @@ def plot_singledata(Cn, el_time, mean_Cn, std_Cn, filename, scan_nr):  # does no
         legend_entries = []
         for k in plot_nr:
             legend_entries.append(input(f"Please enter the legend entry for measurement {k+1}"))
-    [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_Cn[k])) + u"\u00B1" +
-            "{:e}".format(float(std_Cn[k])) + " P/cm" + u"\u00B3") for k in plot_nr]
+    [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_C[k])) + u"\u00B1" +
+            "{:e}".format(float(std_C[k])) + " P/cm" + u"\u00B3") for k in plot_nr]
     #mpldatacursor.datacursor(ax)
     plt.legend(legend_entries)
 
