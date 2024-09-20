@@ -15,6 +15,8 @@ from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilen
 import numpy as np
 import math
 
+import Sup
+
 
 def get_filename():
     """get one filename via UI"""
@@ -112,3 +114,30 @@ def lognormal_test(x_lower=5, x_upper=1000, x_steps=99, conc=1E5, dg=80, sigma_g
     X = np.logspace(x_lower, x_upper, x_steps, endpoint=True, base=10.0)
     C = (np.exp(-((np.log(X/dg))**2)/(2*np.log(sigma_g)**2))/(np.log(sigma_g)*X*np.sqrt(2*math.pi)))
     return X, C
+
+
+def decide_C_unit(used_C):
+    if used_C == "Cv":
+        C_unit = u" \u00B5m\u00B3 g" + u"/cm\u00B3"
+    elif used_C == "Cm":
+        C_unit = " mg" + u"/cm\u00B3"
+    elif used_C == "Cn_dlogX":
+        C_unit = " 1" + u"/cm\u00B3"
+    else:
+        C_unit = " 1" + u"/cm\u00B3"
+    return C_unit
+
+
+def decide_y_label(used_C):
+    C_unit = Sup.decide_C_unit(used_C)
+    if used_C == "Cn_dlogX":
+        y_label = 'dN/dlogD$_{p}/ ' + C_unit
+    elif used_C == "cumm_C":
+        y_label = 'Fraction of Total Particle Concentration %'
+    elif used_C == "Cv":
+        y_label = 'Volume Concentration / ' + C_unit
+    elif used_C == "Cm":
+        y_label = 'Mass Concentration / ' + C_unit
+    else:
+        y_label = 'Number Concentration / ' + C_unit
+    return y_label

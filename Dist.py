@@ -396,25 +396,26 @@ def mean_and_std(data):
     return mean, std
 
 
-def format_plot(fig, ax, used_device):
+def format_plot(fig, ax, used_C, used_device):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    y_label = Sup.decide_y_label(used_C)
     if used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m'")["Device_Identifier"].values):
         # for micrometer instruments TSI APS, PALAS WELAS
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
                xlabel='Particle Diameter / $\mu$m',
-               ylabel='Number Concentration / $\mathregular{1/cm^3}$')
+               ylabel=y_label)
     elif used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m in nm'")["Device_Identifier"].values):
         # for micrometer instruments with nm x-axis
         ax.set(xscale='log', xticks=[100, 300, 800, 2000, 8000], xticklabels=[100, 300, 800, 2000, 8000],
                xlabel='Particle Diameter / $\mu$m',
-               ylabel='Number Concentration / $\mathregular{1/cm^3}$')
+               ylabel=y_label)
     elif used_device in list(Def.device_list.query("Size_Plot_Range=='nm'")["Device_Identifier"].values):
         # for nanometer instruments SMPS
         ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
                xlabel='Particle Diameter / nm',
-               ylabel='Number Concentration / $\mathregular{1/cm^3}$') # dN/dlogD$_{p}$
+               ylabel=y_label)
     else:
         x_label = input("Please enter the desired x-label as string.")
         y_label = input("Please enter the desired y-label as string.")
@@ -425,30 +426,31 @@ def format_plot(fig, ax, used_device):
     return
 
 
-def plot_singledata(data, scan_nrs):
-    """plots the given data, specify measurement to use from sel_Cn array"""
+def plot_singledata(data, scan_nrs, used_C="Cn"):
+    """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
     X = data["X"]
     dX = data["dX"]
-    Cn = data["Cn"]
-    calc_conc_n = data["calc_conc_n"]
+    C = data[used_C]
+    calc_conc = get_conc(data[used_C])
     used_device = data["used_device"]
     plot_nrs = Sup.py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
+    C_unit = Sup.decide_C_unit(used_C)
     if len(plot_nrs) == 1:
         k = plot_nrs[0]
-        ax.bar(X[k, :], Cn[k, :], width=dX[k, :], edgecolor='black')
-        legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
-        # scan_nrs is used here on purpose
-        print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+        ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black')
+        legend_entries = [input(f"Please enter the legend entry for scan {k+1}")]
+        #print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
     else:
         legend_entries = []
         ct = 0
         for k in plot_nrs:
-            ax.bar(X[k, :], Cn[k, :], width=dX[k, :], edgecolor='black', alpha=0.5)
+            ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', alpha=0.5)
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-            print(f"scan {scan_nrs[k]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+            print()
+            print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
             ct += 1
-    format_plot(fig, ax, used_device)
+    format_plot(fig, ax, used_C, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')
@@ -468,6 +470,7 @@ def plot_meandata(mean_data, scan_nrs):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     # add a mean of n in a corner of the plot
+    used_C = "mean_C"
     mean_X = mean_data["mean_X"]
     mean_dX = mean_data["dX"]
     mean_C = mean_data["mean_C"]
@@ -489,7 +492,7 @@ def plot_meandata(mean_data, scan_nrs):
     [print(f"measurement {scan_nrs[k]} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
            "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
-    format_plot(fig, ax, used_device)
+    format_plot(fig, ax, used_C, used_device)
 
     # maybe add savefig, but then filename must be entered differently as mean data can consist of different input files
 
@@ -501,6 +504,7 @@ def plot_meandata(mean_data, scan_nrs):
 def plot_cummdata(data, used_device, scan_nrs):
     """plots the given data, specify measurement to use from sel_Cn array"""
     # seems to work, just needs another axis label to indicate it is cummulative :D
+    used_C = "cummCn"
     X = data["X"]
     dX = data["dX"]
     cummCn = data["cummCn"]
@@ -527,7 +531,7 @@ def plot_cummdata(data, used_device, scan_nrs):
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
             print(f"scan {scan_nrs[k]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
             ct += 1
-    format_plot(fig, ax, used_device)
+    format_plot(fig, ax, used_C, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')
