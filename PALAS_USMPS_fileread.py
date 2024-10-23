@@ -115,14 +115,15 @@ def import_data(filename):
                       "HV Polarity (0=positive, 1=negative)"]
 
     # parameters given in PALAS SMPS manual 6787-de_V2.1_08/21 page 66, newer SMPS has 2 columns more in each header row
-    # so for these files, additional headers have to be added to header list
+    # so for these files, additional headers have to be added to header list after firmware update both SMPS give these
+    # data
 
     if len(parameters[0]) == 28:
         pass
     elif len(parameters[0]) == 30:
-        parameter_list.extend(["", ""])  # asked PALAS what info they contain, add when reply comes
-    else:
-        parameter_list.extend(["", ""])  # added to avoid the error when there are more columns coming. :D
+        parameter_list.extend(["CPC1 Device Status (0=not ready, 1=ready)", "CPC2 Device Status (0=not ready, 1=ready)"])
+    else:  # added to avoid the error when there are more columns coming. :D
+        parameter_list.extend(["CPC1 Device Status (0=not ready, 1=ready)", "CPC2 Device Status (0=not ready, 1=ready)"])
         count = 2
         while len(parameter_list) < len(parameters[0]):
             parameter_list.append("")  # if parameters have less than 28 columns, still an error will occur
