@@ -46,7 +46,7 @@ def rename_columns(df, used_device):
                     'Density(g/cc)': u'Density / g/cm\u00B3', 'td(s)': 'td / s', 'tf(s)': 'tf / s',
                     'D50(nm)': 'D50 / nm', 'Median(nm)': 'Median / nm', 'Mean(nm)': 'Mean / nm',
                     'Geo. Mean(nm)': 'Geo. Mean / nm', 'Mode(nm)': 'Mode / nm',
-                    'Total Conc.(#/cm3)': u'Total Conc. / 1/cm\u00B3'}
+                    'Total Conc.(#/cm³)': u'Total Conc. / 1/cm\u00B3'}
         df.rename(columns=mapping, inplace=True)
     else:
         pass
