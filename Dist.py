@@ -21,7 +21,6 @@ import Sup
 import Def
 import decimal
 # import scipy.integrate as integrate
-# from matplotlib import cm as colormap
 
 
 def select_data(data, sel_nrs):  # merge with cut_dist ?
@@ -70,7 +69,7 @@ def get_conc(C):
     return calc_conc
 
 
-def cut_dist(X, C, dX, lowerbound, upperbound, scan_nrs):  # merge with select_data
+def cut_dist_data(X, C, dX, lowerbound, upperbound, scan_nrs):  # merge with select_data
     """to cut a part of the spectrum"""
     cut_nrs = Sup.py_logic_converter(scan_nrs)
     strt_idx = np.where(X[0] > lowerbound)[0][0]
@@ -84,10 +83,19 @@ def cut_dist(X, C, dX, lowerbound, upperbound, scan_nrs):  # merge with select_d
         cut_X[ct, :] = X[k, strt_idx:end_idx]
         cut_C[ct, :] = C[k, strt_idx:end_idx]
         cut_dX[ct, :] = dX[k, strt_idx:end_idx]
-        cut_conc = np.nansum(cut_C[ct, :])
+        cut_conc.append(np.nansum(cut_C[ct, :]))
         ct += 1
-    return cut_X, cut_C, cut_dX, cut_conc # write into dict
+    return cut_X, cut_C, cut_dX, cut_conc
 
+
+def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
+    X, dX, C = Sup.extract_from_dict(data, used_C)
+    cut_X, cut_C, cut_dX, cut_conc = cut_dist_data(X, C, dX, lowerbound, upperbound, scan_nrs)
+    data["cut_X"] = cut_X
+    data[f"cut_{used_C}"] = cut_C
+    data["cut_dX"] = cut_dX
+    data[f"cut_conc_{used_C}"] = cut_conc
+    return data
 
 def merge_data(sel_data_list):
     """merges dictionaries of data, should best be used with selected data dicts"""
@@ -239,7 +247,120 @@ def lognormal_fit(X, C):
     m_fit=popt_lognorm_fit[1]
     sigma_fit=popt_lognorm_fit[2]
     Cn_fit=lognormal_function(X, *popt_lognorm_fit)
-    return A_fit, m_fit, sigma_fit ,Cn_fit
+    return A_fit, m_fit, sigma_fit, Cn_fit
+
+
+def multimodal_fit(X, C, n_peaks):
+    """fit function for multimodal peak fitting - obvioulsy atm that is just a spacer :D"""
+    bandlist = X*C*n_peaks
+
+    # def soot_fit(x, y):  # x = spectra[k]['wavenumber'], y = spectra[k]['intensity']
+    # """function to calculate and plot the pentamodal fit for one soot spectrum"""
+    # lower_lim = 800  # set limits for spectral region
+    # upper_lim = 2500
+    # index1 = np.where(x < lower_lim)[-1][-1]  # getting indeces of 800 and 2000 cm^-1 to avoid fitting peaks around d
+    # index2 = np.where(x > upper_lim)[0][0]  # and g bands. ATM these are only used for the fit itsself and not for
+    # # plotting!
+    # # initial parameters for fit with mu = peak position in wavenumbers and some values for A and W, that roughly match
+    # # the size relations of a typical soot spectrum, roughly one datapoint per 2 wavenumbers
+    # A5, W5, mu5 = 0.5, 50, 1580  # G band
+    # A1, W1, mu1 = 0.5, 100, 1350  # D1 band
+    # A3, sigma3, mu3 = 0.5, 200, 1500  # D3 band
+    # A4, W4, mu4 = 0.5, 200, 1200  # D4 band
+    # A2, W2, mu2 = 0.5, 100, 1620  # D2 band
+    #
+    # # calculate the parameters of all modes with scipy.optimize -> non-linear least squares method
+    # # predefining the parameters to fit and their bounds before
+    # pinit = [A5, W5, mu5, A1, W1, mu1, A3, sigma3, mu3, A4, W4, mu4, A2, W2, mu2]
+    # lowerbounds = [0, 0, mu5 - 10, 0, 0, mu1 - 10, 0, 0, mu3 - 20, 0, 0, mu4 - 10, 0, 0, mu2 - 10]
+    # upperbounds = [np.inf, 500, mu5 + 10, np.inf, 500, mu1 + 10, np.inf, 500, mu3 + 20, np.inf, 500, mu4 + 10,
+    #                np.inf, 500, mu2 + 10]
+    # # upperbounds = (np.inf, np.inf, mu5+2, np.inf, np.inf, mu1+2, np.inf, np.inf, mu3+2, np.inf, np.inf, mu4+2, np.inf,
+    # #                  np.inf, mu2+2) # 20230127_changed upperbounds from previous values
+    # popt_soot_fit, pcov_soot_fit = optimize.curve_fit(soot, x[index1:index2], y[index1:index2], p0=pinit,
+    #                                                   bounds=(lowerbounds, upperbounds), maxfev=1000)
+    #
+    # # extract the parameters for each mode
+    # pars_G = popt_soot_fit[0:3]
+    # pars_D1 = popt_soot_fit[3:6]
+    # pars_D3 = popt_soot_fit[6:9]
+    # pars_D4 = popt_soot_fit[9:12]
+    # pars_D2 = popt_soot_fit[12:15]
+    #
+    # pars = {"pars_G": pars_G, "pars_D1": pars_D1, "pars_D3": pars_D3, "pars_D4": pars_D4, "pars_D2": pars_D2}
+    #
+    # # calculate each single band from the lorentz and gauss functions and the parameters determined with scipy.optimize
+    # G_band = lorentz(x, *pars_G)
+    # D1_band = lorentz(x, *pars_D1)
+    # D3_band = gauss(x, *pars_D3)
+    # D4_band = lorentz(x, *pars_D4)
+    # D2_band = lorentz(x, *pars_D2)
+    #
+    # # calculate one standard deviation error
+    # perr_soot_fit = np.sqrt(np.diag(pcov_soot_fit))
+    #
+    # # plot the spectrum, the fit and the single bands
+    # cm = 1 / 2.54  # inches to cm
+    # fig, ax = plt.subplots(figsize=(18.5 * cm, 10 * cm))  # height with title 12, without 10
+    #
+    # ax.plot(x, y)
+    # ax.plot(x, soot(x, *popt_soot_fit), 'k--')
+    # ax.plot(x, G_band, "r")
+    # ax.plot(x, D1_band, "y")
+    # ax.plot(x, D3_band, "b")
+    # ax.plot(x, D4_band, "g")
+    # ax.plot(x, D2_band, "purple")
+    # ax.fill_between(x, G_band.min(), G_band, facecolor="red", alpha=0.5)
+    # ax.fill_between(x, D1_band.min(), D1_band, facecolor="yellow", alpha=0.5)
+    # ax.fill_between(x, D3_band.min(), D3_band, facecolor="blue", alpha=0.5)
+    # ax.fill_between(x, D4_band.min(), D4_band, facecolor="green", alpha=0.5)
+    # ax.fill_between(x, D2_band.min(), D2_band, facecolor="purple", alpha=0.5)
+    # ax.set_xlabel('raman shift / cm$^{-1}$')
+    # ax.set_ylabel('normalized intensity / a.u.')
+    # ax.legend(["original spectrum", "5-band fit", "G-band", "D1-band", "D3-band", "D4-band", "D2-band"])
+    # fig.subplots_adjust(top=0.9, bottom=0.15)
+    # # top :0.8 with title, without 0.95 looks good also change figsize, when adding title!
+    # # plt.title(input("Please enter the legend entry for the spectrum"))
+    # plt.show()
+    #
+    # print("G-red")
+    # print("A = %0.2f (+/-) %0.2f" % (pars_G[0], perr_soot_fit[0]))  # A = amplitude, mu = center, W = width
+    # print("W = %0.2f (+/-) %0.2f" % (pars_G[1], perr_soot_fit[1]))
+    # print("mu = %0.2f (+/-) %0.2f" % (pars_G[2], perr_soot_fit[2]))
+    # print("D1-yellow")
+    # print("A = %0.2f (+/-) %0.2f" % (pars_D1[0], perr_soot_fit[3]))
+    # print("W = %0.2f (+/-) %0.2f" % (pars_D1[1], perr_soot_fit[4]))
+    # print("mu = %0.2f (+/-) %0.2f" % (pars_D1[2], perr_soot_fit[5]))
+    # print("D3-blue")
+    # print("A = %0.2f (+/-) %0.2f" % (pars_D3[0], perr_soot_fit[6]))
+    # print("sigma = %0.2f (+/-) %0.2f" % (pars_D3[1], perr_soot_fit[7]))
+    # print("mu = %0.2f (+/-) %0.2f" % (pars_D3[2], perr_soot_fit[8]))
+    # print("D4-green")
+    # print("A = %0.2f (+/-) %0.2f" % (pars_D4[0], perr_soot_fit[9]))
+    # print("W = %0.2f (+/-) %0.2f" % (pars_D4[1], perr_soot_fit[10]))
+    # print("mu = %0.2f (+/-) %0.2f" % (pars_D4[2], perr_soot_fit[11]))
+    # print("D2-purple")
+    # print("A = %0.2f (+/-) %0.2f" % (pars_D2[0], perr_soot_fit[12]))
+    # print("W = %0.2f (+/-) %0.2f" % (pars_D2[1], perr_soot_fit[13]))
+    # print("mu = %0.2f (+/-) %0.2f" % (pars_D2[2], perr_soot_fit[14]))
+    #
+    # bands = {"G_band": G_band, "D1_band": D1_band, "D3_band": D3_band, "D4_band": D4_band, "D2_band": D2_band}
+    # # saves bands in dictionary
+    #
+    # # calculate area under curve from the lorentz function with the determined parameters
+    # G_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_G))
+    # D1_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_D1))
+    # D3_area = integrate.quad(gauss, lower_lim, upper_lim, args=tuple(pars_D3))
+    # D4_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_D4))
+    # D2_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_D2))
+    #
+    # areas = {"G_area": G_area[0], "D1_area": D1_area[0], "D3_area": D3_area[0], "D4_area": D4_area[0],
+    #          "D2_area": D2_area[0]}
+    # # print(f"area rel. errors: G:{G_area[1]/G_area[0]}, D1:{D1_area[1]/D1_area[0]}, D3:{D3_area[1]/D3_area[0]}, "
+    # #       f"D4:{D4_area[1]/D4_area[0]}, D2:{D2_area[1]/D2_area[0]}")
+    #
+    # return ax, bands, areas, pars, perr_soot_fit
+    return bandlist
 
 
 def calc_geometry(X, C, conc, dX):
@@ -426,11 +547,9 @@ def format_plot(fig, ax, used_C, used_device):
     return
 
 
-def plot_singledata(data, scan_nrs, used_C="Cn"):
+def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
-    X = data["X"]
-    dX = data["dX"]
-    C = data[used_C]
+    X, dX, C = Sup.extract_from_dict(data, used_C)
     calc_conc = get_conc(data[used_C])
     used_device = data["used_device"]
     plot_nrs = Sup.py_logic_converter(scan_nrs)
@@ -438,14 +557,14 @@ def plot_singledata(data, scan_nrs, used_C="Cn"):
     C_unit = Sup.decide_C_unit(used_C)
     if len(plot_nrs) == 1:
         k = plot_nrs[0]
-        ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black')
+        ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[0])
         legend_entries = [input(f"Please enter the legend entry for scan {k+1}")]
         #print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
     else:
         legend_entries = []
         ct = 0
         for k in plot_nrs:
-            ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', alpha=0.5)
+            ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
             print()
             print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
@@ -466,7 +585,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn"):
     return ax
 
 
-def plot_meandata(mean_data, scan_nrs):
+def plot_meandata(mean_data, scan_nrs, colors=Def.tum_cm, a=1):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     # add a mean of n in a corner of the plot
@@ -538,6 +657,15 @@ def plot_cummdata(data, used_device, scan_nrs):
     plt.show()
     return ax
 
+
+# following did not work of course. Instead, there should be a new function created and the format plot should maybe be
+# changed, or rather the save fig passage should be moved to format_plot
+# def plot_mixeddata(datalist):
+#     """plots mixed data from distribution and concentration, enter input as in plot_singledata, but as list of different
+#     inputs like [(data1, [scan_nrs1], used_C1), (data2, [scan_nrs2], used_C2),...]"""
+#     for dataset in datalist:
+#         ax = plot_singledata(dataset[0], dataset[1], dataset[2])
+#     return ax
 
 # def plot_add_data():
 

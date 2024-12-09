@@ -8,8 +8,8 @@ Created 2024-08-29
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 """
-
 import pandas as pd
+from matplotlib import colormaps as cmp
 
 device_list = pd.DataFrame([
     [0, "SMPS 3071", "TSI", "Number Distribution", "Electrodynamic", "nm", "TSI_SMPS_fileread"],
@@ -59,6 +59,17 @@ elementary_charge = 1.602176634*10**(-19)  # in Coulomb = As https://physics.nis
 
 TSI_standard_conditions = {'T / K': 294.26, 'Pressure / kPa': 101.3}  # values given in TSI Application Note FLOW-004 as
 # 21.11°C and 101.3 kPa
+
+std_cm = cmp["tab10"].colors
+tum_cls = {"black": (0, 0, 0, 1), "blue": (0, 101/256, 189/256, 1), "grey-80": (0, 0, 0, 0.8),
+              "grey-50": (0, 0, 0, 0.5), "grey-20": (0, 0, 0, 0.2),
+              "darker-blue": (0, 82/256, 147/256, 1), "very-dark-blue": (0, 51/256, 89/256, 1),
+              "very-light-blue": (152/256, 198/256, 234/256, 1), "light-blue": (100/256, 160/256, 200/256, 1),
+              "ivory": (218/256, 215/256, 203/256, 1), "orange": (227/256, 114/256, 34/256, 1),
+              "green": (162/256, 173/256, 0, 1)}  # in RGBA red green blue alpha
+tum_cm = (tum_cls["blue"], tum_cls["very-light-blue"], tum_cls["orange"], tum_cls["green"], tum_cls["grey-50"],
+          tum_cls["very-dark-blue"], tum_cls["light-blue"], tum_cls["ivory"])
+fh_colors = ()
 
 if __name__ == "__main__":
 
