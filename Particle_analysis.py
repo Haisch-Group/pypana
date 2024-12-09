@@ -77,7 +77,8 @@ def load_session():
 
 if __name__ == "__main__":
 
-    plt.ion()
+    plt.ioff()
+
     """
     The script is run from the python console with the following commands
     
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     
     ## For Concentrations
     
-    save_calc_to_csv(data_identifier, ["Scan Nr", "Time", "conc_n", "std_n"], fileaddition="particleDF")
+    save_calc_to_csv(data_identifier, ["Scan Nr", "Time", "mean_Cn", "std_Cn"], fileaddition="particleDF")
     
     # Distribution-specific Functions
     
@@ -142,8 +143,7 @@ if __name__ == "__main__":
     lowerbound = 100 #in the unit, the size data are saved by the instrument e.g. nm
     upperbound = 350
     cut_nrs = [1, 5, 7, 15]
-    cut_X, cut_Cn, cut_dX = Dist.cut_dist(sel_data["X"], sel_data["Cn"], sel_data["dX"], lowerbound,
-    upperbound, cut_nrs)
+    data_identifier = Dist.cut_dist(data_identifier, lowerbound, upperbound, scan_nrs, used_C="Cn")
     
     Allows to cut specific measurements to a more narrow size region, usually selected data should be used, but also 
     normal data can be used
