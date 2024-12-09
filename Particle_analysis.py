@@ -77,6 +77,7 @@ def load_session():
 
 if __name__ == "__main__":
 
+    # test
     """
     The script is run from the python console with the following commands
     
