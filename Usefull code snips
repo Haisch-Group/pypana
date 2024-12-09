@@ -276,3 +276,7 @@ in Sup einfach die Zeile
 from tkinter.filedialog import askopenfilename, askopenfilenames
 ersetzen durch:
 from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename
+
+--------------------------------------------------
+
+sourcetree will mich nicht mitspielen lassen.
