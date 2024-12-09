@@ -242,3 +242,37 @@ def plot_singledata(data, scan_nrs):
     plt.savefig(path, transparent=True)
     plt.show()
     return ax
+
+---------------------------------------------------------
+
+in Particle_analysis.py (einfach ganz unten vor _name_ == _main_:)
+def save_session():
+    filename = Sup.set_filename()
+    path = (f"{filename}" + ".dill")
+    dill.dump_session(path)
+    return
+
+def load_session():
+    path = Sup.get_filename()
+    dill.load_session(path)
+    return
+
+ganz oben im gleichen Skript:
+import dill
+
+unter get_filenames in Sup.py
+
+def set_filename():
+    """set filename via UI"""
+    popup = Tk()
+    popup.attributes('-topmost', 1)
+    popup.withdraw()
+    filename = asksaveasfilename(filetypes=(("All Files", ""), ("png file", ".png"), ("csv file", ".csv"),
+                                            ("dill file", ".dill")))
+    print(filename)
+    return filename
+
+in Sup einfach die Zeile
+from tkinter.filedialog import askopenfilename, askopenfilenames
+ersetzen durch:
+from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename

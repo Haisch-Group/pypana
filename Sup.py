@@ -7,7 +7,6 @@ Created 2024-03-20 from get_filenames.py and other small scripts
 
 """
 
-import dill
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename
 

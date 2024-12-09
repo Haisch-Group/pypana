@@ -73,6 +73,19 @@ def cut_dist(X, C, bar_width, lowerbound, upperbound, scan_nrs):  # merge with s
         cut_conc = np.nansum(cut_C[ct, :])
         ct += 1
     return cut_X, cut_C, cut_bar_width, cut_conc # write into dict
+def select_multiple_data(list_of_tuples):
+    """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
+    in normal non-pythonian logic (starting count at 1)
+    can only easily select data from one day for comparison
+    import as list of tuples: [(data_identifier_1, [scan_nrs_1]),(data_identifier_2, [scan_nrs_2]),...]"""
+    sel_data_list = []
+    for tuple in list_of_tuples:
+        sel_data_list.append(select_data(tuple[0], tuple[1]))
+    sel_merged_data = merge_data(sel_data_list)
+    return sel_merged_data
+
+#How to use:
+#merged_data = Dist.select_multiple_data([ (data_identifier_1, [scan_nrs]), (data_identifier_2,[scan_nrs])])
 
 
 def merge_data(sel_data_list):
@@ -338,8 +351,8 @@ def format_plot(fig, ax, used_device):
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     if used_device in [3, 4, 5]:  # for micrometer instruments TSI LAS + APS, PALAS WELAS
-        ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
-               xlabel='Particle Diameter / $\mu$m',
+        ax.set(xscale='log', xticks=[100, 200, 400, 800, 1600, 3200], xticklabels=[100, 200, 400, 800, 1600, 3200],
+               xlabel='Particle Diameter / nm',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$')
     else:  # for nanometer instruments SMPS
         ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
@@ -356,14 +369,17 @@ def plot_singledata(data, scan_nrs):
     X = data["X"]
     bar_width = data["bar_width"]
     Cn = data["Cn"]
+    dg = data["dg"]
     calc_conc_n = data["calc_conc_n"]
     used_device = data["used_device"]
     plot_nrs = Sup.py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     if len(plot_nrs) == 1:
+        legend_entries = []
         k = plot_nrs[0]
         ax.bar(X[k, :], Cn[k, :], width=bar_width[k, :], edgecolor='black')
-        legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
+        user_input = input(f"Please enter the legend entry for scan {scan_nrs[0]}")
+        legend_entries.append(user_input + " (" + str("{:.2f}".format(float(dg[k]))) + " nm)")
         # scan_nrs is used here on purpose
         print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
     else:
@@ -371,21 +387,20 @@ def plot_singledata(data, scan_nrs):
         ct = 0
         for k in plot_nrs:
             ax.bar(X[k, :], Cn[k, :], width=bar_width[k, :], edgecolor='black', alpha=0.5)
-            legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
+            user_input = input(f"Please enter the legend entry for scan {scan_nrs[ct]}")
+            legend_entries.append(user_input + " (" + str("{:.2f}".format(float(dg[k]))) + " nm)")
             print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3" )
             ct += 1
     format_plot(fig, ax, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')
-
     # move this into format_plot ?
     fileaddition = input("Please enter a fileaddition")
     #data_identifier = Sup.get_variable_name(data)
     path = data["filename"][:-4] + "_" + fileaddition + ".png"
     # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
     plt.savefig(path, transparent=True)
-
     plt.show()
     return ax
 
@@ -409,7 +424,7 @@ def plot_meandata(mean_data, scan_nrs):
     for k in plot_nrs:
         ax.bar(mean_X[k, :], mean_C[k, :], width=mean_bar_width[k, :], yerr=std_C[k, :], edgecolor='black')
         user_input = input(f"Please enter the legend entry for scan {k+1}")
-        legend_entries.append(user_input + " (" + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
+        legend_entries.append(user_input + "\n" + " (" + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
            str("{:.2f}".format(float(std_dg[k]))) + " nm)")
         # legend_entries.append(user_input) # scan_nrs is used here on purpose
     [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
