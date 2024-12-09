@@ -42,7 +42,7 @@ def import_data(filename):
     flowrate_ccs = float(flowrate)*1000/60
     # manual_start = input("Please enter the start time of the measurement in format mm/dd/yyyy hh:mm:ss AM")
     # start = datetime.strptime(manual_start, '%m/%d/%Y %I:%M:%S %p')
-    start = datetime.strptime("01/01/1900 00:00:00", '%m/%d/%Y %H:%M:%S')  # arbitrary start time as it iw not
+    start = datetime.strptime("01/01/1900 00:00:00", '%m/%d/%Y %H:%M:%S')  # arbitrary start time as it is not
     # logged at the moment, so start_time will rather be a reference from the start of the first measurement
 
     # preallocation of lists that become lists of lists in the following section
