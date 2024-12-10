@@ -97,11 +97,12 @@ def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
     data[f"cut_conc_{used_C}"] = cut_conc
     return data
 
+
 def merge_data(sel_data_list):
     """merges dictionaries of data, should best be used with selected data dicts"""
     merged_data_X = []  # create lists to fill with list of 1D arrays
     merged_data_Cn = []
-    merged_data_dX =[]
+    merged_data_dX = []
     n_scans = 0  # count measurements that are imported to the lists
     x_len_list = []
     for i in sel_data_list:  # append all imported lines to the lists
