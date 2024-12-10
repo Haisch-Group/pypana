@@ -77,7 +77,8 @@ def load_session():
 
 if __name__ == "__main__":
 
-    # test
+    plt.ioff()
+
     """
     The script is run from the python console with the following commands
     

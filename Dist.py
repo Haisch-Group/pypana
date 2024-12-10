@@ -253,10 +253,7 @@ def lognormal_fit(X, C):
 
 def multimodal_fit(X, C, n_peaks):
     """fit function for multimodal peak fitting - obvioulsy atm that is just a spacer :D"""
-    bandlist = X*C*n_peaks
 
-    # def soot_fit(x, y):  # x = spectra[k]['wavenumber'], y = spectra[k]['intensity']
-    # """function to calculate and plot the pentamodal fit for one soot spectrum"""
     # lower_lim = 800  # set limits for spectral region
     # upper_lim = 2500
     # index1 = np.where(x < lower_lim)[-1][-1]  # getting indeces of 800 and 2000 cm^-1 to avoid fitting peaks around d
@@ -324,27 +321,7 @@ def multimodal_fit(X, C, n_peaks):
     # # plt.title(input("Please enter the legend entry for the spectrum"))
     # plt.show()
     #
-    # print("G-red")
-    # print("A = %0.2f (+/-) %0.2f" % (pars_G[0], perr_soot_fit[0]))  # A = amplitude, mu = center, W = width
-    # print("W = %0.2f (+/-) %0.2f" % (pars_G[1], perr_soot_fit[1]))
-    # print("mu = %0.2f (+/-) %0.2f" % (pars_G[2], perr_soot_fit[2]))
-    # print("D1-yellow")
-    # print("A = %0.2f (+/-) %0.2f" % (pars_D1[0], perr_soot_fit[3]))
-    # print("W = %0.2f (+/-) %0.2f" % (pars_D1[1], perr_soot_fit[4]))
-    # print("mu = %0.2f (+/-) %0.2f" % (pars_D1[2], perr_soot_fit[5]))
-    # print("D3-blue")
-    # print("A = %0.2f (+/-) %0.2f" % (pars_D3[0], perr_soot_fit[6]))
-    # print("sigma = %0.2f (+/-) %0.2f" % (pars_D3[1], perr_soot_fit[7]))
-    # print("mu = %0.2f (+/-) %0.2f" % (pars_D3[2], perr_soot_fit[8]))
-    # print("D4-green")
-    # print("A = %0.2f (+/-) %0.2f" % (pars_D4[0], perr_soot_fit[9]))
-    # print("W = %0.2f (+/-) %0.2f" % (pars_D4[1], perr_soot_fit[10]))
-    # print("mu = %0.2f (+/-) %0.2f" % (pars_D4[2], perr_soot_fit[11]))
-    # print("D2-purple")
-    # print("A = %0.2f (+/-) %0.2f" % (pars_D2[0], perr_soot_fit[12]))
-    # print("W = %0.2f (+/-) %0.2f" % (pars_D2[1], perr_soot_fit[13]))
-    # print("mu = %0.2f (+/-) %0.2f" % (pars_D2[2], perr_soot_fit[14]))
-    #
+
     # bands = {"G_band": G_band, "D1_band": D1_band, "D3_band": D3_band, "D4_band": D4_band, "D2_band": D2_band}
     # # saves bands in dictionary
     #
@@ -361,6 +338,8 @@ def multimodal_fit(X, C, n_peaks):
     # #       f"D4:{D4_area[1]/D4_area[0]}, D2:{D2_area[1]/D2_area[0]}")
     #
     # return ax, bands, areas, pars, perr_soot_fit
+
+    bandlist = X * C * n_peaks
     return bandlist
 
 
@@ -578,7 +557,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1):
     # move this into format_plot ?
     fileaddition = input("Please enter a fileaddition")
     #data_identifier = Sup.get_variable_name(data)
-    path = data["filename"][0][:-4] + "_" + fileaddition + ".png"
+    path = data["filename"][:-4] + "_" + fileaddition + ".png"
     # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
     plt.savefig(path, transparent=True)
 
