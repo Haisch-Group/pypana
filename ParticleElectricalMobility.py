@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 
 # values for mean free path and viscosity taken from jennings 1988
 
-dp = 55*10**(-9) # initial particle size in m
+dp = 160*10**(-9) # initial particle size in m
 # l = 66*10**(-9) # mean free path in m, nicos value
 l = 65.43*10**(-9)
 # eta = 1.81*10**(-5) # dynamic viscosity of air in kg/ms, nico
@@ -35,14 +35,14 @@ Z = (n1*el*Ccini)/(3*math.pi*eta*dp) # electrical mobility of particle wit dp an
 # when calculating centroid mobility in a DMA for set values, activate below
 
 # for DMA calculation:
-Vsheath = 20 # in L/min
-Vexhaust = 20 # in L/min
-Router = 1.961 # in cm # TSI 3081A: 1.961 # PALAS DEMC 2000:
-Rinner = 0.937 # in cm # TSI 3081A: 0.937 # PALAS DEMC 2000:
-Length = 0.44369 # in m # TSI 3081A: 0.44369 # PALAS DEMC 2000:
+Vsheath = 10.5 # in L/min
+Vexhaust = 10.5 # in L/min
+Router = 1.961 # in cm # TSI 3081A: 1.961 # PALAS DEMC 2000: 3.35
+Rinner = 0.937 # in cm # TSI 3081A: 0.937 # PALAS DEMC 2000: 2.5
+Length = 0.44369 # in m # TSI 3081A: 0.44369 # PALAS DEMC 2000: 0.277
 # Voltage = 5000 # in V
 # Z = (((Vsheath+Vexhaust)/2)/60000)*(math.log(Router/Rinner)/(2*math.pi*Voltage*Length))
-Voltage = (((Vsheath+Vexhaust)/2)/60000)*(math.log(Router/Rinner)/(2*math.pi*Z*Length)) # wo kommt die Formel her?
+Voltage = (((Vsheath+Vexhaust)/2)/60000)*(math.log(Router/Rinner)/(2*math.pi*Z*Length)) # Mäkelä Vorlesung Summer School
 
 ct_list = []
 C_list = []
