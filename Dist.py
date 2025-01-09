@@ -148,6 +148,10 @@ def select_multiple_data(list_of_tuples):
     for tuple in list_of_tuples:
         sel_data_list.append(select_data(tuple[0], tuple[1]))
     sel_merged_data = merge_data(sel_data_list)
+    sel_merged_data["filename"] = input("Please enter a Path this data should be associated with. - "
+                                        "Used for naming figures")
+    print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
+    sel_merged_data["used_device"] = int(input(f"Please enter the device identifier of the used device"))
     return sel_merged_data
 
 
