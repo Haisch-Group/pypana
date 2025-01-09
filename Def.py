@@ -32,7 +32,7 @@ all_parameters = [['Absolute Pressure / mbar', 'Actual Differential Pressure / P
                    'Counter Type (0=CPC, 1=Elektrometer)'],
                   ['D50 / nm', 'Date', u'Density / g/cm\u00B3', 'Diameter Midpoint / nm', 'Diff Pressure Impactor / Pa',
                    'Down Scan First'],
-                  ['Empty Field', 'Error Notification (0=no Error, 1 = Error'],
+                  ['Empty Field', 'Error Notification (0=no Error, 1 = Error)'],
                   [u'Gas Viscosity / Pa\u00B7s', 'Geo. Mean / nm', 'Geo. Std. Dev.'],
                   ['High Voltage / V', 'HV Polarity (0=positive, 1=negative)'],
                   ['Impactor Type / cm','Inner Diameter Column / mm', 'Instrument Errors', 'Instrument ID'],
@@ -69,7 +69,9 @@ tum_cls = {"black": (0, 0, 0, 1), "blue": (0, 101/256, 189/256, 1), "grey-80": (
               "green": (162/256, 173/256, 0, 1)}  # in RGBA red green blue alpha
 tum_cm = (tum_cls["blue"], tum_cls["very-light-blue"], tum_cls["orange"], tum_cls["green"], tum_cls["grey-50"],
           tum_cls["very-dark-blue"], tum_cls["light-blue"], tum_cls["ivory"])
-fh_colors = ()
+fh_colors = {}
+fh_cm = (tum_cls["blue"], tum_cls["very-light-blue"], tum_cls["orange"], tum_cls["green"], tum_cls["grey-50"],
+          tum_cls["very-dark-blue"], tum_cls["light-blue"], tum_cls["ivory"])
 
 if __name__ == "__main__":
 
