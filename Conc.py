@@ -17,19 +17,81 @@ from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
-from Sup import py_logic_converter, normal_logic_converter
+import Sup
 # import mpldatacursor
 
 
-def select_data(Cn, msmt_nrs):
-    # !!! has to be changed to dictionary logic
+def select_data(data, sel_nrs):
     """select specific CPC msmts from the imported raw data, msmt_nrs defines, which measurements to take
     in normal non-pythonian logic (starting count at 1)"""
-    sel_Cn = np.zeros((len(msmt_nrs), Cn.shape[1]))
-    # preallocate the sel_Cn array with shape = (n_msmts, n_timepoints)
-    for k in np.arange(len(msmt_nrs)):  # fill the arrays with the selected data
-        sel_Cn[k, :] = Cn[msmt_nrs[k]-1, :]
-    return sel_Cn
+    scan_nrs = Sup.py_logic_converter(sel_nrs)
+    sel_Cn = np.zeros((len(scan_nrs), data["Cn"].shape[1]))
+    # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
+    sel_el_time = np.zeros_like(sel_Cn)  # maybe nan is needed to avoid zeros on the right of the x-data?
+    sel_time = []
+    sel_scan_nr = []
+    sel_filename = []
+    # different datasets
+    sel_used_device = []
+    for k in np.arange(len(scan_nrs)):  # fill the arrays with the selected data
+        sel_Cn[k, :] = data["Cn"][scan_nrs[k], :]
+        sel_el_time[k, :] = data["el_time"][scan_nrs[k], :]
+        sel_time.append(data["add_info"]["Time"][scan_nrs[k]])
+        sel_scan_nr.append(data["add_info"]["Scan Nr"][scan_nrs[k]])
+        sel_filename.append(data["filename"])
+        sel_used_device.append(data["used_device"])
+    sel_data = {"Cn": sel_Cn, "el_time": sel_el_time, "time": sel_time, "scan_nr": sel_scan_nr,
+                "filename": sel_filename, "used_device": sel_used_device}
+    return sel_data
+
+
+def merge_data(sel_data_list):
+    """merges dictionaries of data, should best be used with selected data dicts"""
+    merged_data_Cn = []  # create lists to fill with list of 1D arrays
+    merged_data_el_time = []
+    time_len_list = []
+    n_scans = 0  # count measurements that are imported to the lists
+    for i in sel_data_list:  # append all imported lines to the lists
+        for k in range(len(i["scan_nr"])):
+            merged_data_Cn.append(i["Cn"][k])
+            merged_data_el_time.append(i["el_time"][k])
+            n_scans += 1
+            time_len_list.append(len(i["el_time"][k]))
+    x_len = max(time_len_list)  # get maximum length of the x-axis elements -> longest x-axis is base for array
+    merged_array_Cn = np.zeros((n_scans, x_len))
+    merged_array_el_time = np.zeros((n_scans, x_len))
+    merged_array_Cn[:] = np.nan
+    merged_array_el_time[:] = np.nan
+    for k in range((n_scans)):  # fill arrays row wise with data from list elements
+        merged_array_Cn[k, 0:len(merged_data_Cn[k])] = merged_data_Cn[k]
+        merged_array_el_time[k, 0:len(merged_data_el_time[k])] = merged_data_el_time[k]
+    merged_data = {}
+    merged_data["Cn"] = merged_array_Cn
+    merged_data["el_time"] = merged_array_el_time
+    merged_data["time"] = sel_data_list[0]["time"][:]
+    merged_data["scan_nr"] = sel_data_list[0]["scan_nr"][:]
+    merged_data["origin"] = []
+    [merged_data["origin"].append(sel_data_list[0]["filename"]) for k in range(len(sel_data_list[0]["scan_nr"]))]
+    for i in sel_data_list[1:]:
+        for k in range(len(i["scan_nr"])):
+            merged_data["time"].append(i["time"][k])
+            merged_data["scan_nr"].append(i["scan_nr"][k])
+            merged_data["origin"].append(i["filename"])
+    return merged_data
+
+
+def select_multiple_data(list_of_tuples):
+    """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
+    in normal non-pythonian logic (starting count at 1)
+    can only easily select data from one day for comparison
+    import as list of tuples: [(data_identifier_1, [scan_nrs_1]),(data_identifier_2, [scan_nrs_2]),...]"""
+    sel_data_list = []
+    for tuple in list_of_tuples:
+        sel_data_list.append(select_data(tuple[0], tuple[1]))
+    sel_merged_data = merge_data(sel_data_list)
+    sel_merged_data["filename"] = input("Please enter a Path this data should be associated with. - "
+                                        "Used for naming figures")
+    return sel_merged_data
 
 
 def calc_meanconc(data, used_C="Cn"):
@@ -70,7 +132,7 @@ def plot_singledata(data, scan_nr, used_C="Cn"):
         el_time = data["el_time"]
     mean_C, std_C = calc_meanconc(data, used_C)
     filename = data["filename"]
-    plot_nr = py_logic_converter(scan_nr)
+    plot_nr = Sup.py_logic_converter(scan_nr)
     cm = 1/2.54  # inches to cm
     fig, ax = plt.subplots(figsize=(18.5*cm, 10*cm))  # height with title 12, without 10
     if len(plot_nr) == 1:
@@ -134,7 +196,7 @@ def plot_timeline(mean_Cn, std_Cn, start_time, start, end):
 
 def plot_calc_conc_n(data, scan_nrs):
     """ function by Nico"""
-    plot_nrs = py_logic_converter(scan_nrs)
+    plot_nrs = Sup.py_logic_converter(scan_nrs)
     x_axis = range(1, len(scan_nrs) + 1)
     calc_conc_n = data["calc_conc_n"]
     fig, ax = plt.subplots()
