@@ -26,7 +26,7 @@ def create_bounds(modalität):
 	bounds=(bounds_1,bounds_2)
 	for i in range(1, modalität+1):
 		bounds_1.append(0.1)
-		bounds_1.append(0.1)
+		bounds_1.append(1.0)
 		bounds_1.append(0.1)
 	for k in range(1, modalität+1):
 		bounds_2.append(850)
