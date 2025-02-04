@@ -58,7 +58,7 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
         else:
             print(f"{variable} is neither in the top level of the data, nor in the add_info dataframe")
     print(f"wrote file with variables {variable_list} to csv with name {path}")
-    dataframe.to_csv(path)
+    dataframe.to_csv(path)  # alternative: dataframe.to_excel(path, sheet_name="Sheet1"
     return
 
 
