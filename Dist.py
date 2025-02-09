@@ -197,13 +197,25 @@ def geometric_std(X, C, conc, dg):
             sigma_g.append(np.inf) # is infinity correct here? should it just be a massiv value? if after that a std is
             # calculated for example when using mean_of_n, the std of sigma is nan of course
         else:
-            sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
-                                                                   - np.log(dg[k]))*C[k]))/(conc[k]-1))))
+            # sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
+            #                                                       - np.log(dg[k]))*C[k]))/(conc[k]-1))))
             # 22-13 in aerosol measurement, Kulkarni et.al.  # 20230705 changed /conc to /np.nansum(C[k]-1)
-        #sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(mean_X[k]) - np.log10(dg[k])) *
-        #                                                  mean_Cn[k])) / (mean_conc_n[k] - 1)))))
+            sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(X[k])-np.log10(dg[k]))*
+                                                              C[k]))/(conc[k]-1)))))
+            # changed to log10 as it is used everywhere else on 20250128
         # same result as above
     return sigma_g
+
+
+def mode_diameter(dg, sigma_g):
+    """calculates the mode diameter from dg and sigma_g via equation given in Aerosol Measurement p.43"""
+    mode = []
+    for k in range(len(dg)):
+        if dg[k] == 0:
+            mode.append(0)
+        else:
+            mode.append(dg[k]*math.pow(10,(-np.log10(sigma_g[k])**2)))
+    return mode
 
 
 def lognormal_dist(conc, sigma_g, dg, X, dX):
@@ -229,21 +241,23 @@ def lognormal_dist(conc, sigma_g, dg, X, dX):
 
 def lognormal_function(x, A, m, sigma):
     """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
-    standard deviation"""
-    return A*(np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))/(np.log(sigma)*x*np.sqrt(2*math.pi)))
+    standard deviation - from Aerosol-Measurement p. 486 with added A parameter similar to p. 42"""
+    # return A / (x * np.log(sigma) * np.sqrt(2 * math.pi)) * np.exp(-((np.log(x / m)) ** 2) / (2 * np.log(sigma) ** 2))
+    return A*(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))
+              /np.nansum(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))))
 
 
 def normal_function(x, A, mu, sigma):
     """definition of a normal function with A being a scale factor, mu being the median and sigma being the geometric
     standard deviation"""
-    return A*np.exp(-((x-mu)**2)/(2*sigma**2))/(sigma*np.sqrt(2*math.pi))
+    return A/(sigma*np.sqrt(2*math.pi))*np.exp(-((x-mu)**2)/(2*sigma**2))
 
 
 def lognormal_fit(X, C):
     """fit of a lognormal peak - works only for one measurement at a time"""
     ## work this through
     p0=[1000, 100, 1.2]
-    lowerbounds=[0, 10, 0.2]
+    lowerbounds=[0, 10, 1]
     upperbounds=[np.inf, 1000, 5]
     popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(lognormal_function, X, C, p0=p0,
                                                             bounds=(lowerbounds, upperbounds), maxfev=1000)
