@@ -32,7 +32,7 @@ C_d = 0.6
 
 ## particle parameters
 ### desired cut-off diameter (nm)
-d_50 = 500
+d_50 = 1000
 ### particle density (kg/m^3)
 roh_p = 1000 # water = 1000
 
@@ -150,7 +150,7 @@ def pressure_drop(roh_g, V0, C_d):
 def W_from_stokes(d_50_m, p_g_Pa, roh_p, Q_m3_s, mu, n, Stk):
     """V0 inserted into stokes and solved for W"""
     C_c = cunningham_slip(d_50_m, p_g_Pa)
-    W_m = ((C_c * d_50_m ** 2 * roh_p * 4*Q_m3_s) / (9 * mu * math.pi * n * Stk) )**(1/3)
+    W_m = ((C_c * d_50_m**2 * roh_p * 4*Q_m3_s) / (9 * mu * math.pi * n * Stk) )**(1/3)
     return W_m
 
 
@@ -164,7 +164,7 @@ def Q_from_stokes(d_50_m, p_g_Pa, Stk, mu, n, W_m, roh_p):
 
 def Q_dp_set_d50_W(W, D_c, A, d_50, p_g, Stk):
     dummy_Q = 1000
-    d_50s, Ws, p_gs, Qs, Vs, Res, dps = [],[],[],[],[],[],[]
+    d_50s, Ws, Qs, Vs, Res, dps = [],[],[],[],[],[]
 
     for k in d_50:
         for i in W:
@@ -181,15 +181,9 @@ def Q_dp_set_d50_W(W, D_c, A, d_50, p_g, Stk):
             Vs.append(V0)
             Res.append(Re)
             dps.append(dp_mbar)
-            p_gs.append(p_g)
 
-    df = pd.DataFrame(
-        {"d_50 / nm": d_50s, "W / mm": Ws, "Q / cm^3/min": Qs, "V0 / m/s": Vs, "Re": Res, "dp / mbar": dps,
-         "p_g / mbar":p_gs})
-    fileextention = input("add file extension")
-    path = "Y:/Projects/Impactor/" + fileextention + ".xlsx"
-    df.to_excel(path)
-    return
+    return d_50s, Ws, Qs, Vs, Res, dps
+
 
 def d50_set_W_Q(W, D_c, A, Q, p_g, Stk):
     dummy_50 = 10000 # as cunningham is almost 1 for 10 micron particles
@@ -241,12 +235,7 @@ def d50_set_W_Q(W, D_c, A, Q, p_g, Stk):
             Res.append(Re)
             dps.append(dp_mbar)
 
-    df = pd.DataFrame(
-        {"d_50 / nm": d_50s, "W / mm": Ws, "Q / cm^3/min": Qs, "V0 / m/s": Vs, "Re": Res, "dp / mbar": dps})
-    fileextention = input("add file extension")
-    path = "Y:/Projects/Impactor/" + fileextention + ".xlsx"
-    df.to_excel(path)
-    return
+    return d_50s, Ws, Qs, Vs, Res, dps
 
 
 def W_Re_set_d50_Q(d_50,D_c, A, Q, p_g, n, Stk):
@@ -269,19 +258,23 @@ def W_Re_set_d50_Q(d_50,D_c, A, Q, p_g, n, Stk):
             Vs.append(V0)
             Res.append(Re)
             dps.append(dp_mbar)
+    return d_50s, Ws, Qs, Vs, Res, dps
 
+
+def save_to_excel(d_50s, Ws, Qs, Vs, Res, dps):
     df = pd.DataFrame(
         {"d_50 / nm": d_50s, "W / mm": Ws, "Q / cm^3/min": Qs, "V0 / m/s": Vs, "Re": Res, "dp / mbar": dps})
     fileextention = input("add file extension")
     path = "Y:/Projects/Impactor/" + fileextention + ".xlsx"
-    df.to_excel(path)
+    # sheet_name = input("add sheet name") # does not work like that, file must be open in writer
+    # df.to_excel(path, sheet_name=sheet_name)
     return
 
 
 if __name__ == "__main__":
 
     ## geometry parameters
-    W = [0.5, 0.75, 1, 1.2, 1.5] ### nozzle diameter (mm)
+    W = 1 ### nozzle diameter (mm)
     S = W ### jet-to-plate-distance (mm)
     T = W ### throat length
     n = 1 ### number of nozzles
@@ -290,7 +283,7 @@ if __name__ == "__main__":
     C_d = 0.6 ### discharge parameter of nozzles - <1 for tapered between 0.7 and 0.9 for straight nozzles 0.6
 
     ## particle parameters
-    d_50 = [500, 750, 800, 1000, 2000, 5000, 10000] ### desired cut-off diameter (nm)
+    d_50 = 10000 ### desired cut-off diameter (nm)
     roh_p = 1000  ### particle density (kg/m^3)
 
     # W_m, S_m, T_m, D_c_m, A_m, d_50_m, Q_m3_s, p_g_Pa = convert_to_SI(W, S, T, D_c, A, d_50, Q, p_g)
@@ -298,13 +291,16 @@ if __name__ == "__main__":
     Stk = 0.498**2
 
     ### flow rate (ccm/min)
-    Q = [300, 500, 1000, 2000, 3000, 5000, 10000]
+    Q = 1000
 
     """choose the desired calculation here if you want"""
 
-    Q_dp_set_d50_W(W, D_c, A, d_50, p_g, Stk)  # W and d_50 as list
-    d50_set_W_Q(W, D_c, A, Q, p_g, Stk) # W and Q as list
-    W_Re_set_d50_Q(d_50, D_c, A, Q, p_g, n, Stk)
+    # d_50s, Ws, Qs, Vs, Res, dps = Q_dp_set_d50_W(W, D_c, A, d_50, p_g, Stk)  # W and d_50 as list
+    # save_to_excel(d_50s, Ws, Qs, Vs, Res, dps)
+    # d_50s, Ws, Qs, Vs, Res, dps = d50_set_W_Q(W, D_c, A, Q, p_g, Stk) # W and Q as list
+    # save_to_excel(d_50s, Ws, Qs, Vs, Res, dps)
+    # d_50s, Ws, Qs, Vs, Res, dps = W_Re_set_d50_Q(d_50, D_c, A, Q, p_g, n, Stk)
+    # save_to_excel(d_50s, Ws, Qs, Vs, Res, dps)
 
     """the two directions do not give the same result unfortunately"""
 
