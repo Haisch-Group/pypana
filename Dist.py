@@ -522,12 +522,12 @@ def format_plot(fig, ax, used_C, used_device):
     if used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m'")["Device_Identifier"].values):
         # for micrometer instruments TSI APS, PALAS WELAS
         ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
-               xlabel='Particle Diameter / $\mu$m',
+               xlabel=u'Particle Diameter / \xb5m',
                ylabel=y_label)
     elif used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m in nm'")["Device_Identifier"].values):
         # for micrometer instruments with nm x-axis
         ax.set(xscale='log', xticks=[400, 1000, 2000, 5000], xticklabels=[0.4, 1, 2, 5],
-               xlabel='Particle Diameter / $\mu$m',
+               xlabel=u'Particle Diameter / \xb5m',
                ylabel=y_label)
     elif used_device in list(Def.device_list.query("Size_Plot_Range=='nm'")["Device_Identifier"].values):
         # for nanometer instruments SMPS
@@ -577,6 +577,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1):
     path = data["filename"][:-4] + "_" + fileaddition + ".png"
     # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
     plt.savefig(path, transparent=True)
+    print(f"file saved to {path}")
 
     plt.show()
     return ax

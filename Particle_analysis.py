@@ -10,6 +10,16 @@ Modified 2024-03-20 to also run CPC_analysis.py which was renamed to Conc.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 """
+import pandas as pd
+import numpy as np
+import math
+import dill
+from matplotlib import pyplot as plt
+from matplotlib import ticker
+from scipy import optimize
+
+# import scipy.integrate as integrate
+# from matplotlib import cm as colormap
 
 import Def  #definitions
 import Sup  #supporting functions
@@ -26,17 +36,6 @@ import TSI_CPC3775_fileread
 import TSI_EM3068_fileread
 import TSI_LAS3340A_fileread
 import TSI_SMPS_fileread
-
-import pandas as pd
-import numpy as np
-import math
-import dill
-from matplotlib import pyplot as plt
-from matplotlib import ticker
-from scipy import optimize
-
-# import scipy.integrate as integrate
-# from matplotlib import cm as colormap
 
 
 def get_data():
