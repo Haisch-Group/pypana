@@ -1,5 +1,5 @@
 """
-DEKATI_ELPI+_fileread.py
+DEKATI_ELPIplus_fileread.py
 
 Import and Display of the Data acquired from the Dekati ELPI+
 

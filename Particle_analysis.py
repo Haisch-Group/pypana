@@ -11,10 +11,22 @@ Modified 2024-03-20 to also run CPC_analysis.py which was renamed to Conc.py
 
 """
 
-import Sup
-import Dist
-import Conc
-import Def
+import Def  #definitions
+import Sup  #supporting functions
+# import Imp  #import functions
+import Dist  #distribution functions
+import Conc  #concentration functions
+
+import DEKATI_ELPIplus_fileread
+import PALAS_UFCPC_fileread
+import PALAS_USMPS_fileread
+import TSI_APS3310_fileread
+import TSI_APS3321_fileread
+import TSI_CPC3775_fileread
+import TSI_EM3068_fileread
+import TSI_LAS3340A_fileread
+import TSI_SMPS_fileread
+
 import pandas as pd
 import numpy as np
 import math
