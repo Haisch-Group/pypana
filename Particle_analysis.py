@@ -76,13 +76,13 @@ def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
 def save_session():
     filename = Sup.set_filename()
     path = (f"{filename}" + ".dill")
-    dill.dump_session(path)
+    dill.dump_module(path,"__main__")
     return
 
 
 def load_session():
     path = Sup.get_filename()
-    dill.load_session(path)
+    dill.load_module(path)
     return
 
 

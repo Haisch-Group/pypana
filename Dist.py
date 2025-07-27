@@ -570,7 +570,6 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1):
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')
-
     # move this into format_plot ?
     fileaddition = input("Please enter a fileaddition")
     #data_identifier = Sup.get_variable_name(data)
