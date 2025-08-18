@@ -8,7 +8,7 @@ Created 2025-07-20
 @written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
-### just copied PALAS SMPS functions -> update!
+### txt data format is crazyly bad
 
 import numpy as np
 from datetime import datetime
@@ -23,80 +23,74 @@ from Def import device_list
 def import_data(filename):
     """takes the raw data and extracts the variables from it to return:
     X  = array with all the X values = particle size
-    Xl = array with all the lower borders of the size bins (named Xu in the Palas SMPS file)
-    Xu = array with all the upper borders of the size bins (named Xo in the Palas SMPS file)
-    Cn = array with all the number counts of the particles per bin in inverted and diffusion corrected (dn_inv_diff in
-    the Palas SMPS file)
+    Xl = array with all the lower borders of the size bins (named Xuk in the Palas WELAS file)
+    Xu = array with all the upper borders of the size bins (named Xok in the Palas WELAS file)
+    Cn = array with all the number concentrations of the particles per bin (dCn in
+    the Palas WELAS file)
     time  = list with the starting times of each measurement
     nr_scans = array with the number of the scans=index+1"""
     with open(filename) as f_in:  # open file and keep open
         lines = f_in.readlines()  # read the file in line by line
         len_file = len(lines)  # determine the length of the file
-        nr_scans = int(len_file/7)  # calculate the number of scans in the file
-        # scan_nr = np.array([i+1 for i in range(0, nr_scans, 1)])  # list of scan numbers for correlating in plots
-        # not used atm
+        nr_scans = int(len_file/50) # calculate the number of scans in the file - 50 lines = 1 msmt
 
         data = []  # defines a list to fill with the data (has to be done this way as the length of the data can vary
         # accordingly to set measuring range
         data_len = []  # defines a list, in which the lengths of each data line are saved to later find out the max and
         # preallocate the data array
 
-        parameters = []  # for import of parameters saved in every first line of the data file, added 20240901
-        # with that also import of labels as done before was changed below
+        first_lines = []  # for import of parameters saved in every first line of the data file
+        # unfortunately, that is completely different to what SMPS data looks like, only date, time and time interval of
+        # measured distribution is written here
 
         counter = 0  # setting a counter for indexing correctly
 
-        pos = np.arange(0, len_file, 7)  # builds an iterator including the positions of all lines filled with measuring
-        # parameters and not data
+        pos = np.arange(0, len_file, 49)  # builds an iterator including the positions of all first lines of measurements
 
         for i in np.arange(0, len_file):  # iterating through all lines in the file to produce a list of lists with the
-            # data skipping all headerlines (the first and every 7th)
+            # dates and data skipping all useless lines
             if i in pos:
-                parameters.append(lines[i].split("\t"))  # produces the list in the list called parameters
-                # continue  # before, here was just skipped, as the first line was only used for time and label import
-            else:
-                data.append(lines[i].split("\t"))  # produces the list in the list called data
+                first_lines.append(lines[i].split("\t"))  # produces the list in the list called parameters
+                data.append(lines[i+19].split("\t"))  # produces the list in the list called data - adds Xuk
+                data.append(lines[i+20].split("\t"))  # adds X
+                data.append(lines[i+21].split("\t"))  # adds Xok
+                data.append(lines[i+22].split("\t"))  # adds dX
+                data.append(lines[i+26].split("\t"))  # adds dCn
                 data_len.append(len(data[counter]))  # gives the length of each data line for later building the array
                 counter += 1
+            else:
+                continue
     f_in.close()  # closes the file from which the data was read
 
     nr_bins = max(data_len)-2  # calculates the maximum number of measuring points in the file subtracting 2 for the
     # first two columns being the "header" columns in the original txt
 
+###hier geendet, sortieren wie oben
+
     X = np.zeros((nr_scans, nr_bins))  # preallocate the arrays
     Xl = np.zeros_like(X)
     Xu = np.zeros_like(X)
+    dX = np.zeros_like(X)
     Cn = np.zeros_like(X)
     X[:] = np.nan  # fill the arrays with nans, so all none filled values are nans later and not 0, necessary as within
-    Xl[:] = np.nan  # one file, the measurint range can be changed easily on the PALAS SMPS leading to differently sized
+    Xl[:] = np.nan  # one file, the measuring range can be changed easily on the PALAS SMPS leading to differently sized
     Xu[:] = np.nan  # data width
+    dX[:] = np.nan
     Cn[:] = np.nan
 
-    conc_data = input("Which of the available concentration data do you want to import? Type 3 for raw, 4 for "
-                           "inverted, 5 for inverted and diffusion corrected")
-
-    if conc_data == "3":
-        print("Raw data is imported")
-    elif conc_data == "4":
-        print("Inverted data is imported")
-    elif conc_data == "5":
-        print("Inverted diffusion corrected data is imported")
-    else:
-        print(f"{conc_data} is not a viable option, please enter again.")
-        input("Which of the available concentration data do you want to import? Type 3 for raw, 4 for "
-              "inverted, 5 for inverted and diffusion corrected")
+### hier die richtigen zahlen aus liste von listen eintragen die oben generiert wurde.
 
     for i in range(nr_scans):  # filling the arrays with the values from the data list of lists
-        for k in range(2, data_len[int(0 + i * 6)]):  # lower bin boundary values contained in each second line in the
+        for k in range(2, data_len[int(0 + i * 5)]):  # lower bin boundary values contained in each second line in the
             Xl[i, k-2] = data[int(0 + i * 6)][int(k)]  # file, or first line in data list of lists created before
-        for k in range(2, data_len[int(1 + i * 6)]):  # upper bin boundary values contained in each third line in the
-            Xu[i, k-2] = data[int(1 + i * 6)][int(k)]  # file, or second line in data list of lists created before
-        for k in range(2, data_len[int(2 + i * 6)]):  # bin midpoints from firth line in file or third in data listslist
-            X[i, k-2] = data[int(2 + i * 6)][int(k)]  # should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
-        for k in range(2, data_len[int(int(conc_data) + i * 6)]):  # Cn is filled from conc array contained in different
-            # stages of processing chosen from file or data list of lists according to user input conc_data above
-            # 5 is based on the inverted diff corrected data, 3 on the raw data, 4 is inverted but not diff corrected
-            Cn[i, k-2] = data[int(int(conc_data) + i * 6)][int(k)]
+        for k in range(2, data_len[int(1 + i * 5)]):  # upper bin boundary values contained in each third line in the
+            Xu[i, k-2] = data[int(1 + i * 5)][int(k)]  # file, or second line in data list of lists created before
+        for k in range(2, data_len[int(2 + i * 5)]):  # bin midpoints from firth line in file or third in data listslist
+            X[i, k-2] = data[int(2 + i * 5)][int(k)]  # should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
+        for k in range(2, data_len[int(int(3) + i * 5)]):  # dCn
+            Cn[i, k-2] = data[int(int(3) + i * 5)][int(k)]
+
+### dump this, its useless basically, the whole part, only write datetime and comment or something similar
 
     parameter_list = ["Date", "Time", "Comment", "Sheath Temp / °C", "Sample Pressure / mbar", "Sheath Flow / L/min",
                       "Aerosol Flow / L/min", "Relative Humidity Aerosol %", "Relative Humidity Sheath %",

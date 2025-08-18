@@ -31,14 +31,14 @@ def import_data(filename):
     X  = array with all the X values = particle size
     Xl = array with all the lower borders of the size bins (named Xu in the Palas SMPS file)
     Xu = array with all the upper borders of the size bins (named Xo in the Palas SMPS file)
-    Cn = array with all the number counts of the particles per bin in inverted and diffusion corrected (dn_inv_diff in
+    Cn = array with all the number concentrations of the particles per bin in inverted and diffusion corrected (dn_inv_diff in
     the Palas SMPS file)
     time  = list with the starting times of each measurement
     nr_scans = array with the number of the scans=index+1"""
     with open(filename) as f_in:  # open file and keep open
         lines = f_in.readlines()  # read the file in line by line
         len_file = len(lines)  # determine the length of the file
-        nr_scans = int(len_file/7)  # calculate the number of scans in the file
+        nr_scans = int(len_file/7)  # calculate the number of scans in the file - 7 lines = 1 msmt
         # scan_nr = np.array([i+1 for i in range(0, nr_scans, 1)])  # list of scan numbers for correlating in plots
         # not used atm
 
@@ -74,7 +74,7 @@ def import_data(filename):
     Xu = np.zeros_like(X)
     Cn = np.zeros_like(X)
     X[:] = np.nan  # fill the arrays with nans, so all none filled values are nans later and not 0, necessary as within
-    Xl[:] = np.nan  # one file, the measurint range can be changed easily on the PALAS SMPS leading to differently sized
+    Xl[:] = np.nan  # one file, the measuring range can be changed easily on the PALAS SMPS leading to differently sized
     Xu[:] = np.nan  # data width
     Cn[:] = np.nan
 
