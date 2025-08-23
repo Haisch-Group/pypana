@@ -16,7 +16,6 @@ from datetime import datetime
 import pandas as pd
 
 from Sup import get_filename
-from Sup import convert_mbar_to_kPa
 from Def import device_list
 
 
@@ -121,5 +120,5 @@ if __name__ == "__main__":
     # print(f"imported {filename}")
 
     data_dict = \
-        import_data_dict(device_list.query("Import_Script=='PALAS_USMPS_fileread'")["Device_Identifier"].values[0])
+        import_data_dict(device_list.query("Import_Script=='PALAS_WELAS_fileread'")["Device_Identifier"].values[0])
     print(f"imported {data_dict['filename']} as dictionary")
