@@ -53,12 +53,12 @@ def import_data(filename):
     return X, dX, Cn, time
 
 
-def import_data_dict():
+def import_data_dict(used_device):
     filename = get_filename()
     X, dX, Cn, time = import_data(filename)
     scan_nr = []
     [scan_nr.append(k + 1) for k in range(len(Cn))]
-    used_device = device_list.query("Import_Script=='TSI_APS3321_fileread'")["Device_Identifier"].values[0]
+    # used_device = device_list.query("Import_Script=='TSI_APS3321_fileread'")["Device_Identifier"].values[0]
     data_dict = {"X": X, "Cn": Cn, "dX": dX, "time": time, "scan_nr": scan_nr, "filename": filename,
                  "used_device": used_device}
     return data_dict
@@ -66,5 +66,9 @@ def import_data_dict():
 
 if __name__ == "__main__":
 
-    filename = get_filename()
-    X, dX, Cn, time = import_data(filename)
+    # filename = get_filename()
+    # X, dX, Cn, time = import_data(filename)
+
+    data_dict = \
+        import_data_dict(device_list.query("Import_Script=='TSI_APS3321_fileread'")["Device_Identifier"].values[0])
+    print(f"imported {data_dict['filename']} as dictionary")
