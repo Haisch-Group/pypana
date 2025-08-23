@@ -377,3 +377,13 @@ def format_plot(fig, ax, used_device):
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
 
+-----------------------------------------
+
+# Kevin Start
+
+#@home
+jupyter notebook --notebook-dir=C:/UniStuff/Code/Python/py_particleanalysis 
+jupyter notebook --notebook-dir=Z:/Projects/AeroCal/Measurements/20240624-0705_Coating
+
+#@FhG
+jupyter notebook --notebook-dir=

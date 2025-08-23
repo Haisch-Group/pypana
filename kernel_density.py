@@ -22,8 +22,6 @@ def create_array(data, k):
     my_array = np.array(list)
     return my_array
 
-
-
 def importindata(data, k):
     data["Array"] = create_array(data, k)
     return data

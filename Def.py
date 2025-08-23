@@ -20,7 +20,7 @@ device_list = pd.DataFrame([
     [5, "LAS 3340A", "TSI", "Number Distribution", "Optical", u"\xb5m in nm", "TSI_LAS3340A_fileread"],
     [6, "CPC 3775", "TSI", "Number Concentration", "Condensation", u"\xb5m", "TSI_CPC3775_fileread"],
     [7, "UF-CPC", "PALAS", "Number Concentration", "Condensation", u"\xb5m", "PALAS_UFCPC_fileread"],
-    [8, "ELPI+", "DEKATI", "Number Distribution", "Aerodynamic", u"\xb5m", "DEKATI_ELPI+_fileread"],
+    [8, "ELPI+", "DEKATI", "Number Distribution", "Aerodynamic", u"\xb5m", "DEKATI_ELPIplus_fileread"],
     [9, "APS 3310", "TSI", "Number Concentration", "Aerodynamic", u"\xb5m", "TSI_APS3310_fileread"],
     [10, "EM 3068", "TSI", "Number Concentration", "Electrical Charge", "nm", "TSI_EM3068_fileread"]
 ], columns=["Device_Identifier", "Device", "Manufacturer", "Accquired_Data", "Working_Principle", "Size_Plot_Range",

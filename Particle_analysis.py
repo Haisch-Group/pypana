@@ -11,12 +11,12 @@ Modified 2024-03-20 to also run CPC_analysis.py which was renamed to Conc.py
 
 """
 import pandas as pd
-import numpy as np
-import math
+import numpy as np # leave in to start with console
+import math # leave in to start with console
 import dill
 from matplotlib import pyplot as plt
-from matplotlib import ticker
-from scipy import optimize
+# from matplotlib import ticker
+# from scipy import optimize
 
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
