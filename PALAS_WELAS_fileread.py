@@ -32,7 +32,7 @@ def import_data(filename):
     with open(filename) as f_in:  # open file and keep open
         lines = f_in.readlines()  # read the file in line by line
         len_file = len(lines)  # determine the length of the file
-        nr_scans = int(len_file/50) # calculate the number of scans in the file - 50 lines = 1 msmt
+        nr_scans = int(len_file/49) # calculate the number of scans in the file - 49 lines = 1 msmt
 
         data = []  # defines a list to fill with the data (has to be done this way as the length of the data can vary
         # accordingly to set measuring range
@@ -50,7 +50,7 @@ def import_data(filename):
         for i in np.arange(0, len_file):  # iterating through all lines in the file to produce a list of lists with the
             # dates and data skipping all useless lines
             if i in pos:
-                first_lines.append(lines[i].split("\t"))  # produces the list in the list called parameters
+                first_lines.append(lines[i].split(" "))  # produces the list in the list called parameters
                 data.append(lines[i+19].split("\t"))  # produces the list in the list called data - adds Xuk
                 data.append(lines[i+20].split("\t"))  # adds X
                 data.append(lines[i+21].split("\t"))  # adds Xok
@@ -63,89 +63,41 @@ def import_data(filename):
     f_in.close()  # closes the file from which the data was read
 
     nr_bins = max(data_len)-2  # calculates the maximum number of measuring points in the file subtracting 2 for the
-    # first two columns being the "header" columns in the original txt
+    # first column being the "header" column in the original txt + last column being empty
 
-###hier geendet, sortieren wie oben
-
-    X = np.zeros((nr_scans, nr_bins))  # preallocate the arrays
-    Xl = np.zeros_like(X)
-    Xu = np.zeros_like(X)
-    dX = np.zeros_like(X)
-    Cn = np.zeros_like(X)
+    Xl = np.zeros((nr_scans, nr_bins))  # preallocate the arrays
+    X = np.zeros_like(Xl)
+    Xu = np.zeros_like(Xl)
+    dX = np.zeros_like(Xl)
+    Cn = np.zeros_like(Xl)
     X[:] = np.nan  # fill the arrays with nans, so all none filled values are nans later and not 0, necessary as within
     Xl[:] = np.nan  # one file, the measuring range can be changed easily on the PALAS SMPS leading to differently sized
     Xu[:] = np.nan  # data width
     dX[:] = np.nan
     Cn[:] = np.nan
 
-### hier die richtigen zahlen aus liste von listen eintragen die oben generiert wurde.
-
     for i in range(nr_scans):  # filling the arrays with the values from the data list of lists
-        for k in range(2, data_len[int(0 + i * 5)]):  # lower bin boundary values contained in each second line in the
-            Xl[i, k-2] = data[int(0 + i * 6)][int(k)]  # file, or first line in data list of lists created before
-        for k in range(2, data_len[int(1 + i * 5)]):  # upper bin boundary values contained in each third line in the
-            Xu[i, k-2] = data[int(1 + i * 5)][int(k)]  # file, or second line in data list of lists created before
-        for k in range(2, data_len[int(2 + i * 5)]):  # bin midpoints from firth line in file or third in data listslist
-            X[i, k-2] = data[int(2 + i * 5)][int(k)]  # should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
-        for k in range(2, data_len[int(int(3) + i * 5)]):  # dCn
-            Cn[i, k-2] = data[int(int(3) + i * 5)][int(k)]
+        for k in range(1, data_len[i]-1):  # transfer values from list of list to respective array
+            Xl[i, k-1] = data[int(0 + i * 5)][int(k)]
+            X[i, k-1] = data[int(1 + i * 5)][int(k)]  #  X should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
+            Xu[i, k-1] = data[int(2 + i * 5)][int(k)]
+            dX[i, k-1] = data[int(int(3) + i * 5)][int(k)]
+            Cn[i, k-1] = data[int(int(4) + i * 5)][int(k)]
+            # k-1 in new array as field 0 in it is filled with field 1 of list as first column in data is "header2
 
-### dump this, its useless basically, the whole part, only write datetime and comment or something similar
+    parameter_list = ["Date", "Time", "whatever", "whatever2", "accumulation", "mode"]
 
-    parameter_list = ["Date", "Time", "Comment", "Sheath Temp / °C", "Sample Pressure / mbar", "Sheath Flow / L/min",
-                      "Aerosol Flow / L/min", "Relative Humidity Aerosol %", "Relative Humidity Sheath %",
-                      "Sample Temp / °C", "Diff Pressure Impactor / Pa", "Inner Diameter Column / mm",
-                      "Outer Diameter Column / mm", "Length Column / mm", "Transfer-Function A", "Transfer-Function d",
-                      "Transfer-Function C", "Set Sheath Flow / L/min", "Set Aerosol Flow / L/min", "td / s",
-                      "Counter Type (0=CPC, 1=Elektrometer)", "Lower Size / nm", "Upper Size / nm",
-                      "Scan Type (0=up, 1=down, 2=up+down_avg, 3=up+down_single)", "Scan Time / s",
-                      "Pre Scan Stabilisation Time / s", "Neutralizer Type (0=Kr-85, 1=X-Ray)",
-                      "HV Polarity (0=positive, 1=negative)"]
-
-    # parameters given in PALAS SMPS manual 6787-de_V2.1_08/21 page 66, newer SMPS has 2 columns more in each header row
-    # so for these files, additional headers have to be added to header list after firmware update both SMPS give these
-    # data
-
-    if len(parameters[0]) == 28:
-        pass
-    elif len(parameters[0]) == 30:
-        parameter_list.extend(["CPC1 Device Status (0=not ready, 1=ready)", "CPC2 Device Status (0=not ready, 1=ready)"])
-    else:  # added to avoid the error when there are more columns coming. :D
-        parameter_list.extend(["CPC1 Device Status (0=not ready, 1=ready)", "CPC2 Device Status (0=not ready, 1=ready)"])
-        count = 2
-        while len(parameter_list) < len(parameters[0]):
-            parameter_list.append("")  # if parameters have less than 28 columns, still an error will occur
-            count += 1
-        print(f"Added {count} column headers as parameters line contains {28+count} columns")
-
-    parametersDF = pd.DataFrame(parameters, columns=parameter_list)
+    parametersDF = pd.DataFrame(first_lines, columns=parameter_list)
 
     time = []  # defining time list
     for i in range(nr_scans):
-        time.append(datetime.strptime(parametersDF["Date"][i] + " " + parametersDF["Time"][i], '%m/%d/%Y %I:%M %p'))
-        #
+        time.append(datetime.strptime(parametersDF["Date"][i] + " " + parametersDF["Time"][i], '%Y/%m/%d %H:%M:%S'))
 
     scan_nr = []
     [scan_nr.append(k + 1) for k in range(len(Cn))]
 
-    add_info = parametersDF[(parameter_list[2:])]
-
-    sample_p_kPa = convert_mbar_to_kPa(parametersDF["Sample Pressure / mbar"].astype(float).copy())
-    add_info.insert(loc=add_info.columns.get_loc("Sample Pressure / mbar") + 1, column="Sample Pressure / kPa",
-                    value=sample_p_kPa)
-    add_info.insert(loc=0, column="Time", value=time)
-    add_info.insert(loc=0, column="Scan Nr", value=scan_nr)
-
-    # following part was used before 20240901 to extract time and columns from each measurements first line in the txt
-    # labels = np.genfromtxt(fname=filename, delimiter='\t', usecols=(0, 1, 2), dtype=str)
-    # # imports the first three columns containing the labels, the date, the time, and the comment from that create time
-    # # and len of the whole file
-    # time = []  # defining time list
-    # comments = []
-    # for i in range(0, nr_scans, 1):  # iteratively filling time list with datetime objects
-    #     time.append(datetime.strptime(labels[i * 7, 0] + " " + labels[i * 7, 1], '%m/%d/%Y %I:%M %p'))
-    #     comments.append(labels[i*7, 2])
-    # # %p is the identifier for AM or PM in a 12 hour format
+    add_info = pd.DataFrame({"Time": time, "Scan Nr": scan_nr, "Comment": parametersDF["whatever"]+" "+
+                            parametersDF["whatever2"]+ " "+parametersDF["accumulation"]+" "+parametersDF["mode"]})
 
     dX = np.subtract(Xu, Xl)
     dlogX = np.log10(Xu/Xl)
