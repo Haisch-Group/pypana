@@ -23,7 +23,7 @@ import decimal
 # import scipy.integrate as integrate
 
 
-def select_data(data, sel_nrs):  # merge with cut_dist ?
+def select_data(data, sel_nrs):
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)
     can only easily select data from one day for comparison"""
@@ -94,7 +94,7 @@ def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
     data["cut_X"] = cut_X
     data[f"cut_{used_C}"] = cut_C
     data["cut_dX"] = cut_dX
-    data[f"cut_conc_{used_C}"] = cut_conc
+    data["results"][f"cut_conc_{used_C}"] = cut_conc
     return data
 
 def merge_data(sel_data_list):
@@ -207,15 +207,69 @@ def geometric_std(X, C, conc, dg):
     return sigma_g
 
 
-def mode_diameter(dg, sigma_g):
-    """calculates the mode diameter from dg and sigma_g via equation given in Aerosol Measurement p.43"""
+def mode_surface_volume_diameter(dg, sigma_g):
+    """calculates the mode diameter from dg and sigma_g via equation given in Aerosol Measurement p.43 - usually
+    calculated from CMD"""
     mode = []
+    SMD = []
+    VMD = []
     for k in range(len(dg)):
         if dg[k] == 0:
             mode.append(0)
+            SMD.append(0)
+            VMD.append(0)
         else:
             mode.append(dg[k]*math.pow(10,(-np.log10(sigma_g[k])**2)))
-    return mode
+            SMD.append(dg[k]*math.pow(10,(2*np.log10(sigma_g[k])**2)))
+            VMD.append(dg[k]*math.pow(10,(3*np.log10(sigma_g[k])**2)))
+    return mode, SMD, VMD
+
+
+def calc_geometry(X, C, conc):
+    """calculates geometric parameters of the distributions"""
+    dg = geometric_mean(X, C, conc)
+    sigma_g = geometric_std(X, C, conc, dg)
+    return dg, sigma_g
+
+
+def cumulative_distribution(C):
+    """calculates the cumulative distribution"""  # tested, first column = Cn[0], last column = calc_conc_n
+    cumC = np.zeros_like(C)
+    for scan in range(len(C)):
+        cumC[scan, 0] = C[scan, 0]
+        for k in range(1, len(C[scan])):
+            cumC[scan, k] = cumC[scan, k-1] + C[scan, k]
+    return cumC
+
+
+def cumulative_diameters(X, cumC):
+    """calculates the diameters below which 10, 16, 50, 84 and 90 % of all particles are"""
+    # seemingly works, at least X50 were similar to PDAnalyze X50 values, but slightly different, as i just give the
+    # middle X value of the bin, maybe PALAS does some other magic with it like calculating a discrete distribution
+    X10 = []
+    X16 = []
+    X50 = []
+    X84 = []
+    X90 = []
+    for k in range(len(cumC)):
+        X10.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.1), 0)])
+        X16.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.16), 0)])
+        X50.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.5), 0)])
+        X84.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.84), 0)])
+        X90.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.9), 0)])
+    # cumDiameters = pd.DataFrame({"X10": X10, "X16": X16, "X50": X50, "X84": X84, "X90": X90})
+    return X10, X16, X50, X84, X90  # cumDiameters
+
+
+def typical_calculations(data):
+    data["results"]["calc_conc_n"] = get_conc(data["Cn"])
+    data["results"]["dg"], data["results"]["sigma_g"] = calc_geometry(data["X"], data["Cn"], data["results"]["calc_conc_n"])
+    data["results"]["mode"], data["results"]["SMD"], data["results"]["VMD"] = (
+        mode_surface_volume_diameter(data["results"]["dg"], data["results"]["sigma_g"]))
+    data["cumC"] = cumulative_distribution(data["Cn"])
+    (data["results"]["X10"], data["results"]["X16"], data["results"]["X50"], data["results"]["X84"],
+     data["results"]["X90"]) = cumulative_diameters(data["X"], data["cumC"])
+    return data
 
 
 def lognormal_dist(conc, sigma_g, dg, X, dX):
@@ -360,51 +414,6 @@ def multimodal_fit(X, C, n_peaks):
     return bandlist
 
 
-def calc_geometry(X, C, conc, dX):
-    """calculates geometric parameters of the distributions"""
-    dg = geometric_mean(X, C, conc)   # spectra by using sel_X, sel_Cn, calc_conc_n, sel_dX
-    sigma_g = geometric_std(X, C, conc, dg)
-    #fit = lognormal_dist(conc, sigma_g, dg, X, dX)
-    return dg, sigma_g#, fit
-
-
-def cumulative_distribution(C):
-    """calculates the cumulative distribution"""  # tested, first column = Cn[0], last column = calc_conc_n
-    cumC = np.zeros_like(C)
-    for scan in range(len(C)):
-        cumC[scan, 0] = C[scan, 0]
-        for k in range(1, len(C[scan])):
-            cumC[scan, k] = cumC[scan, k-1] + C[scan, k]
-    return cumC
-
-
-def cumulative_diameters(X, cumC):
-    """calculates the diameters below which 10, 16, 50, 84 and 90 % of all particles are"""
-    # seemingly works, at least X50 were similar to PDAnalyze X50 values, but slightly different, as i just give the
-    # middle X value of the bin, maybe PALAS does some other magic with it like calculating a discrete distribution
-    X10 = []
-    X16 = []
-    X50 = []
-    X84 = []
-    X90 = []
-    for k in range(len(cumC)):
-        X10.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.1), 0)])
-        X16.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.16), 0)])
-        X50.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.5), 0)])
-        X84.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.84), 0)])
-        X90.append(X[k][next((index for index, val in enumerate(cumC[k]) if val > cumC[k][-1]*0.9), 0)])
-    # cumDiameters = pd.DataFrame({"X10": X10, "X16": X16, "X50": X50, "X84": X84, "X90": X90})
-    return X10, X16, X50, X84, X90  # cumDiameters
-
-
-def typical_calculations(data):
-    data["calc_conc_n"] = get_conc(data["Cn"])
-    data["dg"], data["sigma"] = calc_geometry(data["X"], data["Cn"], data["calc_conc_n"], data["dX"])
-    data["cumC"] = cumulative_distribution(data["Cn"])
-    data["X10"], data["X16"], data["X50"], data["X84"], data["X90"] = cumulative_diameters(data["X"], data["cumC"])
-    return data
-
-
 def mean_of_n(data, nr_mean):
     """calculates a mean of every n consecutive measurements and also gives the standard deviation
     select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
@@ -412,9 +421,9 @@ def mean_of_n(data, nr_mean):
     C = data["Cn"]
     X = data["X"]
     dX = data["dX"]
-    calc_conc = data["calc_conc_n"]
-    dg = data["dg"]
-    sigma = data["sigma"]
+    calc_conc = data["results"]["calc_conc_n"]
+    dg = data["results"]["dg"]
+    sigma = data["results"]["sigma"]
     n = nr_mean
     size = C.shape
     nth_len = int(size[0]/n)

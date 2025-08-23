@@ -106,8 +106,8 @@ def get_meanconc(data, used_C="Cn"):
     """gives mean and std of a concentration array based on the key given as str and writes them into data dictionary
     call: get_meanconc(data, "Cn") """
     mean_C, std_C = calc_meanconc(data, used_C)
-    data["mean_"+used_C] = mean_C
-    data["std_"+used_C] = std_C
+    data["results"]["mean_"+used_C] = mean_C
+    data["results"]["std_"+used_C] = std_C
     return data
 
 
@@ -143,7 +143,7 @@ def plot_singledata(data, scan_nr, used_C="Cn"):
             ax.scatter(el_time[k, :], C[k, :], edgecolor='black')
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set(xlabel='Elapsed Time / s',
-           ylabel='Particle Number Concentration / $\mathregular{1/cm^3}$')
+           ylabel=u'Particle Number Concentration / 1/cm\u00B3')
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     if len(plot_nr) == 1:
@@ -179,7 +179,7 @@ def plot_timeline(mean_Cn, std_Cn, start_time, start, end):
     ax.xaxis.set_tick_params(reset=True)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     ax.set(xlabel='Time / HH:MM',
-           ylabel='Mean Particle Number Concentration / $\mathregular{1/cm^3}$')
+           ylabel=u'Mean Particle Number Concentration / 1/cm\u00B3')
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     legend_entries = [input(f"Please enter the legend entry for the measurement")]
@@ -196,9 +196,10 @@ def plot_timeline(mean_Cn, std_Cn, start_time, start, end):
 
 def plot_calc_conc_n(data, scan_nrs):
     """ function by Nico"""
+    # this is a function for distribution derived concentrations! -> maybe it is misplaced here?
     plot_nrs = Sup.py_logic_converter(scan_nrs)
     x_axis = range(1, len(scan_nrs) + 1)
-    calc_conc_n = data["calc_conc_n"]
+    calc_conc_n = data["results"]["calc_conc_n"]
     fig, ax = plt.subplots()
     if len(plot_nrs) == 1:
         k = plot_nrs[0]
@@ -220,7 +221,7 @@ def format_conc_plot(fig, ax, scan_nrs):
     for k in scan_nrs:
         xtick_entries.append(input(f"Please enter the xtick entries for measurement {k}"))
     ax.set(xticks=range(1, len(scan_nrs)+1), xticklabels=xtick_entries,
-           ylabel='Number Concentration / $\mathregular{1/cm^3}$')
+           ylabel=u'Number Concentration / 1/cm\u00B3')
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
 

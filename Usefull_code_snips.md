@@ -1,9 +1,9 @@
-### Calls kernel_density: # KM moved here from a separate md file
+# Calls kernel_density: # KM moved here from a separate md file
 
 # create sample data
 # für beispieldata vom
 
-#--------------------------------
+---
 
 # create list of repeating values
 importindata(data, 45);
@@ -13,13 +13,13 @@ sample = data["Array"][:, np.newaxis].astype(int)
 # plot histogramm
 
 plot_loghist(data, 500)
-#---------------------------------
+---
 
 for bandwidth in np.linspace(0.2, 3, 3):
     kde = getKernelDensityEstimation(data, x, bandwidth=bandwidth)
     plt.plot(x, kde, alpha = 0.8, label = f'bandwidth = {round(bandwidth, 2)}')
 
-#---------------------------------
+---
 
 cv_bandwidth = bestBandwidth(data["Array"])
 
@@ -28,11 +28,11 @@ from statsmodels.nonparametric.kernel_density import EstimatorSettings
 settings = EstimatorSettings(efficient=True)
 stats_models_cv = KDEMultivariate(data["Array"], 'c', bw = 'cv_ml', defaults = settings).pdf(x)
 
-#-----------------------------------
+---
 
 CV_best_plot(data["Array"])
 
-#-----------------------------------
+---
 
  #plot distribution legend with dg:
  #add dg in list of variables in the funktion Dist.plot_singledata
@@ -48,7 +48,7 @@ CV_best_plot(data["Array"])
  user_input = input(f"Please enter the legend entry for scan {scan_nrs[ct]}")
  legend_entries.append(user_input + " (" + str("{:.2f}".format(float(dg[k]))) + " nm)")
 
---------------------------------------------------------------------------
+---
 
 Change funktion plot cumulative data and make it uniform cf. title and all instances of cummCn/cummC
 create different format plot funktion for cumulative data and a combination of both
@@ -64,7 +64,7 @@ def two_scales(ax1, X, Cn, Width, normcummCn, c1):
     #ax2.legend("ABCDEFGHIJKLMNOP")
     return ax1, ax2
 
----------------------------------------------------
+---
 
 def plot_combidata(data, used_device, scan_nrs):
     """plots the given data, specify measurement to use from sel_Cn array"""
@@ -104,7 +104,7 @@ def plot_combidata(data, used_device, scan_nrs):
     plt.show()
     return ax1, ax2
 
---------------------------------------------------------
+---
 
 def format_combiplot(fig, ax1, ax2, used_device):
     cm = 1 / 2.54  # inches to cm
@@ -124,7 +124,7 @@ def format_combiplot(fig, ax1, ax2, used_device):
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
 
-------------------------------------
+---
 def get_more_data():
     LAS_data = []
     Frage = input("Do you want to import LAS data? Answer Yes")
@@ -136,7 +136,7 @@ def get_more_data():
 
     return LAS_data
 
-------------------------------
+---
 
 def Calc_all_LAS(LASdata):
     LAS_List_identifier = LASdata
@@ -146,14 +146,14 @@ def Calc_all_LAS(LASdata):
 
 Dist.typical_calculations(LAS_List_identifier[]); #funktioniert einzeln
 
--------------------------------
+---
 
 if mathregular is not accepted/not running use
 
 $\\mathregular{1/cm^3}$
 
 
----------------------------------
+---
 def plot_calc_conc_n(data, scan_nrs):
     scan_numbers = scan_nrs
     from array import array
@@ -191,7 +191,7 @@ def format_conc_plot(fig, ax, scan_numbers):
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
 
--------------------------------------
+---
 Kevins Version
 
 def plot_calc_conc_n(data, scan_nrs):
@@ -223,7 +223,7 @@ def plot_calc_conc_n(data, scan_nrs):
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
 
------------------------------
+---
 
 create colormap
 
@@ -233,8 +233,7 @@ colors = []
 for i in range(10):
     colors.append('#%06X' % randint(0, 0xFFFFFF))
 
-_______________________________
-
+___
 Plot funktion with Median
 
 def plot_singledata(data, scan_nrs):
@@ -279,7 +278,7 @@ def plot_singledata(data, scan_nrs):
     plt.show()
     return ax
 
----------------------------------------------------------
+---
 
 in Particle_analysis.py (einfach ganz unten vor _name_ == _main_:)
 def save_session():
@@ -313,7 +312,7 @@ from tkinter.filedialog import askopenfilename, askopenfilenames
 ersetzen durch:
 from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename
 
------------------------------------------
+---
 in order to plot all measurment at once use:
 
 for i in range(1, "number of mesurments" + 1)
@@ -377,7 +376,7 @@ def format_plot(fig, ax, used_device):
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
 
------------------------------------------
+---
 
 # Kevin Start
 

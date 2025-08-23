@@ -143,6 +143,11 @@ def decide_y_label(used_C):
     return y_label
 
 
+def pack_to_dict_df(data, variables):
+    """function to pack variables into a dict and the contained dataframe - maybe use if X and so on are packed to df"""
+    data
+
+
 def extract_from_dict(data, used_C="Cn"):
     X = data["X"]
     dX = data["dX"]

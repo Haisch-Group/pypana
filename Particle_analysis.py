@@ -15,6 +15,7 @@ import numpy as np # leave in to start with console
 import math # leave in to start with console
 import dill
 from matplotlib import pyplot as plt
+import openpyxl
 # from matplotlib import ticker
 # from scipy import optimize
 
@@ -46,6 +47,8 @@ def get_data():
     if used_device in Def.device_list["Device_Identifier"]:  # Size Distribution Instruments
         fr = __import__(Def.device_list["Import_Script"][used_device])
         data = fr.import_data_dict(used_device)
+        data["results"] = data["add_info"][["Scan Nr", "Time", "Comment"]].copy()
+        # create results array from add_info to save all the calculated values in there -> makes print easier too I hope
 
     else:
         print(f"Device {used_device} is not a viable option")
@@ -54,22 +57,17 @@ def get_data():
     return data
 
 
-def save_calc_to_csv(data_dict, variable_list, fileaddition="particleDF"):
+def save_data_to_xlsx(data_dict, fileaddition="particleDF"):
+    # could theoretically also be used to save the arrays containing the measuring data to a single sheet each
     """saves selected variables to a csv file, select variables to save in variable_list as list of strings,
      allways use a different fileaddition when saving anything else than the data input array data_identifier"""
     # data_identifier = Sup.get_variable_name(data_dict)
-    path = data_dict["filename"][:-4]+"_"+fileaddition+".csv"
+    path = data_dict["filename"][:-4]+"_"+fileaddition+".xlsx" #was .csv with older function
     # path = data_dict["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".csv"
-    dataframe = pd.DataFrame()
-    for variable in variable_list:
-        if variable in data_dict:
-            dataframe[variable] = data_dict[variable]
-        elif variable in data_dict["add_info"]:
-            dataframe[variable] = data_dict["add_info"][variable]
-        else:
-            print(f"{variable} is neither in the top level of the data, nor in the add_info dataframe")
-    print(f"wrote file with variables {variable_list} to csv with name {path}")
-    dataframe.to_csv(path)  # alternative: dataframe.to_excel(path, sheet_name="Sheet1"
+    with pd.ExcelWriter(path) as writer:
+        data_dict["results"].to_excel(writer, sheet_name="results")  # alternative: dataframe.to_csv(path)
+        data_dict["add_info"].to_excel(writer, sheet_name="add_info")
+    print(f"wrote add_info and results to file with name {path}")
     return
 
 
@@ -119,16 +117,9 @@ if __name__ == "__main__":
     
     calculates the mean concentration of a measurement
     
-    # Save Calculated Values to CSV    
-    
-    ## For Distributionss
-    
-    save_calc_to_csv(data_identifier, ["Scan Nr", "Time", "dg", "sigma", "calc_conc_n", "X10", "X16", "X50", "X84", 
-    "X90"], fileaddition="particleDF")
-    
-    ## For Concentrations
-    
-    save_calc_to_csv(data_identifier, ["Scan Nr", "Time", "mean_Cn", "std_Cn"], fileaddition="particleDF")
+    # Save Calculated Values to XLSX       
+   
+    save_data_to_xlsx(data_identifier, fileaddition="particleDF")
     
     # Distribution-specific Functions
     
