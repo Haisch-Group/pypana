@@ -31,6 +31,7 @@ import Conc  #concentration functions
 import DEKATI_ELPIplus_fileread
 import PALAS_UFCPC_fileread
 import PALAS_USMPS_fileread
+import PALAS_WELAS_fileread
 import TSI_APS3310_fileread
 import TSI_APS3321_fileread
 import TSI_CPC3775_fileread

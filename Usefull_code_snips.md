@@ -382,7 +382,8 @@ def format_plot(fig, ax, used_device):
 
 #@home
 jupyter notebook --notebook-dir=C:/UniStuff/Code/Python/py_particleanalysis 
-jupyter notebook --notebook-dir=Z:/Projects/AeroCal/Measurements/20240624-0705_Coating
+jupyter notebook --notebook-dir=Z:/Projects/AeroCal/Measurements/
 
 #@FhG
-jupyter notebook --notebook-dir=
+jupyter notebook --notebook-dir=I:/Muenchen/05_Analytics_Bioaerosole/Aerosol/
+run C:/Users/kevin.maier/PycharmProjects/py_particleanalysis/particle_analysis.py
