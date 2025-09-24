@@ -184,7 +184,7 @@ def import_data(filename, used_device):
         #     X[i, k] = x_axis[k]
 
         # Method 3: constructing my own x-axis based on lower and upper limits given in measurement file
-        # also the two less indented lines after this block for calculating X and assigning it to X are required
+        # also the two less indented lines after this block for calculating Xm and assigning it to X are required
         const_dlogX = np.log10(add_info["Upper Size / nm"]/add_info["Lower Size / nm"])/nr_bins
         Xl[i, 0] = add_info["Lower Size / nm"][i]
         Xu[i, -1] = add_info["Upper Size / nm"][i]

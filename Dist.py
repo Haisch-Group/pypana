@@ -564,14 +564,14 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1):
     if len(plot_nrs) == 1:
         k = plot_nrs[0]
         ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[0])
-        legend_entries = [input(f"Please enter the legend entry for scan {k+1}")]
+        legend_entries = [f"{k+1}"]#input(f"Please enter the legend entry for scan {k+1}")]
         #print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
     else:
         legend_entries = []
         ct = 0
         for k in plot_nrs:
             ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
-            legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
+            legend_entries.append(f"{scan_nrs[ct]}") # input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
             print()
             print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
             ct += 1

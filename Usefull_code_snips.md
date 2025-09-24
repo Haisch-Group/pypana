@@ -385,5 +385,6 @@ jupyter notebook --notebook-dir=C:/UniStuff/Code/Python/py_particleanalysis
 jupyter notebook --notebook-dir=Z:/Projects/AeroCal/Measurements/
 
 #@FhG
+jupyter notebook --notebook-dir=C:/Users/kevin.maier/Desktop/JuPyterEval
 jupyter notebook --notebook-dir=I:/Muenchen/05_Analytics_Bioaerosole/Aerosol/
 run C:/Users/kevin.maier/PycharmProjects/py_particleanalysis/particle_analysis.py
