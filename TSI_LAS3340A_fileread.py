@@ -102,7 +102,6 @@ def import_single_data(filename):
     add_info.insert(loc=0, column="Time", value=time)
     add_info.insert(loc=0, column="Nr Scans", value=n_scan_list)
     add_info.insert(loc=0, column="Subscan Nr", value=subscan_nr)
-
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
@@ -122,6 +121,7 @@ def import_data(filenames):
         counter += 1
         [scan_nr.append(counter) for k in add_info_i["Subscan Nr"]]
     add_info.insert(loc=0, column="Scan Nr", value=scan_nr)
+    add_info.insert(loc=0, column="Comment", value="")
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 

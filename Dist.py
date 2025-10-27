@@ -553,7 +553,7 @@ def format_plot(fig, ax, used_C, used_device):
     return
 
 
-def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1):
+def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.fhg_cm, a=1):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
     X, dX, C = Sup.extract_from_dict(data, used_C)
     calc_conc = get_conc(data[used_C])
@@ -591,7 +591,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1):
     return ax
 
 
-def plot_meandata(mean_data, scan_nrs, colors=Def.tum_cm, a=1):
+def plot_meandata(mean_data, scan_nrs, colors=Def.fhg_cm, a=1):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     # add a mean of n in a corner of the plot
