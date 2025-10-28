@@ -17,7 +17,7 @@ def create_n_modal_lognormal_function(n):
     func_def = f"def n_modal_lognormal({func_signature}):\n    return {func_body}\n"
 
     # Execute the function definition
-    exec(func_def, globals())
+    exec(func_def, globals()) # n_modal_lognormal = exec(func_def, globals())
     return n_modal_lognormal
 
 def create_bounds(modalität):
@@ -62,3 +62,49 @@ def full_function(n, data, scan_nr, initial_gess= initial_gess):
     plt.xscale("log")
     df = pd.DataFrame(data={'params': params, 'sigma': sigma}, index=create_n_modal_lognormal_function(n).__code__.co_varnames[1:])
     return params, cov, df
+
+
+import numpy as np
+import random
+from scipy.signal import find_peaks
+
+
+def generate_initial_guesses_from_data(
+        data_row,
+        x_array,
+        height=10,
+        distance=5,
+        a2_range=(1.3, 4.0),
+        a3_range=(100, 100000)
+):
+    """
+    Detects peaks in a 1D data array and generates initial guesses for fitting.
+    Parameters:
+    data_row (array-like): 1D array of data values (e.g., concentrations).
+    x_array (array-like): 1D array of corresponding x-axis values (e.g., sizes).
+    height (float): Minimum height of peaks to detect.
+    distance (int): Minimum distance between peaks.
+    a2_range (tuple): Range (min, max) for random generation of a2 values.
+    a3_range (tuple): Range (min, max) for random generation of a3 values.
+
+    Returns:
+            tuple: (initial_guess_list, number_of_modes)
+                - initial_guess_list: [a1, a2, a3, b1, b2, b3, ...]
+                - number_of_modes: int, number of detected peaks
+    """
+
+    # Detect peaks
+    peaks, _ = find_peaks(data_row, height=height, distance=distance)
+    num_modes = len(peaks)
+
+    # Generate initial guesses
+    initial_guess = []
+    for peak_index in peaks:
+        a1 = x_array[peak_index]  # Use x value at peak position
+        a2 = random.uniform(*a2_range)
+        a3 = random.uniform(*a3_range)
+        initial_guess.extend([a1, a2, a3])
+    return initial_guess, num_modes
+
+# to run: initial_guess = generate_initial_guesses_from_data(Mean_LAS_250826['mean_C'][10], Mean_LAS_250826["mean_X"][10]);
+# to run: full_function(initial_guess[1], Mean_LAS_250826, 11, initial_gess=initial_guess[0]);

@@ -423,7 +423,7 @@ def mean_of_n(data, nr_mean):
     dX = data["dX"]
     calc_conc = data["results"]["calc_conc_n"]
     dg = data["results"]["dg"]
-    sigma = data["results"]["sigma"]
+    sigma = data["results"]["sigma_g"]
     n = nr_mean
     size = C.shape
     nth_len = int(size[0]/n)
