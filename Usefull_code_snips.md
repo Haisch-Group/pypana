@@ -315,8 +315,8 @@ from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilen
 ---
 in order to plot all measurment at once use:
 
-for i in range(1, "number of mesurments" + 1)
-    plot singledata(data, [i])
+for i in range(1, "number of mesurments" + 1):
+    plot_singledata(data, [i])
 
 
 def plot_singledata(data, scan_nrs):
@@ -351,11 +351,11 @@ def plot_singledata(data, scan_nrs):
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')
     # move this into format_plot ?
-    fileaddition = f"Scan_{scan_nrs[0]}" #input("Please enter a fileaddition")
+    #fileaddition = f"Scan_{scan_nrs[0]}" #input("Please enter a fileaddition")
     #data_identifier = Sup.get_variable_name(data)
-    path = data["filename"][:-4] + "_" + fileaddition + ".png"
+    #path = data["filename"][:-4] + "_" + fileaddition + ".png"
     # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
-    plt.savefig(path, transparent=True)
+    #plt.savefig(path, transparent=True)
     plt.show()
     return ax
 
@@ -364,7 +364,7 @@ def format_plot(fig, ax, used_device):
     fig.set_size_inches(18.5 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     if used_device in [3, 4, 5]:  # for micrometer instruments TSI LAS + APS, PALAS WELAS
-        ax.set(xscale='log', xticks=[100, 200, 400, 800, 1600, 3200], xticklabels=[100, 200, 400, 800, 1600, 3200],
+        ax.set(xscale='log', xticks=[100, 200, 500, 1000, 2000, 5000], xticklabels=[100, 200, 500, 1000, 2000, 5000],
                xlabel='Particle Diameter / nm',
                ylabel='Number Concentration / $\mathregular{1/cm^3}$')
     else:  # for nanometer instruments SMPS
@@ -376,6 +376,47 @@ def format_plot(fig, ax, used_device):
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return
 
+For extra Information in Legend
+
+def plot_singledata(data, scan_nrs):
+    """plots the given data, specify measurement to use from sel_Cn array"""
+    X = data["X"]
+    bar_width = data["bar_width"]
+    Cn = data["Cn"]
+    dg = data["dg"]
+    calc_conc_n = data["calc_conc_n"]
+    used_device = data["used_device"]
+    plot_nrs = Sup.py_logic_converter(scan_nrs)
+    fig, ax = plt.subplots()  # height with title 12, without 10
+    if len(plot_nrs) == 1:
+        legend_entries = []
+        k = plot_nrs[0]
+        ax.bar(X[k, :], Cn[k, :], width=bar_width[k, :], edgecolor='black')
+        user_input = input(f"Please enter the legend entry for scan {scan_nrs[0]}")
+        legend_entries.append(user_input + " (" + str("{:.2f}".format(float(dg[k]))) + " nm)")
+        # scan_nrs is used here on purpose
+        print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+    else:
+        legend_entries = []
+        ct = 0
+        for k in plot_nrs:
+            ax.bar(X[k, :], Cn[k, :], width=bar_width[k, :], edgecolor='black', alpha=0.5)
+            user_input = input(f"Please enter the legend entry for scan {scan_nrs[ct]}")
+            legend_entries.append(user_input + f"\n" + "Median-Diameter = " + str("{:.2f}".format(float(dg[k]))) + " nm")
+            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3" )
+            ct += 1
+    format_plot(fig, ax, used_device)
+    #plt.rcParams['figure.dpi'] = 600
+    #plt.rcParams['savefig.dpi'] = 600
+    plt.legend(legend_entries, labelspacing = 1.5, frameon=False)  # , loc='upper left')
+    # move this into format_plot ?
+    #fileaddition = f"Scan_{scan_nrs[0]}" #input("Please enter a fileaddition")
+    #data_identifier = Sup.get_variable_name(data)
+    #path = data["filename"][:-4] + "_" + fileaddition + ".png"
+    # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
+    #plt.savefig(path, transparent=True)
+    plt.show()
+    return ax
 ---
 
 # Kevin Start

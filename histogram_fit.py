@@ -29,7 +29,7 @@ def create_bounds(modalität):
 		bounds_1.append(1.0)
 		bounds_1.append(0.1)
 	for k in range(1, modalität+1):
-		bounds_2.append(850)
+		bounds_2.append(8500)
 		bounds_2.append(np.inf)
 		bounds_2.append(np.inf)
 	return bounds
@@ -44,10 +44,11 @@ def save_parma_data(df, origin, fileaddition):
 initial_gess = (285.82, 2.6, 299299.88, 211.08, 1.38, 28371.53, 23.392, 1.39, 46609.89, 45.99, 1.34, 25491.47)
 
 #feed data to workspace by calling: param, cov, df = full_function(4, mean_Dry_AS, initial_gess)
-def full_function(n, data, initial_gess= initial_gess):
+def full_function(n, data, scan_nr, initial_gess= initial_gess):
     b = create_bounds(n)
+    fit_nr = scan_nr - 1
     function_type = create_n_modal_lognormal_function(n)
-    params, cov = curve_fit(function_type, data["mean_X"][0], data["mean_C"][0],
+    params, cov = curve_fit(function_type, data["mean_X"][0], data["mean_C"][fit_nr],
                             p0=initial_gess,
                             bounds=(b),
                             method="trf")
