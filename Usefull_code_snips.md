@@ -422,7 +422,8 @@ def plot_singledata(data, scan_nrs):
 # Kevin Start
 
 #@home
-jupyter notebook --notebook-dir=C:/UniStuff/Code/Python/py_particleanalysis 
+jupyter notebook --notebook-dir=C:/UniStuff/Code/Python/py_particleanalysis
+jupyter notebook --notebook-dir=Y:/PhD/Code/Py_particleanalysis
 jupyter notebook --notebook-dir=Z:/Projects/AeroCal/Measurements/
 
 #@FhG
