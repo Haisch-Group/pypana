@@ -40,7 +40,7 @@ import TSI_LAS3340A_fileread
 import TSI_SMPS_fileread
 
 
-def get_data(method="prompt" ,used_device=2, filename="Z:/Projects/AeroCal/Measurements/20240624-0705_Coating/20240625/USMPS_17598_2024_06_25.txt"):
+def get_data(method="prompt" ,used_device="", filename=""):
     if method == "fixed":
         used_device = Sup.check_device(used_device)
         fr = __import__(Def.device_list["Import_Script"][used_device])
