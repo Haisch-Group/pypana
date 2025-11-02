@@ -16,10 +16,18 @@ from matplotlib import pyplot as plt
 import numpy as np
 import math
 from scipy import optimize
+from scipy.signal import find_peaks
+import random
 import pandas as pd
+
+import Dist
 import Sup
 import Def
 import decimal
+
+from Sup import py_logic_converter
+
+
 # import scipy.integrate as integrate
 
 
@@ -293,12 +301,15 @@ def lognormal_dist(conc, sigma_g, dg, X, dX):
     return fit
 
 
-def lognormal_function(x, A, m, sigma):
+def lognormal_function(x, A, mu, sigma):
     """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
     standard deviation - from Aerosol-Measurement p. 486 with added A parameter similar to p. 42"""
-    # return A / (x * np.log(sigma) * np.sqrt(2 * math.pi)) * np.exp(-((np.log(x / m)) ** 2) / (2 * np.log(sigma) ** 2))
-    return A*(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))
-              /np.nansum(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/m))**2)/(2*np.log(sigma)**2))))
+    return A / (x * np.log(sigma) * np.sqrt(2 * math.pi)) * np.exp(-((np.log(x / mu)) ** 2) / (2 * np.log(sigma) ** 2))
+
+def normalized_lognormal_function(x, A, mu, sigma):
+    """normalized lognormal function and factor A for scaling"""
+    return A*(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))
+              /np.nansum(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))))
 
 
 def normal_function(x, A, mu, sigma):
@@ -307,111 +318,108 @@ def normal_function(x, A, mu, sigma):
     return A/(sigma*np.sqrt(2*math.pi))*np.exp(-((x-mu)**2)/(2*sigma**2))
 
 
-def lognormal_fit(X, C):
-    """fit of a lognormal peak - works only for one measurement at a time"""
+def monomodal_fit(X, C, fit_function=Dist.normalized_lognormal_function):
+    """fit of a monomodal distribution - works only for one measurement at a time"""
     ## work this through
-    p0=[1000, 100, 1.2]
-    lowerbounds=[0, 10, 1]
-    upperbounds=[np.inf, 1000, 5]
-    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(lognormal_function, X, C, p0=p0,
+    p0=[1000, np.median(X), 1.2] # guesses a monodisperse peak in the middle of the X-axis and with 10^4 /cm^3
+    lowerbounds=[0, min(X), 1]  # lower bound is 0 conc, lower boundary of X-axis and completely monodisperse
+    upperbounds=[np.inf, max(X), 5]  # upper bound is infinite conc., upper bound of X-axis and polydisperse
+    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(fit_function, X, C, p0=p0,
                                                             bounds=(lowerbounds, upperbounds), maxfev=1000)
     A_fit=popt_lognorm_fit[0]
-    m_fit=popt_lognorm_fit[1]
+    mu_fit=popt_lognorm_fit[1]
     sigma_fit=popt_lognorm_fit[2]
     Cn_fit=lognormal_function(X, *popt_lognorm_fit)
-    return A_fit, m_fit, sigma_fit, Cn_fit
+    return A_fit, mu_fit, sigma_fit, Cn_fit
 
 
-def multimodal_fit(X, C, n_peaks):
-    """fit function for multimodal peak fitting - obvioulsy atm that is just a spacer :D"""
+def create_bounds(n):
+    bounds_1 = []
+    bounds_2 = []
+    bounds=(bounds_1,bounds_2)
+    for i in range(1, n+1):
+        bounds_1.append(0.1)
+        bounds_1.append(1.0)
+        bounds_1.append(0.1)
+    for k in range(1, n+1):
+        bounds_2.append(8500)
+        bounds_2.append(np.inf)
+        bounds_2.append(np.inf)
+    return bounds
 
-    # lower_lim = 800  # set limits for spectral region
-    # upper_lim = 2500
-    # index1 = np.where(x < lower_lim)[-1][-1]  # getting indeces of 800 and 2000 cm^-1 to avoid fitting peaks around d
-    # index2 = np.where(x > upper_lim)[0][0]  # and g bands. ATM these are only used for the fit itsself and not for
-    # # plotting!
-    # # initial parameters for fit with mu = peak position in wavenumbers and some values for A and W, that roughly match
-    # # the size relations of a typical soot spectrum, roughly one datapoint per 2 wavenumbers
-    # A5, W5, mu5 = 0.5, 50, 1580  # G band
-    # A1, W1, mu1 = 0.5, 100, 1350  # D1 band
-    # A3, sigma3, mu3 = 0.5, 200, 1500  # D3 band
-    # A4, W4, mu4 = 0.5, 200, 1200  # D4 band
-    # A2, W2, mu2 = 0.5, 100, 1620  # D2 band
-    #
-    # # calculate the parameters of all modes with scipy.optimize -> non-linear least squares method
-    # # predefining the parameters to fit and their bounds before
-    # pinit = [A5, W5, mu5, A1, W1, mu1, A3, sigma3, mu3, A4, W4, mu4, A2, W2, mu2]
-    # lowerbounds = [0, 0, mu5 - 10, 0, 0, mu1 - 10, 0, 0, mu3 - 20, 0, 0, mu4 - 10, 0, 0, mu2 - 10]
-    # upperbounds = [np.inf, 500, mu5 + 10, np.inf, 500, mu1 + 10, np.inf, 500, mu3 + 20, np.inf, 500, mu4 + 10,
-    #                np.inf, 500, mu2 + 10]
-    # # upperbounds = (np.inf, np.inf, mu5+2, np.inf, np.inf, mu1+2, np.inf, np.inf, mu3+2, np.inf, np.inf, mu4+2, np.inf,
-    # #                  np.inf, mu2+2) # 20230127_changed upperbounds from previous values
-    # popt_soot_fit, pcov_soot_fit = optimize.curve_fit(soot, x[index1:index2], y[index1:index2], p0=pinit,
-    #                                                   bounds=(lowerbounds, upperbounds), maxfev=1000)
-    #
-    # # extract the parameters for each mode
-    # pars_G = popt_soot_fit[0:3]
-    # pars_D1 = popt_soot_fit[3:6]
-    # pars_D3 = popt_soot_fit[6:9]
-    # pars_D4 = popt_soot_fit[9:12]
-    # pars_D2 = popt_soot_fit[12:15]
-    #
-    # pars = {"pars_G": pars_G, "pars_D1": pars_D1, "pars_D3": pars_D3, "pars_D4": pars_D4, "pars_D2": pars_D2}
-    #
-    # # calculate each single band from the lorentz and gauss functions and the parameters determined with scipy.optimize
-    # G_band = lorentz(x, *pars_G)
-    # D1_band = lorentz(x, *pars_D1)
-    # D3_band = gauss(x, *pars_D3)
-    # D4_band = lorentz(x, *pars_D4)
-    # D2_band = lorentz(x, *pars_D2)
-    #
-    # # calculate one standard deviation error
-    # perr_soot_fit = np.sqrt(np.diag(pcov_soot_fit))
-    #
-    # # plot the spectrum, the fit and the single bands
-    # cm = 1 / 2.54  # inches to cm
-    # fig, ax = plt.subplots(figsize=(18.5 * cm, 10 * cm))  # height with title 12, without 10
-    #
-    # ax.plot(x, y)
-    # ax.plot(x, soot(x, *popt_soot_fit), 'k--')
-    # ax.plot(x, G_band, "r")
-    # ax.plot(x, D1_band, "y")
-    # ax.plot(x, D3_band, "b")
-    # ax.plot(x, D4_band, "g")
-    # ax.plot(x, D2_band, "purple")
-    # ax.fill_between(x, G_band.min(), G_band, facecolor="red", alpha=0.5)
-    # ax.fill_between(x, D1_band.min(), D1_band, facecolor="yellow", alpha=0.5)
-    # ax.fill_between(x, D3_band.min(), D3_band, facecolor="blue", alpha=0.5)
-    # ax.fill_between(x, D4_band.min(), D4_band, facecolor="green", alpha=0.5)
-    # ax.fill_between(x, D2_band.min(), D2_band, facecolor="purple", alpha=0.5)
-    # ax.set_xlabel('raman shift / cm$^{-1}$')
-    # ax.set_ylabel('normalized intensity / a.u.')
-    # ax.legend(["original spectrum", "5-band fit", "G-band", "D1-band", "D3-band", "D4-band", "D2-band"])
-    # fig.subplots_adjust(top=0.9, bottom=0.15)
-    # # top :0.8 with title, without 0.95 looks good also change figsize, when adding title!
-    # # plt.title(input("Please enter the legend entry for the spectrum"))
-    # plt.show()
-    #
 
-    # bands = {"G_band": G_band, "D1_band": D1_band, "D3_band": D3_band, "D4_band": D4_band, "D2_band": D2_band}
-    # # saves bands in dictionary
-    #
-    # # calculate area under curve from the lorentz function with the determined parameters
-    # G_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_G))
-    # D1_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_D1))
-    # D3_area = integrate.quad(gauss, lower_lim, upper_lim, args=tuple(pars_D3))
-    # D4_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_D4))
-    # D2_area = integrate.quad(lorentz, lower_lim, upper_lim, args=tuple(pars_D2))
-    #
-    # areas = {"G_area": G_area[0], "D1_area": D1_area[0], "D3_area": D3_area[0], "D4_area": D4_area[0],
-    #          "D2_area": D2_area[0]}
-    # # print(f"area rel. errors: G:{G_area[1]/G_area[0]}, D1:{D1_area[1]/D1_area[0]}, D3:{D3_area[1]/D3_area[0]}, "
-    # #       f"D4:{D4_area[1]/D4_area[0]}, D2:{D2_area[1]/D2_area[0]}")
-    #
-    # return ax, bands, areas, pars, perr_soot_fit
+def generate_initial_guesses_from_data(
+        x_array,
+        data_row,
+        height=10,
+        distance=5,
+        a2_range=(1.3, 4.0),
+        a3_range=(100, 100000)):
+    """
+    Detects peaks in a 1D data array and generates initial guesses for fitting.
+    Parameters:
+    data_row (array-like): 1D array of data values (e.g., concentrations).
+    x_array (array-like): 1D array of corresponding x-axis values (e.g., sizes).
+    height (float): Minimum height of peaks to detect.
+    distance (int): Minimum distance between peaks.
+    a2_range (tuple): Range (min, max) for random generation of a2 values.
+    a3_range (tuple): Range (min, max) for random generation of a3 values.
 
-    bandlist = X * C * n_peaks
-    return bandlist
+    Returns:
+            tuple: (initial_guess_list, number_of_modes)
+                - initial_guess_list: [a1, a2, a3, b1, b2, b3, ...]
+                - number_of_modes: int, number of detected peaks
+    """
+
+    # Detect peaks
+    peaks, _ = find_peaks(data_row, height=height, distance=distance)
+    num_modes = len(peaks)
+
+    # Generate initial guesses
+    initial_guess = []
+    for peak_index in peaks:
+        a1 = x_array[peak_index]  # Use x value at peak position
+        a2 = random.uniform(*a2_range)
+        a3 = random.uniform(*a3_range)
+        initial_guess.extend([a1, a2, a3])
+    return initial_guess, num_modes
+
+
+def create_n_modal_fit_function(n, fit_function):
+    """produce n-modal function as linear combination of multiple fit functions as defined above with n
+    being the number of contained single functions"""
+    # Create the function signature
+    args = ['x'] + [f'mu{i + 1}, sigma{i + 1}, A{i + 1}' for i in range(n)]
+    func_signature = ', '.join(args)
+    # Create the function body
+    func_body = ' + '.join([f'{fit_function}(x, mu{i + 1}, sigma{i + 1}, A{i + 1})' for i in range(n)])
+    # Combine the signature and body into a function definition
+    func_def = f"def n_modal_fit({func_signature}):\n    return {func_body}\n"
+
+    # Execute the function definition
+    n_modal_fit = exec(func_def, globals())
+    return n_modal_fit
+
+
+def multimodal_fit(X, C, fit_function=Dist.normalized_lognormal_function):
+    initial_guess, n = generate_initial_guesses_from_data(X, C, height=10, distance=5, a2_range=(1.3, 4.0),
+        a3_range=(100, 100000))
+    b = create_bounds(n)
+    function_type = create_n_modal_fit_function(n, fit_function)
+    params, cov = optimize.curve_fit(function_type, X, C,
+                            p0=initial_guess,
+                            bounds=(b),
+                            method="trf")  # trf -> bounds are provided
+    sigma = np.sqrt(np.diag(cov))
+    plt.plot(X, function_type(X, *params),
+             color='red', lw=3, label='multimodal fit')
+    for k in range(0,n):
+        plt.plot(X, lognormal_function(X, *params[k*3:(k+1)*3]),
+             color='yellow', lw=1.5, ls=":", label=f"distribution {k+1}")
+    plt.legend()
+    plt.xscale("log")
+    df = pd.DataFrame(data={'params': params, 'sigma': sigma}, index=create_n_modal_fit_function(n).__code__.co_varnames[1:])
+    return params, cov, df
 
 
 def mean_of_n(data, nr_mean):
@@ -553,7 +561,7 @@ def format_plot(fig, ax, used_C, used_device):
     return
 
 
-def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.fhg_cm, a=1):
+def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.fhg_cm, a=1, legend="automatic", save_plot="off"):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
     X, dX, C = Sup.extract_from_dict(data, used_C)
     calc_conc = get_conc(data[used_C])
@@ -561,18 +569,17 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.fhg_cm, a=1):
     plot_nrs = Sup.py_logic_converter(scan_nrs)
     fig, ax = plt.subplots()  # height with title 12, without 10
     C_unit = Sup.decide_C_unit(used_C)
+    legend_entries=[]
+    ct=0
     if len(plot_nrs) == 1:
         k = plot_nrs[0]
         ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[0])
-        legend_entries = [input(f"Please enter the legend entry for scan {k+1}")] # [f"{k+1}"]
+        Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
         #print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
     else:
-        legend_entries = []
-        ct = 0
         for k in plot_nrs:
             ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
-            legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}")) # f"{scan_nrs[ct]}")
-            print()
+            Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
             ct += 1
     format_plot(fig, ax, used_C, used_device)
@@ -580,12 +587,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.fhg_cm, a=1):
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')
     # move this into format_plot ?
-    fileaddition = input("Please enter a fileaddition")
-    #data_identifier = Sup.get_variable_name(data)
-    path = data["filename"][:-4] + "_" + fileaddition + ".png"
-    # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
-    plt.savefig(path, dpi=600, transparent=True)
-    print(f"file saved to {path}")
+    Sup.save_plot(save_plot)
 
     plt.show()
     return ax
