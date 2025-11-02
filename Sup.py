@@ -14,9 +14,9 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 import Sup
-
 
 def get_filename():
     """get one filename via UI"""
@@ -153,3 +153,24 @@ def extract_from_dict(data, used_C="Cn"):
     dX = data["dX"]
     C = data[used_C]
     return X, dX, C
+
+
+def build_legend(legend_entries, scan_nrs, ct, legend="automatic"):
+    if legend == "manual":
+        legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
+    else:
+        legend_entries.append(f"Scan {scan_nrs[ct]}")
+    return
+
+
+def save_plot(data, save_plot="off"):
+    if save_plot=="on":
+        fileaddition = input("Please enter a fileaddition")
+        #data_identifier = Sup.get_variable_name(data)
+        path = data["filename"][:-4] + "_" + fileaddition + ".png"
+        # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
+        plt.savefig(path, dpi=600, transparent=True)
+        print(f"file saved to {path}")
+    else:
+        pass
+    return
