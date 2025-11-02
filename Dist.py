@@ -303,11 +303,14 @@ def lognormal_dist(conc, sigma_g, dg, X, dX):
 
 def lognormal_function(x, A, mu, sigma):
     """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
-    standard deviation - from Aerosol-Measurement p. 486 with added A parameter similar to p. 42"""
+    standard deviation - from Aerosol-Measurement p. 486 with added A parameter similar to p. 42
+    A is not directly conc, don't use with fit!"""
     return A / (x * np.log(sigma) * np.sqrt(2 * math.pi)) * np.exp(-((np.log(x / mu)) ** 2) / (2 * np.log(sigma) ** 2))
 
+
 def normalized_lognormal_function(x, A, mu, sigma):
-    """normalized lognormal function and factor A for scaling"""
+    """normalized lognormal function and factor A for scaling -> by that, A should directly be the concentration
+    use this!"""
     return A*(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))
               /np.nansum(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))))
 
@@ -324,13 +327,13 @@ def monomodal_fit(X, C, fit_function=Dist.normalized_lognormal_function):
     p0=[1000, np.median(X), 1.2] # guesses a monodisperse peak in the middle of the X-axis and with 10^4 /cm^3
     lowerbounds=[0, min(X), 1]  # lower bound is 0 conc, lower boundary of X-axis and completely monodisperse
     upperbounds=[np.inf, max(X), 5]  # upper bound is infinite conc., upper bound of X-axis and polydisperse
-    popt_lognorm_fit, pcov_lognorm_fit = optimize.curve_fit(fit_function, X, C, p0=p0,
+    popt_fit, pcov_fit = optimize.curve_fit(fit_function, X, C, p0=p0,
                                                             bounds=(lowerbounds, upperbounds), maxfev=1000)
-    A_fit=popt_lognorm_fit[0]
-    mu_fit=popt_lognorm_fit[1]
-    sigma_fit=popt_lognorm_fit[2]
-    Cn_fit=lognormal_function(X, *popt_lognorm_fit)
-    return A_fit, mu_fit, sigma_fit, Cn_fit
+    A_fit=popt_fit[0]
+    mu_fit=popt_fit[1]
+    sigma_fit=popt_fit[2]
+    C_fit=fit_function(X, *popt_fit)
+    return A_fit, mu_fit, sigma_fit, C_fit
 
 
 def create_bounds(n):
@@ -382,6 +385,7 @@ def generate_initial_guesses_from_data(
         a2 = random.uniform(*a2_range)
         a3 = random.uniform(*a3_range)
         initial_guess.extend([a1, a2, a3])
+    print(f' initial_guess: {initial_guess}, n modes: {num_modes}')
     return initial_guess, num_modes
 
 
@@ -397,11 +401,12 @@ def create_n_modal_fit_function(n, fit_function):
     func_def = f"def n_modal_fit({func_signature}):\n    return {func_body}\n"
 
     # Execute the function definition
-    n_modal_fit = exec(func_def, globals())
+    exec(func_def, globals())  # must stay like this, if changed to n_modal_fit = exec(.. it drops nonType error when
+    # calling the function later
     return n_modal_fit
 
 
-def multimodal_fit(X, C, fit_function=Dist.normalized_lognormal_function):
+def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
     initial_guess, n = generate_initial_guesses_from_data(X, C, height=10, distance=5, a2_range=(1.3, 4.0),
         a3_range=(100, 100000))
     b = create_bounds(n)
@@ -418,8 +423,10 @@ def multimodal_fit(X, C, fit_function=Dist.normalized_lognormal_function):
              color='yellow', lw=1.5, ls=":", label=f"distribution {k+1}")
     plt.legend()
     plt.xscale("log")
-    df = pd.DataFrame(data={'params': params, 'sigma': sigma}, index=create_n_modal_fit_function(n).__code__.co_varnames[1:])
-    return params, cov, df
+    print(params) # this looks super weird -> there, the writing into  the df is wrongly scripted by me
+
+    df = pd.DataFrame(data={'A': params[0], 'mu': params[1], 'sigma': params[2], 'covA': cov[0], 'covmu': cov[1], 'covsigma': cov[2]})
+    return df
 
 
 def mean_of_n(data, nr_mean):
@@ -558,7 +565,7 @@ def format_plot(fig, ax, used_C, used_device):
     # yscale='log', xscale='log', xlabel='$\mathregular{dlog D_p}$ / nm', ylabel='dN / $\mathregular{P/cm^3}$'
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
-    return
+    return ax
 
 
 def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.fhg_cm, a=1, legend="automatic", save_plot="off"):
@@ -582,7 +589,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.fhg_cm, a=1, legend=
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
             ct += 1
-    format_plot(fig, ax, used_C, used_device)
+    ax = format_plot(fig, ax, used_C, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')

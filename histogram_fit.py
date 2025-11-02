@@ -66,6 +66,7 @@ def full_function(n, data, scan_nr, initial_guess= initial_guess, used_C="Cn"):
     plt.legend()
     plt.xscale("log")
     df = pd.DataFrame(data={'params': params, 'sigma': sigma}, index=create_n_modal_lognormal_function(n).__code__.co_varnames[1:])
+    # index part is fancy way to get the row names to be A1, mu1, sigma1 to An, mun, sigman
     return params, cov, df
 
 
@@ -112,4 +113,4 @@ def generate_initial_guesses_from_data(
     return initial_guess, num_modes
 
 # to run: initial_guess = generate_initial_guesses_from_data(Mean_LAS_250826['mean_C'][10], Mean_LAS_250826["mean_X"][10]);
-# to run: full_function(initial_guess[1], Mean_LAS_250826, 11, initial_gess=initial_guess[0]);
+# to run: full_function(initial_guess[1], Mean_LAS_250826, 11, initial_guess=initial_guess[0]);
