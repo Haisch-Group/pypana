@@ -166,8 +166,8 @@ def import_data(filename):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict(used_device):
-    filename = get_filename()
+def import_data_dict(used_device, filename):
+    # filename = get_filename()
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
     data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
                  "used_device": used_device, "add_info": add_info}
@@ -176,12 +176,12 @@ def import_data_dict(used_device):
 
 if __name__ == "__main__":
 
-    # filename = get_filename()
+    filename = get_filename()
     # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
     # print(f"imported {filename}")
 
     data_dict = \
-        import_data_dict(device_list.query("Import_Script=='PALAS_USMPS_fileread'")["Device_Identifier"].values[0])
+        import_data_dict(device_list.query("Import_Script=='PALAS_USMPS_fileread'")["Device_Identifier"].values[0], filename)
     print(f"imported {data_dict['filename']} as dictionary")
 
 

@@ -232,8 +232,8 @@ def import_data(filename, used_device):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict(used_device):
-    filename = get_filename()
+def import_data_dict(used_device, filename):
+    # filename = get_filename()
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
     data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
                  "used_device": used_device, "add_info": add_info}
@@ -247,9 +247,9 @@ if __name__ == "__main__":
     print(f"{SMPS_3071_id} = SMPS 3071; {SMPS_3938_id} = SMPS 3938")
     used_device = int(input("Which instrument did you use? Enter as int."))
 
-    # filename = get_filename()
+    filename = get_filename()
     # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
     # print(f"imported {filename}")
 
-    data_dict = import_data_dict(used_device)
+    data_dict = import_data_dict(used_device, filename)
     print(f"imported {data_dict['filename']} as dictionary")

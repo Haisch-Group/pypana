@@ -40,21 +40,21 @@ import TSI_LAS3340A_fileread
 import TSI_SMPS_fileread
 
 
-def get_data():
-    #test
-    print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
-    used_device = int(input("Which instrument do you want to import data from? Enter as int."))
-
-    if used_device in Def.device_list["Device_Identifier"]:  # Size Distribution Instruments
+def get_data(method="prompt" ,used_device=2, filename="Z:/Projects/AeroCal/Measurements/20240624-0705_Coating/20240625/USMPS_17598_2024_06_25.txt"):
+    if method == "fixed":
+        used_device = Sup.check_device(used_device)
         fr = __import__(Def.device_list["Import_Script"][used_device])
-        data = fr.import_data_dict(used_device)
-        data["results"] = data["add_info"][["Scan Nr", "Time", "Comment"]].copy()
-        # create results array from add_info to save all the calculated values in there -> makes print easier too I hope
-
+        data = fr.import_data_dict(used_device=used_device, filename=filename)
     else:
-        print(f"Device {used_device} is not a viable option")
-        data = used_device
+        print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
+        used_device = int(input("Which instrument do you want to import data from? Enter as int."))
+        used_device = Sup.check_device(used_device)
+        fr = __import__(Def.device_list["Import_Script"][used_device])
+        filename = Sup.decide_filename_function(used_device)
+        data = fr.import_data_dict(used_device, filename)
 
+    data["results"] = data["add_info"][["Scan Nr", "Time", "Comment"]].copy()
+    # create results array from add_info to save all the calculated values in there -> makes print easier too I hope
     return data
 
 
@@ -87,7 +87,9 @@ def load_session():
 
 if __name__ == "__main__":
 
-    plt.ioff()
+    data = get_data()
+
+    # plt.ioff()
 
     """
     The script is run from the python console with the following commands

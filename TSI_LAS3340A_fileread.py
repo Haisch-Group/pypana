@@ -125,12 +125,12 @@ def import_data(filenames):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict(used_device):
-    filenames = get_filenames()
-    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filenames)
+def import_data_dict(used_device, filename): # here list of filenames is required -> get_filenames
+    # filenames = get_filenames()
+    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
     data_dict = {}
-    for k in range(len(filenames)):
-        data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filenames[0],
+    for k in range(len(filename)):
+        data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename[0],
                  "used_device": used_device, "add_info": add_info}
         # killed the list of strings, so an error saving plots is avoided
     return data_dict
@@ -138,7 +138,7 @@ def import_data_dict(used_device):
 
 if __name__ == "__main__":
 
-    # filename = get_filename()
+    filename = get_filenames()
     # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_single_data(filename)
     # print(f"imported {filename}")
 
@@ -147,5 +147,5 @@ if __name__ == "__main__":
     # print(f"imported {filenames}")
 
     data_dict = \
-        import_data_dict(device_list.query("Import_Script=='TSI_LAS3340A_fileread'")["Device_Identifier"].values[0])
+        import_data_dict(device_list.query("Import_Script=='TSI_LAS3340A_fileread'")["Device_Identifier"].values[0], filename)
     print(f"imported {data_dict['filename']} as dictionary")

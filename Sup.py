@@ -17,6 +17,7 @@ import math
 import matplotlib.pyplot as plt
 
 import Sup
+import Def
 
 def get_filename():
     """get one filename via UI"""
@@ -53,6 +54,22 @@ def get_variable_name(some_variable):
     for name, value in globals().items():
         if value is some_variable:
             return name
+
+
+def check_device(used_device):
+    if int(used_device) in Def.device_list["Device_Identifier"]:
+        used_device = int(used_device)
+    else:
+        while int(used_device) not in Def.device_list["Device_Identifier"]:
+            print(f"Device {used_device} is not a viable option")
+            print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
+            used_device = input("Which instrument do you want to import data from? Enter as int.\n"
+                                    "Enter 'break' to stop the input loop.")
+            if used_device == "break":  # this is not perfect yet -> drops error, resolve
+                break
+            else:
+                used_device = int(used_device)
+    return used_device
 
 
 def py_logic_converter(nr_list):
@@ -141,6 +158,15 @@ def decide_y_label(used_C):
     else:
         y_label = 'Number Concentration / ' + C_unit
     return y_label
+
+
+def decide_filename_function(used_device):
+    if used_device == 5:
+        filename = Sup.get_filenames()
+    else:
+        filename = Sup.get_filename()
+    return filename
+
 
 
 def pack_to_dict_df(data, variables):

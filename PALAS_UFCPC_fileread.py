@@ -124,8 +124,8 @@ def import_data(filename):
     return Cn, el_time, add_info
 
 
-def import_data_dict(used_device):
-    filename = get_filename()
+def import_data_dict(used_device, filename):
+    # filename = get_filename()
     Cn, el_time, add_info = import_data(filename)
     data_dict = {"Cn": Cn, "el_time": el_time, "filename": filename, "used_device": used_device, "add_info":add_info}
     return data_dict
@@ -133,10 +133,10 @@ def import_data_dict(used_device):
 
 if __name__ == "__main__":
 
-    # filename = get_filename()
+    filename = get_filename()
     # Cn, el_time, start_time = import_data(filename)
     # print(f"imported {filename}")
 
     data_dict = \
-        import_data_dict(device_list.query("Import_Script=='PALAS_UFCPC_fileread'")["Device_Identifier"].values[0])
+        import_data_dict(device_list.query("Import_Script=='PALAS_UFCPC_fileread'")["Device_Identifier"].values[0], filename)
     print(f"imported {data_dict['filename']} as dictionary")
