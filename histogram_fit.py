@@ -1,11 +1,11 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from math import pi as PI
-from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt  # KM already in Dist
+import numpy as np  # KM already in Dist
+import pandas as pd  # KM already in Dist
+import math  # KM already in Dist but as math only -> rewrite to import math -> done, was only one use
+from scipy import optimize # KM already in Dist sd optimize -> rewrite -> done, was only one use
 
 def lognormal_function(x, mu, sigma, A):
-    return A*(np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))/(np.log(sigma)*x*np.sqrt(2*PI)))
+    return A*(np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))/(np.log(sigma)*x*np.sqrt(2*math.pi)))
 
 def create_n_modal_lognormal_function(n):
     # Create the function signature
@@ -48,7 +48,7 @@ def full_function(n, data, scan_nr, initial_gess= initial_gess):
     b = create_bounds(n)
     fit_nr = scan_nr - 1
     function_type = create_n_modal_lognormal_function(n)
-    params, cov = curve_fit(function_type, data["mean_X"][0], data["mean_C"][fit_nr],
+    params, cov = optimize.curve_fit(function_type, data["mean_X"][0], data["mean_C"][fit_nr],
                             p0=initial_gess,
                             bounds=(b),
                             method="trf")
