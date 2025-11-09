@@ -362,7 +362,7 @@ def create_bounds(n):
 def generate_initial_guesses_from_data(
         x_array,
         data_row,
-        height=10,
+        height=10, # -> could be chosen from calc_conc_n
         distance=5,
         a2_range=(1.3, 4.0),
         a3_range=(100, 100000)):
@@ -383,7 +383,9 @@ def generate_initial_guesses_from_data(
     """
 
     # Detect peaks
-    peaks, _ = find_peaks(data_row, height=height, distance=distance)
+    peaks, properties = find_peaks(data_row, height=height, distance=distance)  # also provides properties
+    print(f"peaks: {peaks}")
+    print(f"properties: {properties}")
     num_modes = len(peaks)
 
     # Generate initial guesses
@@ -415,26 +417,41 @@ def create_n_modal_fit_function(n, fit_function):
 
 
 def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
+    """returned a ValueError: array must not contain infs or NaNs from scipy.optimize, so arrays have to be stripped of
+    NaNs first when using cut arrays"""
+    XnoNans = X[~np.isnan(X)]  # ~ = logical-not operator
+    CnoNaNs = C[~np.isnan(C)]
     initial_guess, n = generate_initial_guesses_from_data(X, C, height=10, distance=5, a2_range=(1.3, 4.0),
         a3_range=(100, 100000))
+    print(f'n = {n}')
     b = create_bounds(n)
     function_type = create_n_modal_fit_function(n, fit_function)
-    params, cov = optimize.curve_fit(function_type, X, C,
+    params, covs = optimize.curve_fit(function_type, XnoNans, CnoNaNs,
                             p0=initial_guess,
                             bounds=(b),
                             method="trf")  # trf -> bounds are provided
-    sigma = np.sqrt(np.diag(cov))
-    plt.plot(X, function_type(X, *params),
+    var = np.diag(covs) # variance is in diag of covs, sigma is sqrt of var
+    C_fit = function_type(X, *params)
+    plt.plot(X, C_fit,
              color='red', lw=3, label='multimodal fit')
     for k in range(0,n):
         plt.plot(X, lognormal_function(X, *params[k*3:(k+1)*3]),
-             color='yellow', lw=1.5, ls=":", label=f"distribution {k+1}")
+             lw=1.5, ls=":", label=f"distribution {k+1}")  # color="yellow"
     plt.legend()
     plt.xscale("log")
-    print(params) # this looks super weird -> there, the writing into  the df is wrongly scripted by me
-
-    df = pd.DataFrame(data={'A': params[0], 'mu': params[1], 'sigma': params[2], 'covA': cov[0], 'covmu': cov[1], 'covsigma': cov[2]})
-    return df
+    print(params)
+    print(var)
+    # in params for k = len measurements, every 0+(n*3) value is A, every 1+(n*3) value is mu and every 2+(n*3) value is
+    # sigma_g -> have to be sorted into dataframe
+    fit_params_vars = np.full((n, 6), np.nan)
+    for k in range(0, n):  # sort params A, mu, sigma into rows for each detected mode n as row
+        fit_params_vars[k, 0] = params[0 + (k * 3)]
+        fit_params_vars[k, 1] = params[1 + (k * 3)]
+        fit_params_vars[k, 2] = params[2 + (k * 3)]
+        fit_params_vars[k, 3] = var[0 + (k * 3)]
+        fit_params_vars[k, 4] = var[1 + (k * 3)]
+        fit_params_vars[k, 5] = var[2 + (k * 3)]
+    return fit_params_vars, C_fit
 
 
 def mean_of_n(data, nr_mean):
