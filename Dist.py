@@ -100,8 +100,11 @@ def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
         pass
     else:
         data["cut_X"] = np.full_like(data["X"], np.nan)
-        data[f"cut_{used_C}"] = np.full_like(data[used_C], np.nan)
         data["cut_dX"] = np.full_like(data["X"], np.nan)
+    if f"cut_{used_C}" in data:
+        pass
+    else:
+        data[f"cut_{used_C}"] = np.full_like(data[used_C], np.nan)
         data["results"][f"cut_conc_{used_C}"] = np.full_like(data["results"]["calc_conc_n"], np.nan)
     for k in cut_nrs:
         cut_X, cut_C, cut_dX, cut_conc = cut_dist_data(X[k], C[k], dX[k], lowerbound, upperbound)
@@ -344,69 +347,71 @@ def monomodal_fit(X, C, fit_function=Dist.normalized_lognormal_function):
     return A_fit, mu_fit, sigma_fit, C_fit
 
 
-def create_bounds(n):
-    bounds_1 = []
-    bounds_2 = []
-    bounds=(bounds_1,bounds_2)
-    for i in range(1, n+1):
-        bounds_1.append(0.1)
-        bounds_1.append(1.0)
-        bounds_1.append(0.1)
-    for k in range(1, n+1):
-        bounds_2.append(8500)
-        bounds_2.append(np.inf)
-        bounds_2.append(np.inf)
+def create_bounds(modality, XnoNaNs, CnoNaNs):
+    lowerbounds = []
+    upperbounds = []
+    bounds=(lowerbounds,upperbounds)
+    for i in range(modality):
+        lowerbounds.append(0)  # A_min
+        lowerbounds.append(min(XnoNaNs)) # mu_min
+        lowerbounds.append(1)  # sigma_min
+    for k in range(modality):
+        upperbounds.append(np.nansum(CnoNaNs)) # A_max
+        upperbounds.append(max(XnoNaNs)) # mu_max
+        upperbounds.append(np.inf) # sigma_max
+    print(f'lower bounds {lowerbounds}')
+    print(f'upper bounds {upperbounds}')
+    bounds = (lowerbounds, upperbounds)
     return bounds
 
 
 def generate_initial_guesses_from_data(
-        x_array,
-        data_row,
-        height=10, # -> could be chosen from calc_conc_n
-        distance=5,
-        a2_range=(1.3, 4.0),
-        a3_range=(100, 100000)):
+        X,
+        C,
+        height=10, # -> minimum height in scipy.signal.find_peaks
+        width=1, # -> minimum width in scipy.signal.find_peaks
+        # threshold = could be added here which describes the difference in height between neighboring peaks
+        distance=5): # horizontal distance between neighboring peaks
     """
     Detects peaks in a 1D data array and generates initial guesses for fitting.
     Parameters:
-    data_row (array-like): 1D array of data values (e.g., concentrations).
-    x_array (array-like): 1D array of corresponding x-axis values (e.g., sizes).
+    X (array-like): 1D array of corresponding x-axis values (e.g., sizes).
+    C (array-like): 1D array of data values (e.g., concentrations).
     height (float): Minimum height of peaks to detect.
+    width (float): Minimum width of peaks to detect.
     distance (int): Minimum distance between peaks.
-    a2_range (tuple): Range (min, max) for random generation of a2 values.
-    a3_range (tuple): Range (min, max) for random generation of a3 values.
 
     Returns:
             tuple: (initial_guess_list, number_of_modes)
-                - initial_guess_list: [a1, a2, a3, b1, b2, b3, ...]
+                - initial_guess_list: [A1, mu1, sigma1, A2, mu2, sigma2, ...]
                 - number_of_modes: int, number of detected peaks
     """
 
     # Detect peaks
-    peaks, properties = find_peaks(data_row, height=height, distance=distance)  # also provides properties
-    print(f"peaks: {peaks}")
+    peaks, properties = find_peaks(C, height=height, width=width, distance=distance)  # also provides properties
     print(f"properties: {properties}")
-    num_modes = len(peaks)
+    modality = len(peaks)
 
     # Generate initial guesses
     initial_guess = []
-    for peak_index in peaks:
-        a1 = x_array[peak_index]  # Use x value at peak position
-        a2 = random.uniform(*a2_range)
-        a3 = random.uniform(*a3_range)
-        initial_guess.extend([a1, a2, a3])
-    print(f' initial_guess: {initial_guess}, n modes: {num_modes}')
-    return initial_guess, num_modes
+    for k in range(len(peaks)):
+        mu = X[peaks[k]]  # Use x value at peak position -> actually close to dg
+        A = properties["width_heights"][k]  # not really height, but starting estimate
+        sigma = properties["widths"][k]  # with in n bins i guess - translates badly in sigma
+        initial_guess.extend([A, mu, sigma])
+    print(f' initial_guess: {initial_guess}')
+    print(f'modality: {modality}')
+    return initial_guess, modality
 
 
-def create_n_modal_fit_function(n, fit_function):
+def create_n_modal_fit_function(modality, fit_function):
     """produce n-modal function as linear combination of multiple fit functions as defined above with n
     being the number of contained single functions"""
     # Create the function signature
-    args = ['x'] + [f'mu{i + 1}, sigma{i + 1}, A{i + 1}' for i in range(n)]
+    args = ['x'] + [f'A{i + 1}, mu{i + 1}, sigma{i + 1}' for i in range(modality)]
     func_signature = ', '.join(args)
     # Create the function body
-    func_body = ' + '.join([f'{fit_function}(x, mu{i + 1}, sigma{i + 1}, A{i + 1})' for i in range(n)])
+    func_body = ' + '.join([f'{fit_function}(x, A{i + 1}, mu{i + 1}, sigma{i + 1})' for i in range(modality)])
     # Combine the signature and body into a function definition
     func_def = f"def n_modal_fit({func_signature}):\n    return {func_body}\n"
 
@@ -419,14 +424,12 @@ def create_n_modal_fit_function(n, fit_function):
 def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
     """returned a ValueError: array must not contain infs or NaNs from scipy.optimize, so arrays have to be stripped of
     NaNs first when using cut arrays"""
-    XnoNans = X[~np.isnan(X)]  # ~ = logical-not operator
+    XnoNaNs = X[~np.isnan(X)]  # ~ = logical-not operator
     CnoNaNs = C[~np.isnan(C)]
-    initial_guess, n = generate_initial_guesses_from_data(X, C, height=10, distance=5, a2_range=(1.3, 4.0),
-        a3_range=(100, 100000))
-    print(f'n = {n}')
-    b = create_bounds(n)
-    function_type = create_n_modal_fit_function(n, fit_function)
-    params, covs = optimize.curve_fit(function_type, XnoNans, CnoNaNs,
+    initial_guess, modality = generate_initial_guesses_from_data(X, C, height=10, width=1, distance=5)
+    b = create_bounds(modality, XnoNaNs, CnoNaNs)
+    function_type = create_n_modal_fit_function(modality, fit_function)
+    params, covs = optimize.curve_fit(function_type, XnoNaNs, CnoNaNs,
                             p0=initial_guess,
                             bounds=(b),
                             method="trf")  # trf -> bounds are provided
@@ -434,7 +437,7 @@ def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
     C_fit = function_type(X, *params)
     plt.plot(X, C_fit,
              color='red', lw=3, label='multimodal fit')
-    for k in range(0,n):
+    for k in range(0,modality):
         plt.plot(X, lognormal_function(X, *params[k*3:(k+1)*3]),
              lw=1.5, ls=":", label=f"distribution {k+1}")  # color="yellow"
     plt.legend()
@@ -443,15 +446,15 @@ def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
     print(var)
     # in params for k = len measurements, every 0+(n*3) value is A, every 1+(n*3) value is mu and every 2+(n*3) value is
     # sigma_g -> have to be sorted into dataframe
-    fit_params_vars = np.full((n, 6), np.nan)
-    for k in range(0, n):  # sort params A, mu, sigma into rows for each detected mode n as row
+    fit_params_vars = np.full((modality, 6), np.nan)
+    for k in range(0, modality):  # sort params A, mu, sigma into rows for each detected mode n as row
         fit_params_vars[k, 0] = params[0 + (k * 3)]
         fit_params_vars[k, 1] = params[1 + (k * 3)]
         fit_params_vars[k, 2] = params[2 + (k * 3)]
         fit_params_vars[k, 3] = var[0 + (k * 3)]
         fit_params_vars[k, 4] = var[1 + (k * 3)]
         fit_params_vars[k, 5] = var[2 + (k * 3)]
-    return fit_params_vars, C_fit
+    return modality, fit_params_vars, C_fit
 
 
 def mean_of_n(data, nr_mean):
