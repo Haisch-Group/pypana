@@ -58,17 +58,24 @@ def get_data(method="prompt" ,used_device="", filename=""):
     return data
 
 
-def save_data_to_xlsx(data_dict, fileaddition="particleDF"):
+def save_data_to_xlsx(data_dict, fileaddition="particleDF", save_arrays=None):
     # could theoretically also be used to save the arrays containing the measuring data to a single sheet each
     """saves selected variables to a csv file, select variables to save in variable_list as list of strings,
      allways use a different fileaddition when saving anything else than the data input array data_identifier"""
     # data_identifier = Sup.get_variable_name(data_dict)
     path = data_dict["filename"][:-4]+"_"+fileaddition+".xlsx" #was .csv with older function
     # path = data_dict["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".csv"
+    identity = ["used_device", "filename"], [data_dict["used_device"], data_dict["filename"]]
     with pd.ExcelWriter(path) as writer:
+        pd.DataFrame(identity).to_excel(writer, sheet_name="identity")
         data_dict["results"].to_excel(writer, sheet_name="results")  # alternative: dataframe.to_csv(path)
         data_dict["add_info"].to_excel(writer, sheet_name="add_info")
-    print(f"wrote add_info and results to file with name {path}")
+        if save_arrays == None:
+            pass
+        else:
+            for array in save_arrays:
+                pd.DataFrame(data_dict[array]).to_excel(writer, sheet_name=array)
+    print(f"wrote data to file with name {path}")
     return
 
 
