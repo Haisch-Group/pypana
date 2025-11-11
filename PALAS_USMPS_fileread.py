@@ -3,9 +3,9 @@
 PALAS_USMPS_fileread.py
 
 Created 2020-09-14
-@written by Karin Wieland
-Import of Data and Plot
-@edited by Kevin Maier (kevin.r.maier@tum.de)
+@written by Karin Wieland: Import of Data and Plot
+
+@edited by Kevin Maier (kevin.r.maier@tum.de):
 
 2020-10-xx: labels plot with comment from txt instead of timestamp
 2020-11-14: created functions from previous script as "import_data" and "plot_data"
@@ -14,6 +14,7 @@ Import of Data and Plot
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
 2023-01-19: filename is retrieved from SMPS_analysis now
+2024-06 to 2025-11 changed file to now work with common data structure and functions
 """
 
 import numpy as np
@@ -29,18 +30,16 @@ from Def import device_list
 def import_data(filename):
     """takes the raw data and extracts the variables from it to return:
     X  = array with all the X values = particle size
-    Xl = array with all the lower borders of the size bins (named Xu in the Palas SMPS file)
-    Xu = array with all the upper borders of the size bins (named Xo in the Palas SMPS file)
+    Xl = array with all the lower borders of the size bins (named Xu in the PALAS SMPS file)
+    Xu = array with all the upper borders of the size bins (named Xo in the PALAS SMPS file)
     Cn = array with all the number concentrations of the particles per bin in inverted and diffusion corrected (dn_inv_diff in
-    the Palas SMPS file)
+    the PALAS SMPS file)
     time  = list with the starting times of each measurement
     nr_scans = array with the number of the scans=index+1"""
     with open(filename) as f_in:  # open file and keep open
         lines = f_in.readlines()  # read the file in line by line
         len_file = len(lines)  # determine the length of the file
         nr_scans = int(len_file/7)  # calculate the number of scans in the file - 7 lines = 1 msmt
-        # scan_nr = np.array([i+1 for i in range(0, nr_scans, 1)])  # list of scan numbers for correlating in plots
-        # not used atm
 
         data = []  # defines a list to fill with the data (has to be done this way as the length of the data can vary
         # accordingly to set measuring range
@@ -56,7 +55,7 @@ def import_data(filename):
         # parameters and not data
 
         for i in np.arange(0, len_file):  # iterating through all lines in the file to produce a list of lists with the
-            # data skipping all headerlines (the first and every 7th)
+            # data skipping all header lines (the first and every 7th)
             if i in pos:
                 parameters.append(lines[i].split("\t"))  # produces the list in the list called parameters
                 # continue  # before, here was just skipped, as the first line was only used for time and label import
@@ -69,14 +68,10 @@ def import_data(filename):
     nr_bins = max(data_len)-2  # calculates the maximum number of measuring points in the file subtracting 2 for the
     # first two columns being the "header" columns in the original txt
 
-    X = np.zeros((nr_scans, nr_bins))  # preallocate the arrays
-    Xl = np.zeros_like(X)
-    Xu = np.zeros_like(X)
-    Cn = np.zeros_like(X)
-    X[:] = np.nan  # fill the arrays with nans, so all none filled values are nans later and not 0, necessary as within
-    Xl[:] = np.nan  # one file, the measuring range can be changed easily on the PALAS SMPS leading to differently sized
-    Xu[:] = np.nan  # data width
-    Cn[:] = np.nan
+    X = np.full((nr_scans, nr_bins), np.nan)  # preallocate the arrays and
+    Xl = np.full_like(X, np.nan) # fill the arrays with nans, so all none filled values are nans later and not 0,
+    Xu = np.full_like(X, np.nan) # necessary as within one file, the measuring range can be changed easily on the PALAS
+    Cn = np.full_like(X, np.nan) # SMPS leading to differently sized data width
 
     conc_data = input("Which of the available concentration data do you want to import? Type 3 for raw, 4 for "
                            "inverted, 5 for inverted and diffusion corrected")
@@ -97,11 +92,11 @@ def import_data(filename):
             Xl[i, k-2] = data[int(0 + i * 6)][int(k)]  # file, or first line in data list of lists created before
         for k in range(2, data_len[int(1 + i * 6)]):  # upper bin boundary values contained in each third line in the
             Xu[i, k-2] = data[int(1 + i * 6)][int(k)]  # file, or second line in data list of lists created before
-        for k in range(2, data_len[int(2 + i * 6)]):  # bin midpoints from firth line in file or third in data listslist
+        for k in range(2, data_len[int(2 + i * 6)]):  # bin midpoints from fourth line in file or third in data listlist
             X[i, k-2] = data[int(2 + i * 6)][int(k)]  # should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
         for k in range(2, data_len[int(int(conc_data) + i * 6)]):  # Cn is filled from conc array contained in different
-            # stages of processing chosen from file or data list of lists according to user input conc_data above
-            # 5 is based on the inverted diff corrected data, 3 on the raw data, 4 is inverted but not diff corrected
+            # stages of processing chosen from file or data list of lists according to user input; conc_data 5 is based
+            # on the inverted diff corrected data, 3 on the raw data, 4 is inverted but not diff corrected
             Cn[i, k-2] = data[int(int(conc_data) + i * 6)][int(k)]
 
     parameter_list = ["Date", "Time", "Comment", "Sheath Temp / °C", "Sample Pressure / mbar", "Sheath Flow / L/min",
@@ -122,7 +117,7 @@ def import_data(filename):
         pass
     elif len(parameters[0]) == 30:
         parameter_list.extend(["CPC1 Device Status (0=not ready, 1=ready)", "CPC2 Device Status (0=not ready, 1=ready)"])
-    else:  # added to avoid the error when there are more columns coming. :D
+    else:  # added to avoid an error when there are more columns coming. :D
         parameter_list.extend(["CPC1 Device Status (0=not ready, 1=ready)", "CPC2 Device Status (0=not ready, 1=ready)"])
         count = 2
         while len(parameter_list) < len(parameters[0]):
