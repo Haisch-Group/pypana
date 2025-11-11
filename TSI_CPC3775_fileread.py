@@ -83,6 +83,7 @@ def import_data(filename):
 
     add_info.insert(loc=0, column="Time", value=start_time)
     add_info.insert(loc=0, column="Scan Nr", value=data["Sample #"])
+    add_info.insert(loc=0, column="Comment", value=data[""])
 
     return Cn, el_time, add_info
 
