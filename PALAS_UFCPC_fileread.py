@@ -2,7 +2,7 @@
 """
 PALAS_UFCPC_fileread.py
 
-Script for Data import of the PALAS CPC 100 or 50
+Script for Data import of the PALAS UFCPC
 
 Created v0 2022-03-10 to 2022-04-04
 @written by Kevin Maier (kevin.r.maier@tum.de)
@@ -10,7 +10,10 @@ Created v0 2022-03-10 to 2022-04-04
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
 
-2024-06 to 2025-11 updated t provide data of structure as used in particle_analysis.py
+2024-06 to 2025-11 updated to provide data of structure as used in particle_analysis.py
+
+Works by assigning a scan number to a set of measured data points based on the change in comment set during saving of
+the data
 """
 
 import numpy as np
@@ -71,7 +74,7 @@ def import_data(filename):
         else:
             msmt_len_list.append(indexlist[k+1]-indexlist[k])  # first point of next - last point of current msmt
 
-    # produce and fill the concentration array with the data and leave the non-filled cells as nan, so no bullshit
+    # produce and fill the concentration array with the data and leave the non-filled cells as nan, so nothing strange
     # is plotted/calculated, also create and fill the start_time list
     Cn = np.zeros((msmt_counter, max(msmt_len_list)))
     Cn[:] = np.nan
@@ -92,7 +95,7 @@ def import_data(filename):
 
 
     # calculate elapsed time array from each time point - start point of the measurement (done this way because PALAS
-    # SMPS sometimes had a hanger and just assigning an elapsed_time array with 1s intervals might lead to wrong axis)
+    # CPC sometimes had a hanger and just assigning an elapsed_time array with 1s intervals might lead to wrong axis)
     el_time = np.zeros_like(Cn)  # preallocation of array
     el_time[:] = np.nan  # filling with NaN to not have wrong numbers in there
     for k in range(msmt_counter):  # goint through all measurements
