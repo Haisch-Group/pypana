@@ -76,8 +76,7 @@ def import_data(filename):
 
     # produce and fill the concentration array with the data and leave the non-filled cells as nan, so nothing strange
     # is plotted/calculated, also create and fill the start_time list
-    Cn = np.zeros((msmt_counter, max(msmt_len_list)))
-    Cn[:] = np.nan
+    Cn = np.full((msmt_counter, max(msmt_len_list)), np.nan)
     start_time = []  # defining start_time list
 
     for k in range(msmt_counter):  # go through all measurements and fill Cn array from 0 to length of the measurement
@@ -96,8 +95,7 @@ def import_data(filename):
 
     # calculate elapsed time array from each time point - start point of the measurement (done this way because PALAS
     # CPC sometimes had a hanger and just assigning an elapsed_time array with 1s intervals might lead to wrong axis)
-    el_time = np.zeros_like(Cn)  # preallocation of array
-    el_time[:] = np.nan  # filling with NaN to not have wrong numbers in there
+    el_time = np.full_like(Cn, np.nan)  # preallocation of array and filling with NaN to not have wrong numbers in there
     for k in range(msmt_counter):  # goint through all measurements
         for i in range(0, msmt_len_list[k]):  # and in that through all entries to calculate elapsed time for each
             dt = datetime.strptime(data["Date"][indexlist[k]+i] + " " + data["Time"][indexlist[k]+i],
