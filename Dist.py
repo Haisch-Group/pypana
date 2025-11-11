@@ -58,14 +58,13 @@ def select_data(data, sel_nrs):
     return sel_data
 
 
-# def convert_cn_to_cn_dlogx(data):
-#     data["Cn_dlogX"] = data["Cn"]/data["dlogX"]
-#     return data
-#
-#
-# def convert_cn_dlogx_to_cn(data):
-#     data["Cn"] = data["Cn_dlogX"]*data["dlogX"]
-#     return data
+def convert_C_to_C_dlogx(data, used_C="Cn"):
+    data[f"{used_C}_dlogX"] = data[used_C].copy/data["dlogX"]
+    return data
+
+def convert_C_dlogx_to_C(data, used_C="Cn_dlogX"):
+    data[used_C.strip("_dlogX")] = data[f"{used_C}"].copy*data["dlogX"]
+    return data
 
 
 def get_conc(C):
@@ -279,12 +278,12 @@ def cumulative_diameters(X, cum_C):
     return X10, X16, X50, X84, X90  # cumDiameters
 
 
-def typical_calculations(data):
-    data["results"]["calc_conc_n"] = get_conc(data["Cn"])
-    data["results"]["dg"], data["results"]["sigma_g"] = calc_geometry(data["X"], data["Cn"], data["results"]["calc_conc_n"])
+def typical_calculations(data, used_C="Cn"):
+    data["results"]["calc_conc_n"] = get_conc(data[used_C])
+    data["results"]["dg"], data["results"]["sigma_g"] = calc_geometry(data["X"], data[used_C], data["results"]["calc_conc_n"])
     data["results"]["mode"], data["results"]["SMD"], data["results"]["VMD"] = (
         mode_surface_volume_diameter(data["results"]["dg"], data["results"]["sigma_g"]))
-    data["cum_C"] = cumulative_distribution(data["Cn"])
+    data["cum_C"] = cumulative_distribution(data[used_C])
     data["norm_cum_C"] = Sup.norm_C(data["cum_C"], data["results"]["calc_conc_n"])
     (data["results"]["X10"], data["results"]["X16"], data["results"]["X50"], data["results"]["X84"],
      data["results"]["X90"]) = cumulative_diameters(data["X"], data["cum_C"])
@@ -458,58 +457,85 @@ def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
     return modality, fit_params_vars, C_fit
 
 
-def mean_of_n(data, nr_mean):
+def mean_of_n(data, nr_mean, used_C="Cn"):
     """calculates a mean of every n consecutive measurements and also gives the standard deviation
     select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
     only works with more than 3 measurements"""
-    C = data["Cn"]
     X = data["X"]
     dX = data["dX"]
+    dlogX = data["dlogX"]
+    C = data[used_C]
+    C_dlogX = data[f"{used_C}_dlogX"]
     calc_conc = data["results"]["calc_conc_n"]
     dg = data["results"]["dg"]
     sigma = data["results"]["sigma_g"]
     n = nr_mean
-    size = C.shape
+    size = X.shape
     nth_len = int(size[0]/n)
-    mean_C = np.zeros(shape=(nth_len, size[1]))  # np.nans?
-    std_C = np.zeros_like(mean_C)
-    mean_X = np.zeros_like(mean_C)
-    mean_dX = np.zeros_like(mean_C)
+    mean_X = np.full((nth_len, size[1]), np.nan)
+    mean_dX = np.full_like(mean_X, np.nan)
+    mean_dlogX = np.full_like(mean_X, np.nan)
+    mean_C = np.full_like(mean_X, np.nan)
+    std_C = np.full_like(mean_X, np.nan)
+    mean_C_dlogX = np.full_like(mean_X, np.nan)
+    std_C_dlogX = np.full_like(mean_X, np.nan)
     mean_conc = []
     std_conc = []
     mean_dg = []
     mean_sigma = []
     std_dg = []
     std_sigma = []
+    scan_nr = []
+    time = []
+    comment = []
+    subscan_nrs = []
     for k in range(nth_len):
-        mean_C[k, :] = np.mean(C[(k*n):((k+1)*n), :], axis=0)
-        std_C[k, :] = np.std(C[(k*n):((k+1)*n), :], axis=0)
-        mean_X[k, :] = np.mean(X[(k*n):((k+1)*n), :], axis=0)
+        mean_X[k, :] = np.mean(X[(k * n):((k + 1) * n), :], axis=0)
         mean_dX[k, :] = np.mean(dX[(k * n):((k + 1) * n), :], axis=0)
+        mean_dlogX[k, :] = np.mean(dlogX[(k * n):((k + 1) * n), :], axis=0)
+        mean_C[k, :] = np.mean(C[(k * n):((k + 1) * n), :], axis=0)
+        std_C[k, :] = np.std(C[(k * n):((k + 1) * n), :], axis=0)
+        mean_C_dlogX[k, :] = np.mean(C_dlogX[(k * n):((k + 1) * n), :], axis=0)
+        std_C_dlogX[k, :] = np.std(C_dlogX[(k * n):((k + 1) * n), :], axis=0)
         mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
         std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
         mean_dg.append(np.mean(dg[(k * n):((k + 1) * n)], axis=0))
         std_dg.append(np.std(dg[(k * n):((k + 1) * n)], axis=0))
         mean_sigma.append(np.mean(sigma[(k * n):((k + 1) * n)], axis=0))
         std_sigma.append(np.std(sigma[(k * n):((k + 1) * n)], axis=0))
-    mean_data = {"mean_X": mean_X, "mean_C": mean_C, "std_C": std_C, "dX": mean_dX,
-                 "mean_conc": mean_conc, "std_conc": std_conc, "mean_dg": mean_dg,"std_dg":std_dg,
-                 "mean_sigma": mean_sigma, "std_sigma": std_sigma, "used_device": data["used_device"]}
+        scan_nr.append(data["add_info"]["Scan Nr"][k*n])
+        time.append(data["add_info"]["Time"][k*n])
+        comment.append(data["add_info"]["Comment"][k*n])
+        sscn = ""
+        if "Subscan Nr" in data["add_info"]:
+            for j in range(0,n): # for every scan that is meaned into one append the subscan nr from subscan nrs
+                sscn += str(data["add_info"]["Scan Nr"][k*n+j]) + "-" + str(data["add_info"]["Subscan Nr"][k*n+j]) + " "
+        else:
+            for j in range(0,n):
+                sscn += str(data["add_info"]["Scan Nr"][k*n+j]) + " "
+        subscan_nrs.append(sscn)
+    add_info = pd.DataFrame({"Scan Nr": scan_nr, "Time": time, "Comment": comment, "Subscan Nrs": subscan_nrs})
+    results = pd.DataFrame({"Scan Nr": scan_nr, "Time": time, "Comment": comment, "mean_conc": mean_conc,
+                            "std_conc": std_conc, "mean_dg": mean_dg, "std_dg": std_dg, "mean_sigma": mean_sigma,
+                            "std_sigma": std_sigma})
+    mean_data = {"X": mean_X, "dX": mean_dX, "dlogX": mean_dlogX, f"mean_{used_C}": mean_C, f"std_{used_C}": std_C,
+                 f"mean_{used_C}_dlogX": mean_C_dlogX, f"std_{used_C}_dlogX": std_C_dlogX, "filename": data["filename"],
+                 "used_device": data["used_device"], "add_info": add_info ,"results": results}
     return mean_data
 
 
-def merge_mean_data(mean_data_list):
+def merge_mean_data(mean_data_list):  ### rework
     """merges dictionaries of data, should best be used with mean data dicts
     currently also writes into the first dict it takes data from???"""
     merged_mean_data = {}
-    merged_mean_data["mean_X"] = mean_data_list[0]["mean_X"]
-    merged_mean_data["mean_C"] = mean_data_list[0]["mean_C"]
-    merged_mean_data["std_C"] = mean_data_list[0]["std_C"]
-    merged_mean_data["dX"] = mean_data_list[0]["dX"]
-    merged_mean_data["mean_conc"] = mean_data_list[0]["mean_conc"][:]
-    merged_mean_data["std_conc"] = mean_data_list[0]["std_conc"][:]
-    merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:]
-    merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:]
+    merged_mean_data["mean_X"] = mean_data_list[0]["mean_X"].copy()
+    merged_mean_data["mean_C"] = mean_data_list[0]["mean_C"].copy()
+    merged_mean_data["std_C"] = mean_data_list[0]["std_C"].copy()
+    merged_mean_data["dX"] = mean_data_list[0]["dX"].copy()
+    merged_mean_data["mean_conc"] = mean_data_list[0]["mean_conc"][:].copy()
+    merged_mean_data["std_conc"] = mean_data_list[0]["std_conc"][:].copy()
+    merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:].copy()
+    merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:].copy()
     for i in mean_data_list[1:]:
         merged_mean_data["mean_X"] = np.append(merged_mean_data["mean_X"], i["mean_X"], axis=0)
         merged_mean_data["mean_C"] = np.append(merged_mean_data["mean_C"], i["mean_C"], axis=0)
@@ -522,9 +548,9 @@ def merge_mean_data(mean_data_list):
     return merged_mean_data
 
 
-def typical_calculations_mean(data):
-    data["calc_conc_n"] = get_conc(data["mean_C"])
-    data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data["mean_C"], data["calc_conc_n"], data["dX"])
+def typical_calculations_mean(data, used_C="Cn"):
+    data["calc_conc_n"] = get_conc(data[f"mean_{used_C}"])
+    data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data[f"mean_{used_C}"], data["calc_conc_n"], data["dX"])
     return data
 
 
