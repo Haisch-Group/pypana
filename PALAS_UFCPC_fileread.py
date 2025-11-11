@@ -2,13 +2,15 @@
 """
 PALAS_UFCPC_fileread.py
 
-Script for Data import of the PALAS CPC 100
+Script for Data import of the PALAS CPC 100 or 50
 
 Created v0 2022-03-10 to 2022-04-04
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
+
+2024-06 to 2025-11 updated t provide data of structure as used in particle_analysis.py
 """
 
 import numpy as np
@@ -23,7 +25,7 @@ def import_data(filename):
     parameter_list = ["Date", "Time", "Comment", u"1s Mean Particle Concentration / 1/cm\u00B3",
                       u"10s Mean Particle Concentration / 1/cm\u00B3", u"Mean Droplet size / \u00B5m",
                       "Aerosol Flow / L/min", "Empty Field", "T Condenser / °C", "T Saturator / °C",
-                      "Operating Mode DSI (0=off, 1=Humidity, 2=Diiferential Pressure)",
+                      "Operating Mode DSI (0=off, 1=Humidity, 2=Differential Pressure)",
                       "Target Relative Humidity %", "Target Differential Pressure / Pa",
                       "Actual Differential Pressure / Pa", "Power of Pump %", "Relative Humidity %",
                       "Absolute Pressure / mbar", "T Aerosol Inlet / °C", "Error Notification (0=no Error, 1 = Error)",
@@ -32,7 +34,7 @@ def import_data(filename):
     # for ENVI CPC
 
     nonusedcolumns = ["Date", "Time", "Comment", u"1s Mean Particle Concentration / 1/cm\u00B3", "Empty Field",
-                      "Operating Mode DSI (0=off, 1=Humidity, 2=Diiferential Pressure)",
+                      "Operating Mode DSI (0=off, 1=Humidity, 2=Differential Pressure)",
                       "Target Relative Humidity %", "Target Differential Pressure / Pa",
                       "Actual Differential Pressure / Pa",  "Relative Humidity %", "T Aerosol Inlet / °C",
                       "Position of Valve in MSS 08 (1-8)"]
