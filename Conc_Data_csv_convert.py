@@ -2,9 +2,9 @@
 """
 Conc_Data_csv_convert.py
 
-writing of SMPS data to Excel for student internship
+writing of Concentration data to Excel for student internship
 
-Created 2023-06-04 from Dist_Data_csv_convert
+Created and modified 2023-06-04 from Dist_Data_csv_convert
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 """
