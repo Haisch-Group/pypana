@@ -10,6 +10,7 @@ Created 2022-03-24
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
 2024-03-20: integrated in Particle_analysis.py
+2024-06 to 2025-11 adapted to new data structure
 """
 
 from matplotlib import ticker
@@ -17,66 +18,70 @@ from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
+
+import Def
 import Sup
-# import mpldatacursor
+# import mpldatacursor  # not used atm
 
 
-def select_data(data, sel_nrs):
-    """select specific CPC msmts from the imported raw data, msmt_nrs defines, which measurements to take
+def select_data(data, scan_nrs):
+    """select specific CPC msmts from the imported raw data, scan_nrs defines, which measurements to take
     in normal non-pythonian logic (starting count at 1)"""
-    scan_nrs = Sup.py_logic_converter(sel_nrs)
-    sel_Cn = np.zeros((len(scan_nrs), data["Cn"].shape[1]))
-    # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
-    sel_el_time = np.zeros_like(sel_Cn)  # maybe nan is needed to avoid zeros on the right of the x-data?
-    sel_time = []
-    sel_scan_nr = []
-    sel_filename = []
-    # different datasets
-    sel_used_device = []
-    for k in np.arange(len(scan_nrs)):  # fill the arrays with the selected data
-        sel_Cn[k, :] = data["Cn"][scan_nrs[k], :]
-        sel_el_time[k, :] = data["el_time"][scan_nrs[k], :]
-        sel_time.append(data["add_info"]["Time"][scan_nrs[k]])
-        sel_scan_nr.append(data["add_info"]["Scan Nr"][scan_nrs[k]])
-        sel_filename.append(data["filename"])
-        sel_used_device.append(data["used_device"])
-    sel_data = {"Cn": sel_Cn, "el_time": sel_el_time, "time": sel_time, "scan_nr": sel_scan_nr,
-                "filename": sel_filename, "used_device": sel_used_device}
+    py_nrs = Sup.py_logic_converter(scan_nrs)
+    sel_C = np.full((len(py_nrs), data["Cn"].shape[1]), np.nan)
+    # preallocate the np array in the correct size (nr of measurements, nr of measuring data)
+    sel_el_time = np.full_like(sel_C, np.nan)
+    for k in np.arange(len(py_nrs)):  # fill the arrays with the selected data
+        sel_C[k, :] = data["Cn"][py_nrs[k], :]
+        sel_el_time[k, :] = data["el_time"][py_nrs[k], :]
+    sel_add_info = pd.DataFrame(columns=list(data["add_info"].columns.values))  # just copy column headers to new DF
+    sel_add_info = pd.concat([sel_add_info, data["add_info"].iloc[py_nrs]])  # fill the new dataframe
+    sel_results = pd.DataFrame(columns=list(data["results"].columns.values))  # with values from selected data lines
+    sel_results = pd.concat([sel_results, data["results"].iloc[py_nrs]])  # dropping NaN columns would need .dropna("all")
+    sel_data = {"Cn": sel_C, "el_time": sel_el_time, "add_info": sel_add_info, "results": sel_results,
+                "filename": data["filename"], "used_device": data["used_device"]}
     return sel_data
 
 
 def merge_data(sel_data_list):
     """merges dictionaries of data, should best be used with selected data dicts"""
-    merged_data_Cn = []  # create lists to fill with list of 1D arrays
-    merged_data_el_time = []
+    merged_data_C = []  # create lists to fill with list of 1D arrays
+    merged_data_el_time = []  # done so complicated as arrays can have different length
     time_len_list = []
+    origin = []
     n_scans = 0  # count measurements that are imported to the lists
-    for i in sel_data_list:  # append all imported lines to the lists
-        for k in range(len(i["scan_nr"])):
-            merged_data_Cn.append(i["Cn"][k])
-            merged_data_el_time.append(i["el_time"][k])
+
+    merged_add_info = pd.DataFrame(columns=list(sel_data_list[0]["add_info"].columns.values))  # copy headers of add_info
+    merged_results = pd.DataFrame(columns=list(sel_data_list[0]["results"].columns.values))  # and results dfs
+
+    for data in sel_data_list:  # append all imported lines to the lists
+        for k in range(len(data["Cn"])):
+            merged_data_C.append(data["Cn"][k])
+            merged_data_el_time.append(data["el_time"][k])
             n_scans += 1
-            time_len_list.append(len(i["el_time"][k]))
+            time_len_list.append(len(data["el_time"][k]))
+        merged_add_info = pd.concat([merged_add_info, data["add_info"]]) # also concatenate add_info and results of
+        merged_results = pd.concat([merged_results, data["results"]]) # all merged datasets
+        origin.append(data["filename"]) # note down filename for each imported dataset
+
     x_len = max(time_len_list)  # get maximum length of the x-axis elements -> longest x-axis is base for array
-    merged_array_Cn = np.zeros((n_scans, x_len))
-    merged_array_el_time = np.zeros((n_scans, x_len))
-    merged_array_Cn[:] = np.nan
-    merged_array_el_time[:] = np.nan
+    merged_array_C = np.full((n_scans, x_len), np.nan)  # preallocate data arrays
+    merged_array_el_time = np.full((n_scans, x_len), np.nan)
     for k in range((n_scans)):  # fill arrays row wise with data from list elements
-        merged_array_Cn[k, 0:len(merged_data_Cn[k])] = merged_data_Cn[k]
+        merged_array_C[k, 0:len(merged_data_C[k])] = merged_data_C[k]
         merged_array_el_time[k, 0:len(merged_data_el_time[k])] = merged_data_el_time[k]
-    merged_data = {}
-    merged_data["Cn"] = merged_array_Cn
+
+    merged_data = {} # prepare merged data dictionary
+
+    merged_data["Cn"] = merged_array_C # fill merged data dictionary
     merged_data["el_time"] = merged_array_el_time
-    merged_data["time"] = sel_data_list[0]["time"][:]
-    merged_data["scan_nr"] = sel_data_list[0]["scan_nr"][:]
-    merged_data["origin"] = []
-    [merged_data["origin"].append(sel_data_list[0]["filename"]) for k in range(len(sel_data_list[0]["scan_nr"]))]
-    for i in sel_data_list[1:]:
-        for k in range(len(i["scan_nr"])):
-            merged_data["time"].append(i["time"][k])
-            merged_data["scan_nr"].append(i["scan_nr"][k])
-            merged_data["origin"].append(i["filename"])
+    merged_data["add_info"] = merged_add_info
+    merged_data["results"] = merged_results
+    merged_data["used_device"] = sel_data_list[0]["used_device"] # use info from first data set
+    merged_data["filename"] = input("Please enter a Path this data should be associated with. - "
+                                        "Used for naming figures")
+    merged_data["origin"] = origin
+
     return merged_data
 
 
@@ -89,23 +94,50 @@ def select_multiple_data(list_of_tuples):
     for tuple in list_of_tuples:
         sel_data_list.append(select_data(tuple[0], tuple[1]))
     sel_merged_data = merge_data(sel_data_list)
-    sel_merged_data["filename"] = input("Please enter a Path this data should be associated with. - "
-                                        "Used for naming figures")
+
     return sel_merged_data
 
 
-def calc_meanconc(data, used_C="Cn"):
+def cut_time_data(C_row, el_time_row, start, end):
+    """can be used to cut conc data time wise per row"""
+    start_idx = np.where(el_time_row >= start)[0][0]
+    end_idx = np.where(el_time_row <= end)[-1][-1] + 1
+    cut_C = np.full_like(C_row, np.nan)
+    cut_el_time = np.full_like(C_row, np.nan)
+    cut_C[start_idx:end_idx] = C_row[start_idx:end_idx]
+    cut_el_time[start_idx:end_idx] = el_time_row[start_idx:end_idx]-el_time_row[start_idx-1]
+    return cut_C, cut_el_time
+
+
+def cut_time(data, start, end, scan_nrs, used_C="Cn"):
+    py_nrs = Sup.py_logic_converter(scan_nrs)
+    if "cut_el_time" in data:
+        pass
+    else:
+        data["cut_el_time"] = np.full_like(data["el_time"], np.nan)
+    if f"cut_{used_C}" in data:
+        pass
+    else:
+        data[f"cut_{used_C}"] = np.full_like(data[used_C], np.nan)
+    for msmt in py_nrs:
+        data[f"cut_{used_C}"][msmt], data["cut_el_time"][msmt] = (
+            cut_time_data(data[used_C][msmt], data["el_time"][msmt], start, end))
+    return data
+
+
+def calc_meanconc(C):
     """gives mean and std of a concentration array based on the key given as str
-    call: mean_C, std_C = calc_meanconc(data, "Cn") """
-    mean_C = np.nanmean(data[used_C], 1)
-    std_C = np.nanstd(data[used_C], 1)
+    call: mean_C, std_C = calc_meanconc(C) """
+    mean_C = np.nanmean(C, 1)
+    std_C = np.nanstd(C, 1)
     return mean_C, std_C
 
 
 def get_meanconc(data, used_C="Cn"):
     """gives mean and std of a concentration array based on the key given as str and writes them into data dictionary
     call: get_meanconc(data, "Cn") """
-    mean_C, std_C = calc_meanconc(data, used_C)
+    C = data[used_C]
+    mean_C, std_C = calc_meanconc(C)
     data["results"]["mean_"+used_C] = mean_C
     data["results"]["std_"+used_C] = std_C
     return data
@@ -116,66 +148,68 @@ def typical_calculations(data):
     return data
 
 
-def cut_time(data, start, end):
-    """can be used to cut conc array time wise"""
-    data["cut_Cn"] = data["Cn"][:, start:end]
-    data["cut_time"] = data["el_time"][:, start:end]
-    return data
-
-
-def plot_singledata(data, scan_nr, used_C="Cn"):
-    """plots scan data"""
-    C = data[used_C]
-    if used_C == "cut_Cn":
-        el_time = data["cut_time"]
-    else:
-        el_time = data["el_time"]
-    mean_C, std_C = calc_meanconc(data, used_C)
-    filename = data["filename"]
-    plot_nr = Sup.py_logic_converter(scan_nr)
-    cm = 1/2.54  # inches to cm
-    fig, ax = plt.subplots(figsize=(18.5*cm, 10*cm))  # height with title 12, without 10
-    if len(plot_nr) == 1:
-        k = plot_nr[0]
-        ax.scatter(el_time[k, :], C[k, :], edgecolor='black')
-    else:
-        for k in plot_nr:
-            ax.scatter(el_time[k, :], C[k, :], edgecolor='black')
+def format_plot(fig, ax):
+    cm = 1 / 2.54  # inches to cm
+    fig.set_size_inches(16 * cm, 10 * cm) # height with title 12, without 10
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.set(xlabel='Elapsed Time / s',
-           ylabel=u'Particle Number Concentration / 1/cm\u00B3')
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
-    if len(plot_nr) == 1:
-        k = plot_nr[0]
-        legend_entries = [input(f"Please enter the legend entry for measurement {k+1}")]
-        #print(f"measurement {k} conc. = " + "{:e}".format(float(conc_n[k])) + u"\u00B1" +
-        #       "{:e}".format(float(std_n[k])) + " P/cm" + u"\u00B3")
+    return ax
+
+
+def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", colors=Def.tum_cm, a=1, legend="automatic",
+                    save_plot="off"):
+    """plots scan data"""
+    py_nr = Sup.py_logic_converter(scan_nrs)
+    C = data[used_C]
+    el_time = data[used_time]  # cut_el_time starts at 1, el_time at actual timepoint, so both can be used to get different plots
+    # mean_C, std_C = calc_meanconc(data, used_C) # was only printed before, better displayed in results now
+
+    fig, ax = plt.subplots()
+
+    legend_entries = []
+
+    ct = 0
+    if len(py_nr) == 1:
+        k = py_nr[0]
+        ax.scatter(el_time[k, :], C[k, :], edgecolor='black', color=colors[0])
+        Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
     else:
-        legend_entries = []
-        for k in plot_nr:
-            legend_entries.append(input(f"Please enter the legend entry for measurement {k+1}"))
-    [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_C[k])) + u"\u00B1" +
-            "{:e}".format(float(std_C[k])) + " P/cm" + u"\u00B3") for k in plot_nr]
-    #mpldatacursor.datacursor(ax)
+        for k in py_nr:
+            ax.scatter(el_time[k, :], C[k, :], edgecolor='black', color=colors[ct], alpha=a)
+            Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+            ct+=1
+
+    ax = format_plot(fig, ax)
+
+    ax.set(xlabel='Elapsed Time / s',
+           ylabel=u'Particle Number Concentration / 1/cm\u00B3')
+
     plt.legend(legend_entries)
 
-    fileaddition = input("Please enter a fileaddition")
-    path = filename[:-4] + "_" + fileaddition + ".png"
-    plt.savefig(path, transparent=True)
+    legend_entries = []
+    plt.legend(legend_entries)  # , loc='upper left')
+
+    Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
 
     plt.show()
     return ax
 
 
-def plot_timeline(mean_Cn, std_Cn, start_time, start, end):
+def plot_mean_timeline(mean_Cn, std_Cn, start_time, start, end):
     """plots concentration timeline with mean conc of chosen single CPC scans
     only works with more than 1 datapoints"""
-    cm = 1/2.54  # inches to cm
-    fig, ax = plt.subplots(figsize=(18.5*cm, 10*cm))  # height with title 12, without 10
+    # should use only samples of same length to make sense -> should be useable with cut_Cn and sel_Cn, but from cut_Cn
+    # also mean has to be produced for that and a start time has to be calculated!
+
+    start_time=data["add_info"]["Time"]
+
+    fig, ax = plt.subplots()  # height with title 12, without 10
     ax.scatter(start_time[start:end], mean_Cn[start:end], edgecolor='black')
     ax.errorbar(start_time[start:end], mean_Cn[start:end], yerr=std_Cn[start:end], fmt="o")
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+
+    ax = format_plot(fig, ax)
+
     ax.xaxis.set_tick_params(reset=True)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     ax.set(xlabel='Time / HH:MM',
@@ -183,15 +217,13 @@ def plot_timeline(mean_Cn, std_Cn, start_time, start, end):
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     legend_entries = [input(f"Please enter the legend entry for the measurement")]
-    [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_Cn[k])) + u"\u00B1" +
-           "{:e}".format(float(std_Cn[k])) + " P/cm" + u"\u00B3") for k in np.arange(start, end)]
-    #mpldatacursor.datacursor(ax)
+    # [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_Cn[k])) + u"\u00B1" +
+    #        "{:e}".format(float(std_Cn[k])) + " P/cm" + u"\u00B3") for k in np.arange(start, end)]
+    # mpldatacursor.datacursor(ax)
     plt.legend(legend_entries)
 
     plt.show()
     return ax
-
-# Maybe add D50 eval function?
 
 
 def plot_calc_conc_n(data, scan_nrs):
