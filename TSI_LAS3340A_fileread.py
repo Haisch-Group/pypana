@@ -7,6 +7,8 @@ Script for Data Import of the TSI LAS 3340A Data
 Created 2023
 @written by Nico Chrisam (nico.chrisam@tum.de)
 @modified by Kevin Maier (kevin.r.maier@tum.de)
+
+!data also has to have 99 bins as import is hardcoded atm!
 """
 
 import numpy as np
@@ -49,18 +51,19 @@ def import_single_data(filename):
 
     usedcolumns = ['Accum. / s', 'Scatter / V', 'Current / V', u'Aerosol Flow / scm\u00B3/min',
                       'Ref. / V', 'Temp. / V', u'Sheath Flow / scm\u00B3/min', 'Box / K', 'Pressure / kPa', ]
-    # columns actually used for building add_info, other columns are eather datetime, conc data, or not used in the
+    # columns actually used for building add_info, other columns are either datetime, conc data, or not used in the
     # TSI 3340A according to the manual
 
     add_info = data.loc[1:, (usedcolumns)]
 
-    # import concentration values from lines 15 to 114 from line 1 as line 0 after header is still header :D
-    counts = data.iloc[1:, list(range(15, 114))].to_numpy()
+    # import concentration values from columns 15 to 114 from line 1 as line 0 after header is still header :D
+    data_indices = list(range(15, 114))
+    counts = data.iloc[1:, data_indices].to_numpy()
 
     # building an x-axis spanning from lower bin boundary of lowest bin to upper boundary of highest bin
-    Xl = data.columns.values[list(range(15, 114))].astype(float)
+    Xl = data.columns.values[data_indices].astype(float)
     # extracts the lower bin boundary from the pd.dataframe header
-    Xu = data.iloc[0, list(range(15, 114))].to_numpy().astype(float)
+    Xu = data.iloc[0, data_indices].to_numpy().astype(float)
     # extracts the upper bin boundary from pd.dataframe line 0 after header
 
     # calculation of bin widths delta_x, logarithmic bin widths dlog_X and midpoint diameter mid_x arrays
@@ -74,9 +77,9 @@ def import_single_data(filename):
                                                             TSI_standard_conditions['T / K'],
                                                             TSI_standard_conditions['Pressure / kPa'], 'K')
 
-    X = np.zeros(counts.shape)
-    dX = np.zeros(counts.shape)
-    dlogX = np.zeros(counts.shape)
+    X = np.full_like(counts, np.nan)
+    dX = np.full_like(counts, np.nan)
+    dlogX = np.full_like(counts, np.nan)
     n_scans = len(counts)
 
     time = []
@@ -92,7 +95,7 @@ def import_single_data(filename):
                                       '%m/%d/%Y %I:%M:%S.%f %p'))
         subscan_nr.append(i+1)
         Cn[i] = (Cn[i] * (60 / float(data.loc[i+1, "Accum. / s"]))) / corr_aerosol_flow[i+1]
-        # raw counts are saved -> counts/accumulation_time*60s/min*acorrected flowrate in cm^3/min
+        # raw counts are saved -> counts/accumulation_time*60s/min*corrected flowrate in cm^3/min
         n_scan_list.append(n_scans)
 
     Cn_dlogX = Cn.copy()/dlogX
