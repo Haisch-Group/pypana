@@ -9,6 +9,7 @@ Created 2022-03-10
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 2022-03-24 finished import_data function to produce Cn, el_time, start_time
+2024-06 to 2025-11 updated to work with new data structure
 """
 
 import numpy as np
@@ -33,9 +34,11 @@ def import_data(filename):
     then extract the actual measuring data from the dataframe and give Cn, el_time, start_time
     to work, the data has to be exported in rows"""
 
-    data = pd.read_table(filename, sep='\t', header=2, engine='python', encoding='iso-8859-1')  # originally ansi which is superset of iso
+    data = pd.read_table(filename, sep='\t', header=2, engine='python', encoding='iso-8859-1')  # originally ansi which
+    # is superset of iso
     # file is in encoding = ansi which caused an import error off cm^3 due to wrong encoding setting
-    # changed to iso as ansi is windows only and iso also works on linux
+    # changed to iso as ansi is windows only and iso also works on linux -> if error reoccurs quick fix is to recode the
+    # measurement file, which is not a nice, but a quick solution. :D
 
     data = rename_columns(data)  # change names of the array to match the other input files schematic
 
@@ -45,7 +48,7 @@ def import_data(filename):
     # parameters as displayed in txt file
 
     conc = data[data.columns.difference(parameter_list, sort=False)].to_numpy()  # somehow in the file there is an empty
-    # column attached that i do not get rid of atm, used -1 below when copying from conc to Cn array
+    # column attached, used -1 below when copying from conc to Cn array to not have empty values
     add_info = data[(parameter_list[3:])]  # copying the infos from the imported dataframe to add_info dataframe using
     # the paramter_list omitting the sample number and datetime parameters as they are added later
 
@@ -65,12 +68,11 @@ def import_data(filename):
         factor = int((conc.shape[1]-1)/int(max(timepoints)))
         # when more different counts are exported, the factor is automatically adjusted
 
-    Cn = np.zeros((len(data), int(max(timepoints))))  # pre-allocation of Cn and el_time arrays done with max, as i
+    Cn = np.full((len(data), int(max(timepoints))), np.nan)  # pre-allocation of Cn and el_time arrays done with max, as i
     # thought, it might be the case, that there are measurements of different length in one file which could happen if
     # the measurement is abandoned while running, as shown in 20230223_TSI_CPC3775_variablelength file
-    el_time = np.zeros((len(data), int(max(timepoints))))
-    Cn[:] = np.nan  # filling with NaN to not have wrong numbers in there
-    el_time[:] = np.nan
+    el_time = np.full((len(data), int(max(timepoints))), np.nan)
+    # filling with NaN to not have wrong numbers in there
     start_time = []
 
     for i in range(len(data)):  # filling start_time, Cn and el_time with values
@@ -81,9 +83,9 @@ def import_data(filename):
             # txt file for example
             el_time[i, k] = k*avg_interval[i]+1  # el_time fills from known averaging interval for each msmt
 
+    add_info.insert(loc=0, column="Comment", value="")
     add_info.insert(loc=0, column="Time", value=start_time)
     add_info.insert(loc=0, column="Scan Nr", value=data["Sample #"])
-    add_info.insert(loc=0, column="Comment", value=data[""])
 
     return Cn, el_time, add_info
 
@@ -102,5 +104,5 @@ if __name__ == "__main__":
     # print(f"imported {filename}")
 
     data_dict = \
-        import_data_dict(device_list.query("Import_Script=='PALAS_UFCPC_fileread'")["Device_Identifier"].values[0], filename)
+        import_data_dict(device_list.query("Import_Script=='TSI_CPC3775_fileread'")["Device_Identifier"].values[0], filename)
     print(f"imported {data_dict['filename']} as dictionary")
