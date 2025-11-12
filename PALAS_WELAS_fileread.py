@@ -8,8 +8,6 @@ Created 2025-07-20
 @written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
-### txt data format is crazyly bad
-
 import numpy as np
 from datetime import datetime
 
@@ -22,10 +20,10 @@ from Def import device_list
 def import_data(filename):
     """takes the raw data and extracts the variables from it to return:
     X  = array with all the X values = particle size
-    Xl = array with all the lower borders of the size bins (named Xuk in the Palas WELAS file)
-    Xu = array with all the upper borders of the size bins (named Xok in the Palas WELAS file)
+    Xl = array with all the lower borders of the size bins (named Xuk in the PALAS WELAS file)
+    Xu = array with all the upper borders of the size bins (named Xok in the PALAS WELAS file)
     Cn = array with all the number concentrations of the particles per bin (dCn in
-    the Palas WELAS file)
+    the PALAS WELAS file)
     time  = list with the starting times of each measurement
     nr_scans = array with the number of the scans=index+1"""
     with open(filename) as f_in:  # open file and keep open
@@ -64,16 +62,11 @@ def import_data(filename):
     nr_bins = max(data_len)-2  # calculates the maximum number of measuring points in the file subtracting 2 for the
     # first column being the "header" column in the original txt + last column being empty
 
-    Xl = np.zeros((nr_scans, nr_bins))  # preallocate the arrays
-    X = np.zeros_like(Xl)
-    Xu = np.zeros_like(Xl)
-    dX = np.zeros_like(Xl)
-    Cn = np.zeros_like(Xl)
-    X[:] = np.nan  # fill the arrays with nans, so all none filled values are nans later and not 0, necessary as within
-    Xl[:] = np.nan  # one file, the measuring range can be changed easily on the PALAS SMPS leading to differently sized
-    Xu[:] = np.nan  # data width
-    dX[:] = np.nan
-    Cn[:] = np.nan
+    Xl = np.full((nr_scans, nr_bins), np.nan)  # preallocate the arrays and fill the arrays with nans, so all
+    X = np.full_like(Xl, np.nan) # none filled values are nans later and not 0
+    Xu = np.full_like(Xl, np.nan)
+    dX = np.full_like(Xl, np.nan)
+    Cn = np.full_like(Xl, np.nan)
 
     for i in range(nr_scans):  # filling the arrays with the values from the data list of lists
         for k in range(1, data_len[i]-1):  # transfer values from list of list to respective array
@@ -100,7 +93,7 @@ def import_data(filename):
 
     dX = np.subtract(Xu, Xl)
     dlogX = np.log10(Xu/Xl)
-    Cn_dlogX = Cn/dlogX  # calculate dC/dlogX from known interval width
+    Cn_dlogX = Cn.copy()/dlogX  # calculate dC/dlogX from known interval width
 
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
