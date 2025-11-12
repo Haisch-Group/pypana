@@ -55,6 +55,7 @@ def get_data(method="prompt" ,used_device="", filename=""):
         filename = Sup.decide_filename_function(used_device)
         data = fr.import_data_dict(used_device, filename)
 
+    # data["add_info"].dropna(axis=1, how="all", inplace=True)
     data["results"] = data["add_info"][["Scan Nr", "Time", "Comment"]].copy()
     # create results array from add_info to save all the calculated values in there -> makes print easier too
     return data
