@@ -71,10 +71,16 @@ def save_data_to_xlsx(data_dict, fileaddition="particleDF", save_arrays=None):
         pd.DataFrame(identity).to_excel(writer, sheet_name="identity")
         data_dict["results"].to_excel(writer, sheet_name="results")  # alternative: dataframe.to_csv(path)
         data_dict["add_info"].to_excel(writer, sheet_name="add_info")
-        if save_arrays == None:
+        if save_arrays == None:  # save only the indentity, results and add_info arrays from data_dict
             pass
+        elif save_arrays == "all":
+            skip_arrays = ["add_info", "results", "used_device", "filename"]
+            data_keys = list(data_dict.keys())
+            [data_keys.remove(key) for key in skip_arrays]
+            for key in data_keys:
+                pd.DataFrame(data_dict[key]).to_excel(writer, sheet_name=key)
         else:
-            for array in save_arrays:
+            for array in save_arrays:  # choose specific keys and give them as list of strings
                 pd.DataFrame(data_dict[array]).to_excel(writer, sheet_name=array)
     print(f"wrote data to file with name {path}")
     return
