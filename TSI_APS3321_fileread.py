@@ -3,12 +3,12 @@
 TSI_APS3321_fileread.py
 
 Script for Data Evaluation of the TSI APS 3321
-Data has to be exported in rows and plot is written, so that it displays the dW/logDp
+Data has to be exported in rows
 
 Created 2023-05-15 from TSI_SMPS3071_fileread.py
 Recreated on 2025-09-24 from TSI_SMPS_fileread due to changes in import of additional infos
 
-!!first data column is al particles below the given size!!
+!!first data column is all particles below the given size!!
 """
 
 import numpy as np
@@ -88,9 +88,8 @@ def import_data(filename):
         if k in data:
             pass
         else:
-            data[k] = np.zeros((nr_scans,))
-            data[k] = np.nan  # with np.empty, it somehow filled the newly created column with some values from another
-            # existing column??
+            data[k] = np.full((nr_scans,), np.nan)
+            # with np.empty, it somehow filled the newly created column with some values from another existing column??
 
     add_info = data[(parameter_list[3:])]
 
@@ -98,7 +97,7 @@ def import_data(filename):
 
     x_axis = data[data.columns.difference(parameter_list, sort=False)].columns.values
     # extracts the midpoint diameter from the pd.dataframe header similar to how conc was extracted
-    x_axis[0] = x_axis[0].replace("<", "")
+    x_axis[0] = x_axis[0].replace("<", "")  # first x-axis value contains "<" as this bin is particles below ca 500 nm
     x_axis = x_axis.astype(float)
 
     nr_bins = len(x_axis)
@@ -110,17 +109,11 @@ def import_data(filename):
     Xu = np.zeros(conc.shape)
 
     # unfortunately, the methods for calculating the bin boundaries Xl and Xu based on the midpoint diameters contained
-    # in the measurement file do not give a constant dlogX as I think TSI sets "nice" values for midpoint diameters with
-    # only one decimal
-    # I contacted TSI to ask how they construct their X-axis and why the given midpoints are not equaly spaced on a
-    # log axis
-    # below I implemented 3 methods for calculating Xu and Xl, the first two are based on the given midpoints, the last
-    # is only based on the upper and lower size limits given in the measurement file and constructs a new x-axis with
-    # newly calculated midpoint diameters with intervals of equal length on the logarithmic axis
-    # each method should work by just uncommenting it and commenting the method not to be used
+    # in the measurement file do not give a constant dlogX as they are rounded to only one decimal
 
-    # Building x-array methods see TSI_SMPS_fileread
-    # Method 3: constructing my own x-axis based on lower and upper limits given in measurement file
+    # 3 methods for building an x-array are implemented in TSI_SMPS_fileread, they could also be used here
+
+    # Method 3: constructing x-axis based on lower and upper limits given in measurement file
     # also the two less indented lines after this block for calculating X and assigning it to X are required
 
     with open(filename) as f_in:  # open file and keep open
@@ -150,7 +143,7 @@ def import_data(filename):
     Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
     X=Xm  # values are slightly different than those of TSI by maximum 0.01 micrometers for > 10 um, below third digit
 
-    # end of the three methods rest works with all three of them
+    # end of the x-array generation, rest works with all three of them
 
     # calculate bin width from upper and lower boundary
     dX = np.subtract(Xu, Xl)
