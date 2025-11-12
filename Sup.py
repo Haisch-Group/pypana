@@ -72,18 +72,18 @@ def check_device(used_device):
     return used_device
 
 
-def py_logic_converter(nr_list):
+def py_logic_converter(scan_nr_list):
     """converts from normal logic (starting count from 1) to python logic (starting count from 0)"""
     py_nr_list = []
-    [py_nr_list.append(i - 1) for i in nr_list]
+    [py_nr_list.append(i - 1) for i in scan_nr_list]
     return py_nr_list
 
 
-def normal_logic_converter(nr_list):
+def normal_logic_converter(py_nr_list):
     """converts from python logic (starting count from 0) to normal logic (starting count from 1)"""
-    normal_nr_list = []
-    [normal_nr_list.append(i + 1) for i in nr_list]
-    return normal_nr_list
+    scan_nr_list = []
+    [scan_nr_list.append(i + 1) for i in py_nr_list]
+    return scan_nr_list
 
 
 def convert_standard_to_volumetric_flow(standard_flow, T_flow, p_flow, T_standard, p_standard, T_unit):
