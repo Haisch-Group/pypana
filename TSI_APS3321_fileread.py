@@ -104,9 +104,9 @@ def import_data(filename):
 
     # calculate upper bin boundary from midpoint diameters
 
-    X = np.zeros(conc.shape)
-    Xl = np.zeros(conc.shape)
-    Xu = np.zeros(conc.shape)
+    X = np.full_like(conc, np.nan)
+    Xl = np.full_like(conc, np.nan)
+    Xu = np.full_like(conc, np.nan)
 
     # unfortunately, the methods for calculating the bin boundaries Xl and Xu based on the midpoint diameters contained
     # in the measurement file do not give a constant dlogX as they are rounded to only one decimal

@@ -2,11 +2,13 @@
 """
 TSI_SMPS_fileread.py
 
-Script for Data Evaluation of the TSI SMPS consisting of Classifier 3082 and CPC 3775
-Data has to be exported in rows and plot is written, so that it displays the dW/logDp
+Script for Data Evaluation of the TSI SMPS
+Can be consisting of Classifier 3082 and CPC 3775 or newer
+Data has to be exported in rows
 
-Created 2024-05-01 as copy of TSI_SMPS3071_fileread.py
+Created 2024-05-01 as copy of script limited to older SMPS: TSI_SMPS3071_fileread.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
+2024-06 to 2025-11: adjusted to new data structure and to work with the TSI SMPS 3938 data acquired in AIM 10
 """
 
 import numpy as np
@@ -110,7 +112,7 @@ def import_data(filename, used_device):
     # originally ansi which is superset of iso; smps file is in encoding = ansi which caused an import error off cm^3
     # due to wrong encoding setting changed to iso as ansi is windows only and iso also works on linux
 
-    # data = data.reset_index(drop=True)  # resetting index, anecessary, when Sample # column is used as index col in
+    # data = data.reset_index(drop=True)  # resetting index, necessary, when Sample # column is used as index col in
     # pd.read_table -> removed as Sample # is used to directly generate Scan Nr
 
     data = rename_columns(data, used_device)
@@ -146,16 +148,14 @@ def import_data(filename, used_device):
 
     # calculate upper bin boundary from midpoint diameters
 
-    X = np.zeros(conc.shape)
-    Xl = np.zeros(conc.shape)
-    Xu = np.zeros(conc.shape)
+    X = np.full_like(conc, np.nan)
+    Xl = np.full_like(conc, np.nan)
+    Xu = np.full_like(conc, np.nan)
 
     # unfortunately, the methods for calculating the bin boundaries Xl and Xu based on the midpoint diameters contained
-    # in the measurement file do not give a constant dlogX as I think TSI sets "nice" values for midpoint diameters with
-    # only one decimal
-    # I contacted TSI to ask how they construct their X-axis and why the given midpoints are not equaly spaced on a
-    # log axis
-    # below I implemented 3 methods for calculating Xu and Xl, the first two are based on the given midpoints, the last
+    # in the measurement file do not give a constant dlogX as they are rounded to only one decimal
+
+    # below 3 methods for calculating Xu and Xl are given, the first two are based on the given midpoints, the last
     # is only based on the upper and lower size limits given in the measurement file and constructs a new x-axis with
     # newly calculated midpoint diameters with intervals of equal length on the logarithmic axis
     # each method should work by just uncommenting it and commenting the method not to be used
@@ -183,7 +183,7 @@ def import_data(filename, used_device):
         # for k in range(nr_bins):
         #     X[i, k] = x_axis[k]
 
-        # Method 3: constructing my own x-axis based on lower and upper limits given in measurement file
+        # Method 3: constructing x-axis based on lower and upper limits given in measurement file
         # also the two less indented lines after this block for calculating Xm and assigning it to X are required
         const_dlogX = np.log10(add_info["Upper Size / nm"]/add_info["Lower Size / nm"])/nr_bins
         Xl[i, 0] = add_info["Lower Size / nm"][i]
@@ -194,7 +194,7 @@ def import_data(filename, used_device):
     Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
     X=Xm
 
-    # end of the three methods rest works with all three of them
+    # end of the x-array generation, rest works with all three of them
 
     # calculate bin width from upper and lower boundary
     dX = np.subtract(Xu, Xl)
