@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
+import datetime
 
 import Def
 import Sup
@@ -154,6 +155,7 @@ def format_plot(fig, ax):
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
+    fig.tight_layout()
     return ax
 
 
@@ -185,9 +187,6 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", colors=Def
     ax.set(xlabel='Elapsed Time / s',
            ylabel=u'Particle Number Concentration / 1/cm\u00B3')
 
-    plt.legend(legend_entries)
-
-    legend_entries = []
     plt.legend(legend_entries)  # , loc='upper left')
 
     Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
@@ -196,17 +195,31 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", colors=Def
     return ax
 
 
-def plot_mean_timeline(mean_Cn, std_Cn, start_time, start, end):
+def plot_mean_timeline(data, start_time, end_time, used_C="mean_Cn", colors=Def.tum_cm, a=1, save_plot="off"):
     """plots concentration timeline with mean conc of chosen single CPC scans
-    only works with more than 1 datapoints"""
+    only works with more than 1 datapoints, enter time as datetime in format 'YYYY-MM-DD HH:MM:SS'"""
     # should use only samples of same length to make sense -> should be useable with cut_Cn and sel_Cn, but from cut_Cn
     # also mean has to be produced for that and a start time has to be calculated!
+    mean_C = data["results"][used_C]
+    std_C = data["results"][used_C.replace("mean", "std")]
 
-    start_time=data["add_info"]["Time"]
+    start_time = pd.to_datetime(start_time)
+    end_time = pd.to_datetime(end_time)
+    time = data["add_info"]["Time"].copy()
+    time = time.to_numpy()
+
+    if used_C == "cut_mean_Cn":
+        for k in range(len(data["add_info"]["Time"])):
+            time[k] += datetime.timedelta(seconds=data["el_time"][~np.isnan(data["cut_el_time"])][:][k])
+    else:
+        pass
+
+    start_idx = np.where(time >= start_time)[0][0]
+    end_idx = np.where(time >= end_time)[-1][-1]
 
     fig, ax = plt.subplots()  # height with title 12, without 10
-    ax.scatter(start_time[start:end], mean_Cn[start:end], edgecolor='black')
-    ax.errorbar(start_time[start:end], mean_Cn[start:end], yerr=std_Cn[start:end], fmt="o")
+    ax.scatter(time[start_idx:end_idx], mean_C[start_idx:end_idx], edgecolor='black', color=colors[0])
+    ax.errorbar(time[start_idx:end_idx], mean_C[start_idx:end_idx], yerr=std_C[start_idx:end_idx], fmt="o")
 
     ax = format_plot(fig, ax)
 
@@ -214,56 +227,44 @@ def plot_mean_timeline(mean_Cn, std_Cn, start_time, start, end):
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     ax.set(xlabel='Time / HH:MM',
            ylabel=u'Mean Particle Number Concentration / 1/cm\u00B3')
+
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
-    fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
-    legend_entries = [input(f"Please enter the legend entry for the measurement")]
-    # [print(f"measurement {k} conc. = " + "{:e}".format(float(mean_Cn[k])) + u"\u00B1" +
-    #        "{:e}".format(float(std_Cn[k])) + " P/cm" + u"\u00B3") for k in np.arange(start, end)]
+
     # mpldatacursor.datacursor(ax)
-    plt.legend(legend_entries)
+
+    Sup.save_plot(data, save_plot)
 
     plt.show()
     return ax
 
 
-def plot_calc_conc_n(data, scan_nrs):
-    """ function by Nico"""
-    # this is a function for distribution derived concentrations! -> maybe it is misplaced here?
-    plot_nrs = Sup.py_logic_converter(scan_nrs)
-    x_axis = range(1, len(scan_nrs) + 1)
-    calc_conc_n = data["results"]["calc_conc_n"]
+def plot_calc_conc_n(data, scan_nrs, used_C="calc_conc_n", colors=Def.tum_cm, a=1, save_plot="off"):
+    """ function by Nico: this is a function for distribution derived concentrations"""
+
+    py_nrs = Sup.py_logic_converter(scan_nrs)
+    calc_conc_n = data["results"][used_C]
     fig, ax = plt.subplots()
-    if len(plot_nrs) == 1:
-        k = plot_nrs[0]
-        ax.scatter(x_axis[k], calc_conc_n[k], edgecolor="black")
-        print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+
+    ct=0
+    if len(py_nrs) == 1:
+        k = py_nrs[0]
+        ax.scatter(scan_nrs[0], calc_conc_n[k], edgecolor="black", color=colors[0], alpha=a)
+        # print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
     else:
-        for k in range(len(plot_nrs)):
-            ax.scatter(x_axis[k], calc_conc_n[plot_nrs[k]], edgecolor="black")
-            print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
-    format_conc_plot(fig, ax, scan_nrs)
+        for k in range(len(py_nrs)):
+            ax.scatter(scan_nrs[k], calc_conc_n[py_nrs[k]], edgecolor="black", color=colors[0], alpha=a)
+            # print(f"scan {k} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+            ct += 1
+
+    format_plot(fig, ax)
+    ax.set(xlabel='Scan Nr.',
+           ylabel=u'Calculated Particle Number Concentration / 1/cm\u00B3')
+
+    Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
     plt.show()
     return ax
-
-
-def format_conc_plot(fig, ax, scan_nrs):
-    cm = 1 / 2.54  # inches to cm
-    fig.set_size_inches(18.5 * cm, 10 * cm)
-    xtick_entries = []
-    for k in scan_nrs:
-        xtick_entries.append(input(f"Please enter the xtick entries for measurement {k}"))
-    ax.set(xticks=range(1, len(scan_nrs)+1), xticklabels=xtick_entries,
-           ylabel=u'Number Concentration / 1/cm\u00B3')
-    fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
-    return
 
 
 if __name__ == "__main__":
 
     """"""
-    # get_meanconc(data)
-    # measurement_nr = [0]#np.arange(0, 3)
-    # ax = plot_singledata(Cn, el_time, conc_n, std_n, measurement_nr)
-    # ax = plot_timeline(conc_n, std_n, start_time, start, end) # start end are measurement numbers in conc array
-
-    # ax.legend(legend_entries, ncol=2,handleheight=2.4, labelspacing=0.05) if legend is too long
