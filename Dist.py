@@ -58,6 +58,7 @@ def convert_C_to_C_dlogX(data, used_C="Cn"):
     data[f"{used_C}_dlogX"] = data[used_C].copy()/data["dlogX"]
     return data
 
+
 def convert_C_dlogX_to_C(data, used_C="Cn_dlogX"):
     data[used_C.strip("_dlogX")] = data[f"{used_C}"].copy()*data["dlogX"]
     return data
@@ -183,49 +184,35 @@ def select_multiple_data(list_of_tuples, used_C="Cn"):
 
 
 def geometric_mean(X, C, conc):
-    """calculates the geometric mean from given X, C and conc arrays"""
-    # for lognormal, count median diameter = geometric mean diameter
-    # maybe add a check for lognormal
+    """calculates the geometric mean from given X, C and conc arrays
+    Adapted from Eq. 22-12 in Aerosol Measurement p. 485, Ed. P. Kulkarni, P.A. Baron, K. Willeke 2011
+    for lognormal distributions, count median diameter = geometric mean diameter - maybe add a check for lognormality ?"""
     dg = []
     for k in np.arange(0, C.shape[0]):
-        if conc[k] == 0:
-            dg.append(0)
+        if conc[k] == 0: # if the concentration of the array is 0, no distribution can be determined
+            dg.append(0) # so, 0 is reported as geometric mean diameter
         else:
             dg.append(math.pow(10, ((1 / conc[k]) * np.nansum(np.log10(X[k]) * C[k]))))
-            # dg.append(math.exp((1 / conc[k]) * np.nansum(np.log(X[k])*C[k])))
+            # dg.append(math.exp((1 / conc[k]) * np.nansum(np.log(X[k])*C[k]))) # using e as base
             # both methods give the same result only varying by 10**-14 in some cases so negligible
             # log10 is used, as data is also on log10 base
     return dg
 
 
-def count_median_diameter(X, C, conc):
-    """does not work atm as all values are float and that only works until 10**308 which is reached with the first
-    power operation """
-    X_dummy = np.array(X.copy(), dtype=np.longdouble)
-    C_dummy = np.array(C.copy(), dtype=np.longdouble)
-    CMD = []
-    for k in np.arange(0, C.shape[0]):
-        if conc[k] == 0:
-            CMD.append(0)
-        else:
-            CMD.append(np.power(np.nanprod(np.power(X_dummy[k], C_dummy[k])), 1/conc[k]))
-    return CMD
-
-
 def geometric_std(X, C, conc, dg):
-    """calculates the geometric standard deviation from given X, C and conc, can be used with mean_C, or sel_C,
-        call mean_sigma_g = geometric_std(mean_X, mean_C, mean_conc, mean_dg then,
-        or sel_sigma_g = geometric_std(sel_X, sel_C, calc_conc, sel_dg)"""
+    """calculates the geometric standard deviation from given X, C, conc and dg
+     can be used with different C
+     Adapted from Eq. 22-12 in Aerosol Measurement p. 485, Ed. P. Kulkarni, P.A. Baron, K. Willeke 2011"""
     sigma_g = []
-    for k in range(0, len(conc)):  # gave a math error for conc < 1 because conc-1 in sigma_g is < 0 then, so division
-        #  is not possible
+    for k in range(0, len(conc)):
+        # gave a math error for conc < 1 because conc-1 in sigma_g is < 0 then, so division is not possible
         if conc[k] < 1.00001:
-            sigma_g.append(np.inf) # is infinity correct here? should it just be a massiv value? if after that a std is
+            sigma_g.append(np.inf) # is infinity correct here? should it just be a massive value? if after that a std is
             # calculated for example when using mean_of_n, the std of sigma is nan of course
         else:
             # sigma_g.append(math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
             #                                                       - np.log(dg[k]))*C[k]))/(conc[k]-1))))
-            # 22-13 in aerosol measurement, Kulkarni et.al.  # 20230705 changed /conc to /np.nansum(C[k]-1)
+
             sigma_g.append(math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(X[k])-np.log10(dg[k]))*
                                                               C[k]))/(conc[k]-1)))))
             # changed to log10 as it is used everywhere else on 20250128
@@ -233,22 +220,46 @@ def geometric_std(X, C, conc, dg):
     return sigma_g
 
 
-def mode_surface_volume_diameter(dg, sigma_g):
-    """calculates the mode diameter from dg and sigma_g via equation given in Aerosol Measurement p.43 - usually
-    calculated from CMD"""
-    mode = []
-    SMD = []
-    VMD = []
-    for k in range(len(dg)):
-        if dg[k] == 0:
-            mode.append(0)
-            SMD.append(0)
-            VMD.append(0)
+def count_median_diameter(X, C):
+    """does not work atm as all values are float and that only works until 10**308 which is reached with the first
+    power operation """
+    X_dummy = np.array(X.copy())
+    C_dummy = np.array(C.copy())
+
+    CMD = []
+    for k in np.arange(0, C.shape[0]):
+        conc = np.nansum(C_dummy[k])
+        if conc == 0:
+            CMD.append(0)
         else:
-            mode.append(dg[k]*math.pow(10,(-np.log10(sigma_g[k])**2)))
-            SMD.append(dg[k]*math.pow(10,(2*np.log10(sigma_g[k])**2)))
-            VMD.append(dg[k]*math.pow(10,(3*np.log10(sigma_g[k])**2)))
-    return mode, SMD, VMD
+            norm_C_dummy = np.divide(C_dummy[k], conc)
+            CMD.append(np.nanprod(np.power(X_dummy[k], norm_C_dummy)))
+    return CMD
+
+
+def Hatch_Choate(CMD, sigma_g):
+    """calculates mode, length median (LMD), surface median (SMD), mass median (MMD) and mass mean diameter
+    from dg and sigma_g from CMD and sigma g
+     Adapted from Eqs. equation given in Aerosol Measurement p.43 - usually calculated """
+    mode = []
+    LMD = []
+    SMD = []
+    MMD = []
+    mass_mean_D = []
+    for k in range(len(CMD)):
+        if CMD[k] == 0:
+            mode.append(0)
+            LMD.append(0)
+            SMD.append(0)
+            MMD.append(0)
+            mass_mean_D.append(0)
+        else:
+            mode.append(CMD[k] * math.pow(10, (-1 * np.log10(sigma_g[k]) ** 2)))
+            LMD.append(CMD[k] * math.pow(10, (1 * np.log10(sigma_g[k]) ** 2)))
+            SMD.append(CMD[k] * math.pow(10, (2 * np.log10(sigma_g[k]) ** 2)))
+            MMD.append(CMD[k] * math.pow(10, (3 * np.log10(sigma_g[k]) ** 2)))
+            mass_mean_D.append(CMD[k] * math.pow(10, (3.5 * np.log10(sigma_g[k]) ** 2)))
+    return mode, LMD, SMD, MMD, mass_mean_D
 
 
 def calc_geometry(X, C, conc):
@@ -259,8 +270,9 @@ def calc_geometry(X, C, conc):
 
 
 def cumulative_distribution(C):
-    """calculates the cumulative distribution"""  # tested, first column = Cn[0], last column = calc_conc_n
-    cum_C = np.zeros_like(C)
+    """calculates the cumulative distribution"""
+    # tested, first column = Cn[0], last column = calc_conc_n
+    cum_C = np.full_like(C, np.nan)
     for scan in range(len(C)):
         cum_C[scan, 0] = C[scan, 0]
         for k in range(1, len(C[scan])):
@@ -290,8 +302,9 @@ def cumulative_diameters(X, cum_C):
 def typical_calculations(data, used_C="Cn"):
     data["results"]["calc_conc_n"] = get_conc(data[used_C])
     data["results"]["dg"], data["results"]["sigma_g"] = calc_geometry(data["X"], data[used_C], data["results"]["calc_conc_n"])
-    data["results"]["mode"], data["results"]["SMD"], data["results"]["VMD"] = (
-        mode_surface_volume_diameter(data["results"]["dg"], data["results"]["sigma_g"]))
+    data["results"]["CMD"] = count_median_diameter(data["X"], data["Cn"])
+    (data["results"]["mode"], data["results"]["LMD"], data["results"]["SMD"], data["results"]["MMD"],
+     data["results"]["mass_mean_D"]) = Hatch_Choate(data["results"]["CMD"], data["results"]["sigma_g"])
     data["cum_C"] = cumulative_distribution(data[used_C])
     data["norm_cum_C"] = Sup.norm_C(data["cum_C"], data["results"]["calc_conc_n"])
     (data["results"]["X10"], data["results"]["X16"], data["results"]["X50"], data["results"]["X84"],
@@ -302,7 +315,7 @@ def typical_calculations(data, used_C="Cn"):
 def lognormal_dist(conc, sigma_g, dg, X, dX):
     """calculates a normal distribution based on the concentration, the median diameter and the geometric standard
     deviation"""
-    fit = np.zeros_like(X)
+    fit = np.full_like(X, np.nan)
     for k in np.arange(0, X.shape[0]):
         #fit[k, :] = (mean_conc_n[k] / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
         #            np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
@@ -316,7 +329,6 @@ def lognormal_dist(conc, sigma_g, dg, X, dX):
         # gives more narrow distribution than with natural base
         # fit[k, :] = (1 / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
         #             np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
-
     return fit
 
 
@@ -705,19 +717,21 @@ def plot_meandata(mean_data, scan_nrs, colors=Def.fhg_cm, a=1):
     return ax
 
 
-def plot_cum_data(data, used_device, scan_nrs):
+def plot_cum_data(data, scan_nrs):
     """plots the given data, specify measurement to use from sel_Cn array"""
     # seems to work, just needs another axis label to indicate it is cummulative :D
+    py_nrs = Sup.py_logic_converter(scan_nrs)
     used_C = "cum_C"
     X = data["X"]
     dX = data["dX"]
     cum_C = data["cum_C"]
-    calc_conc_n = data["calc_conc_n"]
+    calc_conc_n = data["results"]["calc_conc_n"]
     normcum_C = Sup.norm_C(cum_C, calc_conc_n)
-    plot_nrs = Sup.py_logic_converter(scan_nrs)
+    used_device = data["used_device"]
+
     fig, ax = plt.subplots()  # height with title 12, without 10
-    if len(plot_nrs) == 1:
-        k = plot_nrs[0]
+    if len(py_nrs) == 1:
+        k = py_nrs[0]
         ax.bar(X[k, :], normcum_C[k, :], width=dX[k, :], edgecolor='black')
         legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
         # scan_nrs is used here on purpose
@@ -725,7 +739,7 @@ def plot_cum_data(data, used_device, scan_nrs):
     else:
         legend_entries = []
         ct = 0
-        for k in plot_nrs:
+        for k in py_nrs:
             ax.bar(X[k, :], normcum_C[k, :], width=dX[k, :], edgecolor='black', alpha=0.5)
             legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
             print(f"scan {scan_nrs[k]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
