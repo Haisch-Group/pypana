@@ -7,7 +7,7 @@ Run from Particle_analysis.py
 
 Created 2024-03-20 by moving functions from Particle_analysis.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
-
+2024-06 to 2025-11 adjusted to work with new data structure
 """
 
 
@@ -17,53 +17,49 @@ import numpy as np
 import math
 from scipy import optimize
 from scipy.signal import find_peaks
-import random
 import pandas as pd
 
 import Dist
 import Sup
 import Def
-import decimal
-
-from Sup import py_logic_converter
 
 
-# import scipy.integrate as integrate
-
-
-def select_data(data, sel_nrs):
+def select_data(data, scan_nrs, used_C="Cn"):
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)
     can only easily select data from one day for comparison"""
-    scan_nrs = Sup.py_logic_converter(sel_nrs)
-    sel_Cn = np.zeros((len(scan_nrs), data["Cn"].shape[1]))
+    py_nrs = Sup.py_logic_converter(scan_nrs)
+    sel_C = np.full((len(py_nrs), data[used_C].shape[1]), np.nan)
     # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
-    sel_X = np.zeros_like(sel_Cn)  # maybe nan is needed to avoid zeros on the right of the x-data?
-    sel_dX = np.zeros_like(sel_Cn)
-    sel_time = []
-    sel_scan_nr = []
-    sel_filename = []
-    # different datasets
-    sel_used_device = []
-    for k in np.arange(len(scan_nrs)):  # fill the arrays with the selected data
-        sel_Cn[k, :] = data["Cn"][scan_nrs[k], :]
-        sel_X[k, :] = data["X"][scan_nrs[k], :]
-        sel_dX[k, :] = data["dX"][scan_nrs[k], :]
-        sel_time.append(data["add_info"]["Time"][scan_nrs[k]])
-        sel_scan_nr.append(data["add_info"]["Scan Nr"][scan_nrs[k]])
-        sel_filename.append(data["filename"])
-        sel_used_device.append(data["used_device"])
-    sel_data = {"X": sel_X, "Cn": sel_Cn, "dX": sel_dX, "time": sel_time, "scan_nr": sel_scan_nr,
-                "filename": sel_filename, "used_device": sel_used_device}
+    sel_X = np.full_like(sel_C, np.nan)  # nan is needed to avoid zeros in case of varying scan range
+    sel_dX = np.full_like(sel_C, np.nan)
+    sel_dlogX = np.full_like(sel_C, np.nan)
+    sel_C_dlogX = np.full_like(sel_C, np.nan)
+
+    for k in np.arange(len(py_nrs)):  # fill the arrays with the selected data
+        sel_C[k, :] = data[used_C][py_nrs[k], :]
+        sel_X[k, :] = data["X"][py_nrs[k], :]
+        sel_dX[k, :] = data["dX"][py_nrs[k], :]
+        sel_dlogX[k, :] = data["dlogX"][py_nrs[k], :]
+        sel_C_dlogX[k, :] = data[f"{used_C}_dlogX"][py_nrs[k], :]
+    sel_add_info = pd.DataFrame(columns=list(data["add_info"].columns.values))  # just copy column headers to new DF
+    sel_add_info = pd.concat([sel_add_info, data["add_info"].iloc[py_nrs]], ignore_index=True)  # fill the new dataframe
+    sel_results = pd.DataFrame(columns=list(data["results"].columns.values))  # with values from selected data lines
+    sel_results = pd.concat([sel_results, data["results"].iloc[py_nrs]], ignore_index=True)
+    # dropping NaN columns would need .dropna("all")
+
+    sel_data = {"X": sel_X, "dX": sel_dX, "dlogX": sel_dlogX, used_C: sel_C, f"{used_C}_dlogX": sel_C_dlogX ,
+                "filename": data["filename"], "used_device": data["used_device"], "add_info": sel_add_info,
+                "results": sel_results}
     return sel_data
 
 
-def convert_C_to_C_dlogx(data, used_C="Cn"):
-    data[f"{used_C}_dlogX"] = data[used_C].copy/data["dlogX"]
+def convert_C_to_C_dlogX(data, used_C="Cn"):
+    data[f"{used_C}_dlogX"] = data[used_C].copy()/data["dlogX"]
     return data
 
-def convert_C_dlogx_to_C(data, used_C="Cn_dlogX"):
-    data[used_C.strip("_dlogX")] = data[f"{used_C}"].copy*data["dlogX"]
+def convert_C_dlogX_to_C(data, used_C="Cn_dlogX"):
+    data[used_C.strip("_dlogX")] = data[f"{used_C}"].copy()*data["dlogX"]
     return data
 
 
@@ -80,14 +76,15 @@ def cut_dist_data(X, C, dX, lowerbound, upperbound):  # merge with select_data
     """to cut a part of the spectrum - this formerly created an array smaller than the original array
     -> changed to now produce an array of same size for easier handliing afterwards be just changing all values outside
     of cut area to np.nan"""
-    strt_idx = np.where(X > lowerbound)[0][0]
-    end_idx = np.where(X < upperbound)[-1][-1] + 1
-    cut_X = np.full_like(X, np.nan)
+    # is only done here for entire arry but woudld need to be done row by row, right? !maybe not -> check
+    start_idx = np.where(X >= lowerbound)[0][0]
+    end_idx = np.where(X <= upperbound)[-1][-1] + 1
+    cut_X = np.full_like(X, np.nan)  # actually this would not be needed, just the C-array as nans should be enough
     cut_C = np.full_like(C, np.nan)
     cut_dX = np.full_like(dX, np.nan)
-    cut_X[strt_idx:end_idx] = X[strt_idx:end_idx]
-    cut_C[strt_idx:end_idx] = C[strt_idx:end_idx]
-    cut_dX[strt_idx:end_idx] = dX[strt_idx:end_idx]
+    cut_X[start_idx:end_idx] = X[start_idx:end_idx]
+    cut_C[start_idx:end_idx] = C[start_idx:end_idx]
+    cut_dX[start_idx:end_idx] = dX[start_idx:end_idx]
     cut_conc = np.nansum(cut_C)
     return cut_X, cut_C, cut_dX, cut_conc
 
@@ -114,49 +111,66 @@ def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
     return data
 
 
-def merge_data(sel_data_list):
+def merge_data(sel_data_list, used_C="Cn"):
     """merges dictionaries of data, should best be used with selected data dicts"""
     merged_data_X = []  # create lists to fill with list of 1D arrays
-    merged_data_Cn = []
     merged_data_dX =[]
-    n_scans = 0  # count measurements that are imported to the lists
+    merged_data_dlogX = []
+    merged_data_C = []
+    merged_data_C_dlogX = []
     x_len_list = []
-    for i in sel_data_list:  # append all imported lines to the lists
-        for k in range(len(i["scan_nr"])):
-            merged_data_X.append(i["X"][k])
-            merged_data_Cn.append(i["Cn"][k])
-            merged_data_dX.append(i["dX"][k])
+    origin = []
+    n_scans = 0  # count measurements that are imported to the lists
+
+    merged_add_info = pd.DataFrame(columns=list(sel_data_list[0]["add_info"].columns.values))  # copy headers of add_info
+    merged_results = pd.DataFrame(columns=list(sel_data_list[0]["results"].columns.values))  # and results dfs
+
+    for data in sel_data_list:  # append all imported lines to the lists
+
+        for k in range(len(data["X"])):
+            merged_data_X.append(data["X"][k])
+            merged_data_dX.append(data["dX"][k])
+            merged_data_dlogX.append(data["dlogX"][k])
+            merged_data_C.append(data[used_C][k])
+            merged_data_C_dlogX.append(data[f"{used_C}_dlogX"][k])
+            x_len_list.append(len(data["X"][k]))
+            origin.append(data["filename"])  # note down filename for each imported dataset
             n_scans += 1
-            x_len_list.append(len(i["X"][k]))
+
+        merged_add_info = pd.concat([merged_add_info, data["add_info"]],
+                                    ignore_index=True)  # also concatenate add_info and results of
+        merged_results = pd.concat([merged_results, data["results"]], ignore_index=True)  # all merged datasets
+
     x_len = max(x_len_list)  # get maximum length of the x_axis elements -> longest x-axis is base for array
-    merged_array_X = np.zeros((n_scans, x_len))  # preallocate arrays for X, Cn, dX
-    merged_array_Cn = np.zeros((n_scans, x_len))
-    merged_array_dX = np.zeros((n_scans, x_len))
-    merged_array_X[:] = np.nan  # fill with nans so no weird zero values are plotted later
-    merged_array_Cn[:] = np.nan
-    merged_array_dX[:] = np.nan
+    merged_array_X = np.full((n_scans, x_len), np.nan)  # preallocate arrays for X, C, dX, ...
+    merged_array_dX = np.full((n_scans, x_len), np.nan)
+    merged_array_dlogX = np.full((n_scans, x_len), np.nan)
+    merged_array_C = np.full((n_scans, x_len), np.nan)
+    merged_array_C_dlogX = np.full((n_scans, x_len), np.nan)
+
     for k in range((n_scans)):  # fill arrays row wise with data from list elements
         merged_array_X[k, 0:len(merged_data_X[k])] = merged_data_X[k]
-        merged_array_Cn[k, 0:len(merged_data_Cn[k])] = merged_data_Cn[k]
         merged_array_dX[k, 0:len(merged_data_dX[k])] = merged_data_dX[k]
+        merged_array_dlogX[k, 0:len(merged_data_dlogX[k])] = merged_data_dlogX[k]
+        merged_array_C[k, 0:len(merged_data_C[k])] = merged_data_C[k]
+        merged_array_C_dlogX[k, 0:len(merged_data_C_dlogX[k])] = merged_data_C_dlogX[k]
 
     merged_data = {}
     merged_data["X"] = merged_array_X
-    merged_data["Cn"] = merged_array_Cn
     merged_data["dX"] = merged_array_dX
-    merged_data["time"] = sel_data_list[0]["time"][:]
-    merged_data["scan_nr"] = sel_data_list[0]["scan_nr"][:]
-    merged_data["origin"] = []
-    [merged_data["origin"].append(sel_data_list[0]["filename"]) for k in range(len(sel_data_list[0]["scan_nr"]))]
-    for i in sel_data_list[1:]:
-        for k in range(len(i["scan_nr"])):
-            merged_data["time"].append(i["time"][k])
-            merged_data["scan_nr"].append(i["scan_nr"][k])
-            merged_data["origin"].append(i["filename"])
+    merged_data["dlogX"] = merged_array_dlogX
+    merged_data[used_C] = merged_array_C
+    merged_data[f"{used_C}_dlogX"] = merged_array_C_dlogX
+    merged_data["used_device"] = sel_data_list[0]["used_device"]  # use info from first data set
+    merged_data["filename"] = input("Please enter a Path this data should be associated with. - "
+                                    "Used for naming figures")
+    merged_add_info.insert(loc=1, column="Origin", value=origin)
+    merged_data["add_info"] = merged_add_info
+    merged_data["results"] = merged_results
     return merged_data
 
 
-def select_multiple_data(list_of_tuples):
+def select_multiple_data(list_of_tuples, used_C="Cn"):
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)
     can only easily select data from one day for comparison
@@ -164,17 +178,12 @@ def select_multiple_data(list_of_tuples):
     sel_data_list = []
     for tuple in list_of_tuples:
         sel_data_list.append(select_data(tuple[0], tuple[1]))
-    sel_merged_data = merge_data(sel_data_list)
-    sel_merged_data["filename"] = input("Please enter a Path this data should be associated with. - "
-                                        "Used for naming figures")
-    print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
-    sel_merged_data["used_device"] = int(input(f"Please enter the device identifier of the used device"))
+    sel_merged_data = merge_data(sel_data_list, used_C=used_C)
     return sel_merged_data
 
 
 def geometric_mean(X, C, conc):
-    """calculates the geometric mean from given X, C and conc, can be used with mean_C, or sel_C,
-    call mean_dg = geometric_mean(mean_X, mean_C, mean_conc then, or sel_dg = geometric_mean(sel_X, sel_C, calc_conc)"""
+    """calculates the geometric mean from given X, C and conc arrays"""
     # for lognormal, count median diameter = geometric mean diameter
     # maybe add a check for lognormal
     dg = []
@@ -625,31 +634,35 @@ def format_plot(fig, ax, used_C, used_device):
 
 def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1, legend="automatic", save_plot="off"):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
+    py_nrs = Sup.py_logic_converter(scan_nrs)
     X, dX, C = Sup.extract_from_dict(data, used_C)
     calc_conc = get_conc(data[used_C])
     used_device = data["used_device"]
-    plot_nrs = Sup.py_logic_converter(scan_nrs)
+
     fig, ax = plt.subplots()  # height with title 12, without 10
     C_unit = Sup.decide_C_unit(used_C)
-    legend_entries=[]
+
+    legend_entries = []
+
     ct=0
-    if len(plot_nrs) == 1:
-        k = plot_nrs[0]
+    if len(py_nrs) == 1:
+        k = py_nrs[0]
         ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[0])
         Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
         #print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
     else:
-        for k in plot_nrs:
+        for k in py_nrs:
             ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
             ct += 1
+
     ax = format_plot(fig, ax, used_C, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
+
     plt.legend(legend_entries)  # , loc='upper left')
-    # move this into format_plot ?
-    # scan_nr_fileaddition = f"scan_nr_{['{k}_' for k in scan_nrs]}"
+
     Sup.save_plot(data, save_plot) #, fileaddition=scan_nr_fileaddition)
 
     plt.show()
