@@ -189,12 +189,16 @@ def extract_from_dict(data, used_C="Cn"):
     if "cut" in used_C:
         X = data["cut_X"]
         dX = data["cut_dX"]
+        dlogX = data["cut_dlogX"]
         C = data[used_C]
+        C_dlogdX = data[f"cut_{used_C}_dlogX"]
     else:
         X = data["X"]
         dX = data["dX"]
+        dlogX = data["dlogX"]
         C = data[used_C]
-    return X, dX, C
+        C_dlogX = data[f"{used_C}_dlogX"]
+    return X, dX, dlogX, C, C_dlogX
 
 
 def build_legend(legend_entries, scan_nrs, ct, legend="automatic"):
