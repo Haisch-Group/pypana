@@ -198,10 +198,12 @@ def extract_from_dict(data, used_C="Cn"):
 
 
 def build_legend(legend_entries, scan_nrs, ct, legend="automatic"):
-    if legend == "manual":
-        legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-    else:
+    if legend == "automatic":
         legend_entries.append(f"Scan {scan_nrs[ct]}")
+    elif isinstance(legend, list):
+        legend_entries.append(legend[ct])
+    else:
+        legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
     return
 
 
