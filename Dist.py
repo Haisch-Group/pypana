@@ -66,14 +66,14 @@ def convert_C_dlogX_to_C(data, used_C="Cn_dlogX"):
 
 def get_conc(C):
     """calculate the total concentration for each selected measurement, can be applied to Cn, Cv, or Cm
-    call for example as data["calc_conc_n"] = get_conc(data["Cn"]) to specify (or Cv, or Cm)"""
+    call for example as data["results"]["calc_conc"] = get_conc(data["Cn"]) to specify (or Cv, or Cm)"""
     calc_conc = np.zeros(C.shape[0], )  # preallocate the array again
     for k in range(C.shape[0]):  # iteratively fill the array with the sum of all size concentrations
         calc_conc[k, ] = np.nansum(C[k, :])  # np.nansum counts NaN as 0
     return calc_conc
 
 
-def cut_dist_data(X, C, dX, lowerbound, upperbound):  # merge with select_data
+def cut_dist_data(X, dX, C, lowerbound, upperbound):  # merge with select_data
     """to cut a part of the spectrum - this formerly created an array smaller than the original array
     -> changed to now produce an array of same size for easier handliing afterwards be just changing all values outside
     of cut area to np.nan"""
@@ -81,13 +81,17 @@ def cut_dist_data(X, C, dX, lowerbound, upperbound):  # merge with select_data
     start_idx = np.where(X >= lowerbound)[0][0]
     end_idx = np.where(X <= upperbound)[-1][-1] + 1
     cut_X = np.full_like(X, np.nan)  # actually this would not be needed, just the C-array as nans should be enough
-    cut_C = np.full_like(C, np.nan)
     cut_dX = np.full_like(dX, np.nan)
+    # cut_dlogX = np.full_like(dX, np.nan)
+    cut_C = np.full_like(C, np.nan)
+    #cut_C_dlogX = np.full_like(dX, np.nan)
     cut_X[start_idx:end_idx] = X[start_idx:end_idx]
-    cut_C[start_idx:end_idx] = C[start_idx:end_idx]
     cut_dX[start_idx:end_idx] = dX[start_idx:end_idx]
+    # cut_dlogX[start_idx:end_idx] = dX[start_idx:end_idx]
+    cut_C[start_idx:end_idx] = C[start_idx:end_idx]
+    # cut_C_dlogX[start_idx:end_idx] = C_dlogX[start_idx:end_idx]
     cut_conc = np.nansum(cut_C)
-    return cut_X, cut_C, cut_dX, cut_conc
+    return cut_X, cut_dX, cut_C, cut_conc
 
 
 def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
@@ -98,16 +102,20 @@ def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
     else:
         data["cut_X"] = np.full_like(data["X"], np.nan)
         data["cut_dX"] = np.full_like(data["X"], np.nan)
+        # data["cut_dlogX"] = np.full_like(data["X"], np.nan)
     if f"cut_{used_C}" in data:
         pass
     else:
         data[f"cut_{used_C}"] = np.full_like(data[used_C], np.nan)
-        data["results"][f"cut_conc_{used_C}"] = np.full_like(data["results"]["calc_conc_n"], np.nan)
+        # data[f"cut_{used_C}_dlogX"] = np.full_like(data[used_C], np.nan)
+        data["results"][f"cut_conc_{used_C}"] = np.full_like(data["results"][f"calc_conc{used_C}"], np.nan)
     for k in cut_nrs:
-        cut_X, cut_C, cut_dX, cut_conc = cut_dist_data(X[k], C[k], dX[k], lowerbound, upperbound)
+        cut_X, cut_dX, cut_dlogX, cut_C, cut_C_dlogX, cut_conc = cut_dist_data(X[k], C[k], dX[k], lowerbound, upperbound)
         data["cut_X"][k] = cut_X
-        data[f"cut_{used_C}"][k] = cut_C
         data["cut_dX"][k] = cut_dX
+        # data["cut_dlogX"][k] = cut_dlogX
+        data[f"cut_{used_C}"][k] = cut_C
+        # data[f"cut_{used_C}_dlogX"][k] = cut_C_dlogX
         data["results"].loc[k, f"cut_conc_{used_C}"] = cut_conc # dropped a SettingWithCopyWarning so using .loc now
     return data
 
@@ -300,50 +308,168 @@ def cumulative_diameters(X, cum_C):
 
 
 def typical_calculations(data, used_C="Cn"):
-    data["results"]["calc_conc_n"] = get_conc(data[used_C])
-    data["results"]["dg"], data["results"]["sigma_g"] = calc_geometry(data["X"], data[used_C], data["results"]["calc_conc_n"])
-    data["results"]["CMD"] = count_median_diameter(data["X"], data["Cn"])
+    data["results"][f"calc_conc_{used_C}"] = get_conc(data[used_C])
+    data["results"]["dg"], data["results"]["sigma_g"] = calc_geometry(data["X"], data[used_C],
+                                                                      data["results"][f"calc_conc_{used_C}"])
+    data["results"]["CMD"] = count_median_diameter(data["X"], data[used_C])
     (data["results"]["mode"], data["results"]["LMD"], data["results"]["SMD"], data["results"]["MMD"],
      data["results"]["mass_mean_D"]) = Hatch_Choate(data["results"]["CMD"], data["results"]["sigma_g"])
     data["cum_C"] = cumulative_distribution(data[used_C])
-    data["norm_cum_C"] = Sup.norm_C(data["cum_C"], data["results"]["calc_conc_n"])
+    data["norm_cum_C"] = Sup.norm_C(data["cum_C"], data["results"][f"calc_conc_{used_C}"])
     (data["results"]["X10"], data["results"]["X16"], data["results"]["X50"], data["results"]["X84"],
      data["results"]["X90"]) = cumulative_diameters(data["X"], data["cum_C"])
     return data
 
 
-def lognormal_dist(conc, sigma_g, dg, X, dX):
-    """calculates a normal distribution based on the concentration, the median diameter and the geometric standard
-    deviation"""
-    fit = np.full_like(X, np.nan)
-    for k in np.arange(0, X.shape[0]):
-        #fit[k, :] = (mean_conc_n[k] / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
-        #            np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
-        # is roughly 28 times higher than the histogram
-        fit[k, :] = ((conc[k])/(math.sqrt(2 * math.pi) * np.log(sigma_g[k])))*\
-                    np.exp((-np.square(np.log(X[k, :])-np.log(dg[k])))/(2*(math.log(sigma_g[k]))**2))
-        # did not do what i wanted it to
-        # fit[k, :] = ((mean_conc_n[k] / mean_X.shape[0]) / (math.sqrt(2 * math.pi) * np.log10(sigma_g[k]))) * \
-        #            np.power(10, ((-np.square(np.log10(mean_X[k, :]) - np.log10(dg[k]))) /
-        #                          (2 * (math.log10(sigma_g[k])) ** 2)))
-        # gives more narrow distribution than with natural base
-        # fit[k, :] = (1 / (math.sqrt(2 * math.pi) * np.log(sigma_g[k]))) * \
-        #             np.exp((-np.square(np.log(mean_X[k, :]) - np.log(dg[k]))) / (2 * (math.log(sigma_g[k])) ** 2))
-    return fit
+def mean_of_n(data, nr_mean, used_C="Cn"):
+    """calculates a mean of every n consecutive measurements and also gives the standard deviation
+    select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
+    only works with more than 3 measurements"""
+    X, dX, C = Sup.extract_from_dict(data, used_C)
+    dlogX = data["dlogX"]
+    C_dlogX = data[f"{used_C}_dlogX"]
+    calc_conc = data["results"][f"calc_conc_{used_C}"]
+    dg = data["results"]["dg"]
+    sigma = data["results"]["sigma_g"]
+    n = nr_mean
+    size = X.shape
+    nth_len = int(size[0]/n)
+    mean_X = np.full((nth_len, size[1]), np.nan)
+    mean_dX = np.full_like(mean_X, np.nan)
+    mean_dlogX = np.full_like(mean_X, np.nan)
+    mean_C = np.full_like(mean_X, np.nan)
+    std_C = np.full_like(mean_X, np.nan)
+    mean_C_dlogX = np.full_like(mean_X, np.nan)
+    std_C_dlogX = np.full_like(mean_X, np.nan)
+    mean_conc = []
+    std_conc = []
+    mean_dg = []
+    mean_sigma = []
+    std_dg = []
+    std_sigma = []
+    scan_nr = []
+    time = []
+    comment = []
+    subscan_nrs = []
+    for k in range(nth_len):
+        mean_X[k, :] = np.mean(X[(k * n):((k + 1) * n), :], axis=0)
+        mean_dX[k, :] = np.mean(dX[(k * n):((k + 1) * n), :], axis=0)
+        mean_dlogX[k, :] = np.mean(dlogX[(k * n):((k + 1) * n), :], axis=0)
+        mean_C[k, :] = np.mean(C[(k * n):((k + 1) * n), :], axis=0)
+        std_C[k, :] = np.std(C[(k * n):((k + 1) * n), :], axis=0)
+        mean_C_dlogX[k, :] = np.mean(C_dlogX[(k * n):((k + 1) * n), :], axis=0)
+        std_C_dlogX[k, :] = np.std(C_dlogX[(k * n):((k + 1) * n), :], axis=0)
+        mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
+        std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
+        mean_dg.append(np.mean(dg[(k * n):((k + 1) * n)], axis=0))
+        std_dg.append(np.std(dg[(k * n):((k + 1) * n)], axis=0))
+        mean_sigma.append(np.mean(sigma[(k * n):((k + 1) * n)], axis=0))
+        std_sigma.append(np.std(sigma[(k * n):((k + 1) * n)], axis=0))
+        scan_nr.append(data["add_info"]["Scan Nr"][k*n])
+        time.append(data["add_info"]["Time"][k*n])
+        comment.append(data["add_info"]["Comment"][k*n])
+        sscn = ""
+        if "Subscan Nr" in data["add_info"]:
+            for j in range(0,n): # for every scan that is meaned into one append the subscan nr from subscan nrs
+                sscn += str(data["add_info"]["Scan Nr"][k*n+j]) + "-" + str(data["add_info"]["Subscan Nr"][k*n+j]) + " "
+        else:
+            for j in range(0,n):
+                sscn += str(data["add_info"]["Scan Nr"][k*n+j]) + " "
+        subscan_nrs.append(sscn)
+    add_info = pd.DataFrame({"Scan Nr": scan_nr, "Time": time, "Comment": comment, "Subscan Nrs": subscan_nrs})
+    results = pd.DataFrame({"Scan Nr": scan_nr, "Time": time, "Comment": comment, "mean_conc": mean_conc,
+                            "std_conc": std_conc, "mean_dg": mean_dg, "std_dg": std_dg, "mean_sigma": mean_sigma,
+                            "std_sigma": std_sigma})
+    mean_data = {"X": mean_X, "dX": mean_dX, "dlogX": mean_dlogX, f"mean_{used_C}": mean_C, f"std_{used_C}": std_C,
+                 f"mean_{used_C}_dlogX": mean_C_dlogX, f"std_{used_C}_dlogX": std_C_dlogX, "filename": data["filename"],
+                 "used_device": data["used_device"], "add_info": add_info, "results": results}
+    return mean_data
 
 
-def lognormal_function(x, A, mu, sigma):
-    """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
-    standard deviation - from Aerosol-Measurement p. 486 with added A parameter similar to p. 42
-    A is not directly conc, don't use with fit!"""
-    return A / (x * np.log(sigma) * np.sqrt(2 * math.pi)) * np.exp(-((np.log(x / mu)) ** 2) / (2 * np.log(sigma) ** 2))
+def merge_mean_data(mean_data_list, used_C="Cn"):  ### rework
+    """merges dictionaries of data, should best be used with mean data dicts
+    currently also writes into the first dict it takes data from???"""
+    merged_mean_data = {}
+    merged_mean_data["mean_X"] = mean_data_list[0]["mean_X"].copy()
+    merged_mean_data["mean_C"] = mean_data_list[0]["mean_C"].copy()
+    merged_mean_data["std_C"] = mean_data_list[0]["std_C"].copy()
+    merged_mean_data["dX"] = mean_data_list[0]["dX"].copy()
+    merged_mean_data["mean_conc"] = mean_data_list[0]["mean_conc"][:].copy()
+    merged_mean_data["std_conc"] = mean_data_list[0]["std_conc"][:].copy()
+    merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:].copy()
+    merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:].copy()
+    for i in mean_data_list[1:]:
+        merged_mean_data["mean_X"] = np.append(merged_mean_data["mean_X"], i["mean_X"], axis=0)
+        merged_mean_data["mean_C"] = np.append(merged_mean_data["mean_C"], i["mean_C"], axis=0)
+        merged_mean_data["std_C"] = np.append(merged_mean_data["std_C"], i["std_C"], axis=0)
+        merged_mean_data["dX"] = np.append(merged_mean_data["dX"], i["dX"], axis=0)
+        merged_mean_data["mean_conc"].extend(i["mean_conc"])
+        merged_mean_data["std_conc"].extend(i["std_conc"])
+        merged_mean_data["mean_dg"].extend(i["mean_dg"])
+        merged_mean_data["std_dg"].extend(i["std_dg"])
+    return merged_mean_data
 
 
-def normalized_lognormal_function(x, A, mu, sigma):
-    """normalized lognormal function and factor A for scaling -> by that, A should directly be the concentration
-    use this!"""
-    return A*(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))
-              /np.nansum(1/(x*np.log(sigma)*np.sqrt(2*math.pi))*np.exp(-((np.log(x/mu))**2)/(2*np.log(sigma)**2))))
+def typical_calculations_mean(data, used_C="Cn"):  # rework
+    data["calc_conc_n"] = get_conc(data[f"mean_{used_C}"])
+    data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data[f"mean_{used_C}"], data["calc_conc_n"], data["dX"])
+    return data
+
+
+def surface_dist(data):
+    """gives surface concentration per bin in micrometer^2 / cm^3
+    can be used on data directly, or on data selected with select_data()"""
+    Cn = data["Cn"]
+    X = data["X"]
+    Cs = np.full_like(Cn, np.nan)
+    mum_D = np.divide(X, 1000)
+    # convert sel_X from nm to micrometers by dividing by 1000
+    # percubicmeter_Cn = np.multiply(Cn, 10 ** 6)
+    # convert sel_Cn to P/m^3
+    for k in np.arange(Cn.shape[0]):
+        for j in np.arange(Cn.shape[1]):
+            Cs[k, j] = (Cn[k, j] * (math.pi * (mum_D[k, j]) ** 2))
+    data["Cs"] = Cs
+    return data
+
+
+def volume_dist(data):
+    """gives volume concentration per bin in micrometer^3 / m^3
+    can be used on data directly, or on data selected with select_data()"""
+    Cn = data["Cn"]
+    X = data["X"]
+    Cv = np.full_like(Cn, np.nan)
+    mum_D = np.divide(X, 1000)
+    # convert sel_X from nm to micrometers by dividing by 1000
+    percubicmeter_Cn = np.multiply(Cn, 10 ** 6)
+    # convert sel_Cn to P/m^3
+    for k in np.arange(Cn.shape[0]):
+        for j in np.arange(Cn.shape[1]):
+            Cv[k, j] = (percubicmeter_Cn[k, j] * ((1 / 6) * math.pi * (mum_D[k, j]) ** 3))
+    data["Cv"] = Cv
+    return data
+
+
+def mass_dist(data, density):
+    """gives mass concentration per bin in mg/m^3, takes g/cm^3 as density input, Cv in micrometer/m^3 must be
+    calculated before! - can be used on data directly, or on data selected with select_data()"""
+    Cv = data["Cv"]
+    densitymgpermum = density*(10**(-9))  # convert the density from g/cm^3 to milligram per cubic micrometer
+    Cm = np.multiply(Cv, densitymgpermum)  # last part converts from per cm^3 to per m^3
+    data["Cm"] = Cm
+    return data # check
+
+
+def mean_and_std(data):
+    """calculates the mean and std of whatever
+    e.g. call for mean_dg, std_dg = mean_and_std(sel_data["results"]["dg"][idx]) to get mean and std of the geometric mean
+    diameter of all the indexed measurements"""
+    n = len(data)
+    mean = np.mean(data)
+    std = np.std(data)
+    # print(f"mean of {n}:" + "{:e}".format(float(mean)) + u"\u00B1" +
+    #        "{:e}".format(float(std)))
+    return mean, std
 
 
 def normal_function(x, A, mu, sigma):
@@ -352,7 +478,13 @@ def normal_function(x, A, mu, sigma):
     return A/(sigma*np.sqrt(2*math.pi))*np.exp(-((x-mu)**2)/(2*sigma**2))
 
 
-def monomodal_fit(X, C, fit_function=Dist.normalized_lognormal_function):
+def lognormal_function(X, A, mu, sigma):
+    """definition of a log-normal function with A being a scale factor, m being the median and sigma being the geometric
+    standard deviation - from Aerosol-Measurement p. 486 with added A parameter similar to p. 42"""
+    return A / (X * np.log(sigma) * np.sqrt(2 * math.pi)) * np.exp(-((np.log(X / mu)) ** 2) / (2 * np.log(sigma) ** 2))
+
+
+def monomodal_fit(X, C, fit_function=Dist.lognormal_function):
     """fit of a monomodal distribution - works only for one measurement at a time"""
     ## work this through
     XnoNaNs = X[~np.isnan(X)]  # ~ = logical-not operator
@@ -441,7 +573,7 @@ def create_n_modal_fit_function(modality, fit_function):
     return n_modal_fit
 
 
-def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
+def multimodal_fit(X, C, fit_function="lognormal_function"):
     """returned a ValueError: array must not contain infs or NaNs from scipy.optimize, so arrays have to be stripped of
     NaNs first when using cut arrays"""
     XnoNaNs = X[~np.isnan(X)]  # ~ = logical-not operator
@@ -457,10 +589,13 @@ def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
     var = np.diag(covs) # variance is in diag of covs, sigma is sqrt of var
     C_fit = function_type(XnoNaNs, *params)
     plt.plot(XnoNaNs, C_fit,
-             color='red', lw=3, label='multimodal fit')
+             color='black', lw=3, label='multimodal fit')
+    colors=[Def.fhg_cm[2], Def.fhg_cm[6], Def.fhg_cm[7]]
+    ct=0
     for k in range(0,modality):
         plt.plot(X, lognormal_function(X, *params[k*3:(k+1)*3]),
-             lw=1.5, ls=":", label=f"distribution {k+1}")  # color="yellow"
+             lw=3, ls=":", label=f"distribution {k+1}", color=colors[ct])
+        ct+=1
     plt.legend()
     plt.xscale("log")
     print(params)
@@ -469,149 +604,13 @@ def multimodal_fit(X, C, fit_function="normalized_lognormal_function"):
     # sigma_g -> have to be sorted into dataframe
     fit_params_vars = np.full((modality, 6), np.nan)
     for k in range(0, modality):  # sort params A, mu, sigma into rows for each detected mode n as row
-        fit_params_vars[k, 0] = params[0 + (k * 3)]
-        fit_params_vars[k, 1] = params[1 + (k * 3)]
-        fit_params_vars[k, 2] = params[2 + (k * 3)]
-        fit_params_vars[k, 3] = var[0 + (k * 3)]
-        fit_params_vars[k, 4] = var[1 + (k * 3)]
-        fit_params_vars[k, 5] = var[2 + (k * 3)]
+        fit_params_vars[k, 0] = params[0 + (k * 3)]  # A
+        fit_params_vars[k, 1] = params[1 + (k * 3)]  # mu
+        fit_params_vars[k, 2] = params[2 + (k * 3)]  # sigma
+        fit_params_vars[k, 3] = var[0 + (k * 3)]  # Acov
+        fit_params_vars[k, 4] = var[1 + (k * 3)]  # mucov
+        fit_params_vars[k, 5] = var[2 + (k * 3)]  # sigmacov
     return modality, fit_params_vars, C_fit
-
-
-def mean_of_n(data, nr_mean, used_C="Cn"):
-    """calculates a mean of every n consecutive measurements and also gives the standard deviation
-    select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
-    only works with more than 3 measurements"""
-    X = data["X"]
-    dX = data["dX"]
-    dlogX = data["dlogX"]
-    C = data[used_C]
-    C_dlogX = data[f"{used_C}_dlogX"]
-    calc_conc = data["results"]["calc_conc_n"]
-    dg = data["results"]["dg"]
-    sigma = data["results"]["sigma_g"]
-    n = nr_mean
-    size = X.shape
-    nth_len = int(size[0]/n)
-    mean_X = np.full((nth_len, size[1]), np.nan)
-    mean_dX = np.full_like(mean_X, np.nan)
-    mean_dlogX = np.full_like(mean_X, np.nan)
-    mean_C = np.full_like(mean_X, np.nan)
-    std_C = np.full_like(mean_X, np.nan)
-    mean_C_dlogX = np.full_like(mean_X, np.nan)
-    std_C_dlogX = np.full_like(mean_X, np.nan)
-    mean_conc = []
-    std_conc = []
-    mean_dg = []
-    mean_sigma = []
-    std_dg = []
-    std_sigma = []
-    scan_nr = []
-    time = []
-    comment = []
-    subscan_nrs = []
-    for k in range(nth_len):
-        mean_X[k, :] = np.mean(X[(k * n):((k + 1) * n), :], axis=0)
-        mean_dX[k, :] = np.mean(dX[(k * n):((k + 1) * n), :], axis=0)
-        mean_dlogX[k, :] = np.mean(dlogX[(k * n):((k + 1) * n), :], axis=0)
-        mean_C[k, :] = np.mean(C[(k * n):((k + 1) * n), :], axis=0)
-        std_C[k, :] = np.std(C[(k * n):((k + 1) * n), :], axis=0)
-        mean_C_dlogX[k, :] = np.mean(C_dlogX[(k * n):((k + 1) * n), :], axis=0)
-        std_C_dlogX[k, :] = np.std(C_dlogX[(k * n):((k + 1) * n), :], axis=0)
-        mean_conc.append(np.mean(calc_conc[(k * n):((k + 1) * n), ], axis=0))
-        std_conc.append(np.std(calc_conc[(k * n):((k + 1) * n), ], axis=0))
-        mean_dg.append(np.mean(dg[(k * n):((k + 1) * n)], axis=0))
-        std_dg.append(np.std(dg[(k * n):((k + 1) * n)], axis=0))
-        mean_sigma.append(np.mean(sigma[(k * n):((k + 1) * n)], axis=0))
-        std_sigma.append(np.std(sigma[(k * n):((k + 1) * n)], axis=0))
-        scan_nr.append(data["add_info"]["Scan Nr"][k*n])
-        time.append(data["add_info"]["Time"][k*n])
-        comment.append(data["add_info"]["Comment"][k*n])
-        sscn = ""
-        if "Subscan Nr" in data["add_info"]:
-            for j in range(0,n): # for every scan that is meaned into one append the subscan nr from subscan nrs
-                sscn += str(data["add_info"]["Scan Nr"][k*n+j]) + "-" + str(data["add_info"]["Subscan Nr"][k*n+j]) + " "
-        else:
-            for j in range(0,n):
-                sscn += str(data["add_info"]["Scan Nr"][k*n+j]) + " "
-        subscan_nrs.append(sscn)
-    add_info = pd.DataFrame({"Scan Nr": scan_nr, "Time": time, "Comment": comment, "Subscan Nrs": subscan_nrs})
-    results = pd.DataFrame({"Scan Nr": scan_nr, "Time": time, "Comment": comment, "mean_conc": mean_conc,
-                            "std_conc": std_conc, "mean_dg": mean_dg, "std_dg": std_dg, "mean_sigma": mean_sigma,
-                            "std_sigma": std_sigma})
-    mean_data = {"X": mean_X, "dX": mean_dX, "dlogX": mean_dlogX, f"mean_{used_C}": mean_C, f"std_{used_C}": std_C,
-                 f"mean_{used_C}_dlogX": mean_C_dlogX, f"std_{used_C}_dlogX": std_C_dlogX, "filename": data["filename"],
-                 "used_device": data["used_device"], "add_info": add_info ,"results": results}
-    return mean_data
-
-
-def merge_mean_data(mean_data_list):  ### rework
-    """merges dictionaries of data, should best be used with mean data dicts
-    currently also writes into the first dict it takes data from???"""
-    merged_mean_data = {}
-    merged_mean_data["mean_X"] = mean_data_list[0]["mean_X"].copy()
-    merged_mean_data["mean_C"] = mean_data_list[0]["mean_C"].copy()
-    merged_mean_data["std_C"] = mean_data_list[0]["std_C"].copy()
-    merged_mean_data["dX"] = mean_data_list[0]["dX"].copy()
-    merged_mean_data["mean_conc"] = mean_data_list[0]["mean_conc"][:].copy()
-    merged_mean_data["std_conc"] = mean_data_list[0]["std_conc"][:].copy()
-    merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:].copy()
-    merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:].copy()
-    for i in mean_data_list[1:]:
-        merged_mean_data["mean_X"] = np.append(merged_mean_data["mean_X"], i["mean_X"], axis=0)
-        merged_mean_data["mean_C"] = np.append(merged_mean_data["mean_C"], i["mean_C"], axis=0)
-        merged_mean_data["std_C"] = np.append(merged_mean_data["std_C"], i["std_C"], axis=0)
-        merged_mean_data["dX"] = np.append(merged_mean_data["dX"], i["dX"], axis=0)
-        merged_mean_data["mean_conc"].extend(i["mean_conc"])
-        merged_mean_data["std_conc"].extend(i["std_conc"])
-        merged_mean_data["mean_dg"].extend(i["mean_dg"])
-        merged_mean_data["std_dg"].extend(i["std_dg"])
-    return merged_mean_data
-
-
-def typical_calculations_mean(data, used_C="Cn"):
-    data["calc_conc_n"] = get_conc(data[f"mean_{used_C}"])
-    data["dg"], data["sigma"] = calc_geometry(data["mean_X"], data[f"mean_{used_C}"], data["calc_conc_n"], data["dX"])
-    return data
-
-
-def volume_dist(data):
-    """gives volume concentration per bin in micrometer^3 / m^3
-    can be used on data directly, or on data selected with select_data()"""
-    Cn = data["Cn"]
-    X = data["X"]
-    Cv = np.zeros_like(Cn)
-    mum_D = np.divide(X, 1000)
-    # convert sel_X from nm to micrometers by dividing by 1000
-    percubicmeter_Cn = np.multiply(Cn, 10 ** 6)
-    # convert sel_Cn to P/m^3
-    for k in np.arange(Cn.shape[0]):
-        for j in np.arange(Cn.shape[1]):
-            Cv[k, j] = (percubicmeter_Cn[k, j] * ((1 / 6) * math.pi * (mum_D[k, j]) ** 3))
-    data["Cv"] = Cv
-    return data
-
-
-def mass_dist(data, density):
-    """gives mass concentration per bin in mg/m^3, takes g/cm^3 as density input, Cv in micrometer/m^3 must be
-    calculated before! - can be used on data directly, or on data selected with select_data()"""
-    Cv = data["Cv"]
-    densitymgpermum = density*(10**(-9))  # convert the density from g/cm^3 to milligram per cubic micrometer
-    Cm = np.multiply(Cv, densitymgpermum)  # last part converts from per cm^3 to per m^3
-    data["Cm"] = Cm
-    return data # check
-
-
-def mean_and_std(data):
-    """calculates the mean and std of whatever
-    e.g. call for mean_dg, std_dg = mean_and_std(sel_data["dg"][idx]) to get mean and std of the geometric mean
-    diameter, or call mean_conc_n, std_conc_n = mean_and_std(data_identifier["calc_conc_n"][idx])"""
-    n = len(data)
-    mean = np.mean(data)
-    std = np.std(data)
-    # print(f"mean of {n}:" + "{:e}".format(float(mean)) + u"\u00B1" +
-    #        "{:e}".format(float(std)))
-    return mean, std
 
 
 def format_plot(fig, ax, used_C, used_device):
@@ -621,17 +620,20 @@ def format_plot(fig, ax, used_C, used_device):
     y_label = Sup.decide_y_label(used_C)
     if used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m'")["Device_Identifier"].values):
         # for micrometer instruments TSI APS, PALAS WELAS
-        ax.set(xscale='log', xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
+        ax.set(xscale='log',
+               xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
                xlabel=u'Particle Diameter / \xb5m',
                ylabel=y_label)
     elif used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m in nm'")["Device_Identifier"].values):
         # for micrometer instruments with nm x-axis
-        ax.set(xscale='log', xticks=[100, 500, 1000, 2000, 5000, 10000], xticklabels=[0.1, 0.5, 1, 2, 5, 10],
+        ax.set(xscale='log',
+               xticks=[100, 500, 1000, 2000, 5000, 10000], xticklabels=[0.1, 0.5, 1, 2, 5, 10],
                xlabel=u'Particle Diameter / \xb5m',
                ylabel=y_label)
     elif used_device in list(Def.device_list.query("Size_Plot_Range=='nm'")["Device_Identifier"].values):
         # for nanometer instruments SMPS
-        ax.set(xscale='log', xticks=[20, 50, 100, 200, 400, 800], xticklabels=[20, 50, 100, 200, 400, 800],
+        ax.set(xscale='log',
+               xticks=[10, 20, 50, 100, 200, 400, 800], xticklabels=[10, 20, 50, 100, 200, 400, 800],
                xlabel='Particle Diameter / nm',
                ylabel=y_label)
     else:
@@ -661,12 +663,12 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1, legend=
         k = py_nrs[0]
         ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[0])
         Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
-        #print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
+        # print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
     else:
         for k in py_nrs:
             ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
-            print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
+            # print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
             ct += 1
 
     ax = format_plot(fig, ax, used_C, used_device)
@@ -705,8 +707,8 @@ def plot_meandata(mean_data, scan_nrs, colors=Def.fhg_cm, a=1):
         # legend_entries.append(user_input + " (" + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
         #    str("{:.2f}".format(float(std_dg[k]))) + " nm)")
         # legend_entries.append(user_input) # scan_nrs is used here on purpose
-    [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
-           "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
+    # [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
+    #        "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
     format_plot(fig, ax, used_C, used_device)
 
@@ -717,7 +719,7 @@ def plot_meandata(mean_data, scan_nrs, colors=Def.fhg_cm, a=1):
     return ax
 
 
-def plot_cum_data(data, scan_nrs):
+def plot_cum_data(data, scan_nrs, colors=Def.tum_cm, a=1, legend="automatic", save_plot="off"):
     """plots the given data, specify measurement to use from sel_Cn array"""
     # seems to work, just needs another axis label to indicate it is cummulative :D
     py_nrs = Sup.py_logic_converter(scan_nrs)
@@ -725,29 +727,32 @@ def plot_cum_data(data, scan_nrs):
     X = data["X"]
     dX = data["dX"]
     cum_C = data["cum_C"]
-    calc_conc_n = data["results"]["calc_conc_n"]
-    normcum_C = Sup.norm_C(cum_C, calc_conc_n)
+    calc_conc = get_conc(cum_C)
+    normcum_C = Sup.norm_C(cum_C, calc_conc)
     used_device = data["used_device"]
-
+    legend_entries = []
     fig, ax = plt.subplots()  # height with title 12, without 10
+    ct=0
+
     if len(py_nrs) == 1:
         k = py_nrs[0]
-        ax.bar(X[k, :], normcum_C[k, :], width=dX[k, :], edgecolor='black')
-        legend_entries = [input(f"Please enter the legend entry for scan {scan_nrs[0]}")]
+        ax.bar(X[k, :], normcum_C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct])
+        Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
         # scan_nrs is used here on purpose
-        print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+        # print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + " P/cm" + u"\u00B3")
     else:
-        legend_entries = []
-        ct = 0
         for k in py_nrs:
-            ax.bar(X[k, :], normcum_C[k, :], width=dX[k, :], edgecolor='black', alpha=0.5)
-            legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-            print(f"scan {scan_nrs[k]} conc. = " + "{:e}".format(float(calc_conc_n[k])) + " P/cm" + u"\u00B3")
+            ax.bar(X[k, :], normcum_C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
+            Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+            # print(f"scan {scan_nrs[k-1]} conc. = " + "{:e}".format(float(calc_conc[k])) + " P/cm" + u"\u00B3")
             ct += 1
+
     format_plot(fig, ax, used_C, used_device)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
     plt.legend(legend_entries)  # , loc='upper left')
+    Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
+
     plt.show()
     return ax
 

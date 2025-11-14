@@ -134,8 +134,10 @@ def lognormal_test(x_lower=5, x_upper=1000, x_steps=99, conc=1E5, dg=80, sigma_g
 
 
 def decide_C_unit(used_C):
-    if used_C == "Cv":
-        C_unit = u" \u00B5m\u00B3 g" + u"/cm\u00B3"
+    if used_C == "Cs":
+        C_unit = u" \u00B5m\u00B2" + u"/cm\u00B3"
+    elif used_C == "Cv":
+        C_unit = u" \u00B5m\u00B3" + u"/cm\u00B3"
     elif used_C == "Cm":
         C_unit = " mg" + u"/cm\u00B3"
     elif used_C == "Cn_dlogX":
