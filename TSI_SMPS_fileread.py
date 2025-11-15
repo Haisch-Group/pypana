@@ -176,13 +176,13 @@ def import_data(filename, used_device):
         # Method 2: calculating xu and xl iteratively from given lower size limit and midpoint diameters: (gives closure
         # between size bins, but still has variable dlogX especially in lower size range)
 
-        Xl[i, 0] = add_info["Lower Size / nm"][i]
-        Xu[i, -1] = add_info["Upper Size / nm"][i]
-        for k in range(nr_bins-1):
-            Xl[i, k+1] = 2*x_axis[k]-Xl[i, k]
-            Xu[i, k] = Xl[i, k+1]
-        for k in range(nr_bins):
-            X[i, k] = x_axis[k]
+        # Xl[i, 0] = add_info["Lower Size / nm"][i]
+        # Xu[i, -1] = add_info["Upper Size / nm"][i]
+        # for k in range(nr_bins-1):
+        #     Xl[i, k+1] = 2*x_axis[k]-Xl[i, k]
+        #     Xu[i, k] = Xl[i, k+1]
+        # for k in range(nr_bins):
+        #     X[i, k] = x_axis[k]
 
         # Method 3: constructing x-axis based on lower and upper limits given in measurement file
         # also the two less indented lines after this block for calculating Xm and assigning it to X are required
@@ -200,11 +200,11 @@ def import_data(filename, used_device):
         # # / by number of bins) similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
         # # Xl and Xu from midpoints.
 
-        # const_dlogX = 1/np.rint(nr_bins/np.log10(add_info["Upper Size / nm"] / add_info["Lower Size / nm"]))
-        # for k in range(nr_bins):
-        #     X[i, k] = x_axis[k]
-        #     Xl[i, k] = (2*X[i, k])/(np.pow(10,const_dlogX[i])+1)
-        #     Xu[i, k] = (2*X[i, k])/(1/np.pow(10,const_dlogX[i])+1)
+        const_dlogX = 1/np.rint(nr_bins/np.log10(add_info["Upper Size / nm"] / add_info["Lower Size / nm"]))
+        for k in range(nr_bins):
+            X[i, k] = x_axis[k]
+            Xl[i, k] = (2*X[i, k])/(np.pow(10,const_dlogX[i])+1)
+            Xu[i, k] = (2*X[i, k])/(1/np.pow(10,const_dlogX[i])+1)
 
         # Method 5: calculating dlogX from resolution in channels per decade (can be automized from number of bins / by
         # log length of axis) ;similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
