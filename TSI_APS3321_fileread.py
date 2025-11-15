@@ -108,13 +108,8 @@ def import_data(filename):
     Xl = np.full_like(conc, np.nan)
     Xu = np.full_like(conc, np.nan)
 
-    # unfortunately, the methods for calculating the bin boundaries Xl and Xu based on the midpoint diameters contained
-    # in the measurement file do not give a constant dlogX as they are rounded to only one decimal
-
-    # 3 methods for building an x-array are implemented in TSI_SMPS_fileread, they could also be used here
-
-    # Method 3: constructing x-axis based on lower and upper limits given in measurement file
-    # also the two less indented lines after this block for calculating X and assigning it to X are required
+   # multiple methods for building an x-array are implemented in TSI_SMPS_fileread, they could also be used here
+    # method 4 gave best results for SMPS, so also used here
 
     with open(filename) as f_in:  # open file and keep open
         for i, line in enumerate(f_in):
@@ -127,23 +122,34 @@ def import_data(filename):
             else:
                 continue
 
+    # Method 3: constructing x-axis based on lower and upper limits given in measurement file
+    # also the two less indented lines after this block for calculating X and assigning it to X are required
 
-    const_dlogX = np.log10(upper_size / lower_size) / nr_bins
-    Xl[0, 0] = lower_size
-    Xu[0, -1] = upper_size
+    # const_dlogX = np.log10(upper_size / lower_size) / nr_bins
+    # Xl[0, 0] = lower_size
+    # Xu[0, -1] = upper_size
+    #
+    # for k in range(1, nr_bins):
+    #     Xl[0, k] = Xl[0, k - 1] * 10 ** (const_dlogX)
+    #     Xu[0, k - 1] = Xl[0, k]
+    #
+    # for i in range(1, nr_scans):
+    #     Xl[i] = Xl[0]
+    #     Xu[i] = Xu[0]
+    #
+    # X=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
 
-    for k in range(1, nr_bins):
-        Xl[0, k] = Xl[0, k - 1] * 10 ** (const_dlogX)
-        Xu[0, k - 1] = Xl[0, k]
+    # Method 4: calculating dlogX from resolution in channels per decade (can be automized from log length of axis
+    # / by number of bins) similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
+    # Xl and Xu from midpoints.
 
-    for i in range(1, nr_scans):
-        Xl[i] = Xl[0]
-        Xu[i] = Xu[0]
+    const_dlogX = 1 / np.rint(nr_bins / np.log10(upper_size / lower_size))
+    for k in range(nr_bins):
+        X[i, k] = x_axis[k]
+        Xl[i, k] = (2 * X[i, k]) / (np.pow(10, const_dlogX[i]) + 1)
+        Xu[i, k] = (2 * X[i, k]) / (1 / np.pow(10, const_dlogX[i]) + 1)
 
-    Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
-    X=Xm  # values are slightly different than those of TSI by maximum 0.01 micrometers for > 10 um, below third digit
-
-    # end of the x-array generation, rest works with all three of them
+    # end of the x-array generation
 
     # calculate bin width from upper and lower boundary
     dX = np.subtract(Xu, Xl)

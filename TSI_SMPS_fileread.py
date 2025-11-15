@@ -155,10 +155,11 @@ def import_data(filename, used_device):
     # unfortunately, the methods for calculating the bin boundaries Xl and Xu based on the midpoint diameters contained
     # in the measurement file do not give a constant dlogX as they are rounded to only one decimal
 
-    # below 3 methods for calculating Xu and Xl are given, the first two are based on the given midpoints, the last
-    # is only based on the upper and lower size limits given in the measurement file and constructs a new x-axis with
-    # newly calculated midpoint diameters with intervals of equal length on the logarithmic axis
+    # below different methods for calculating Xu and Xl are given, the first two are based on the given midpoints, Nr
+    # 3 is only based on the upper and lower size limits given in the measurement file and constructs a new x-axis
+    # with newly calculated midpoint diameters with intervals of equal length on the logarithmic axis
     # each method should work by just uncommenting it and commenting the method not to be used
+    # Method 3 has the lowest deviation to the actual TSI values in X-perspective, but for Conc, i dont know
 
     for i in range(nr_scans):
 
@@ -175,24 +176,49 @@ def import_data(filename, used_device):
         # Method 2: calculating xu and xl iteratively from given lower size limit and midpoint diameters: (gives closure
         # between size bins, but still has variable dlogX especially in lower size range)
 
-        # Xl[i, 0] = add_info["Lower Size (nm)"][i]
-        # Xu[i, -1] = add_info["Upper Size (nm)"][i]
-        # for k in range(nr_bins-1):
-        #     Xl[i, k+1] = 2*x_axis[k]-Xl[i, k]
-        #     Xu[i, k] = Xl[i, k+1]
-        # for k in range(nr_bins):
-        #     X[i, k] = x_axis[k]
+        Xl[i, 0] = add_info["Lower Size / nm"][i]
+        Xu[i, -1] = add_info["Upper Size / nm"][i]
+        for k in range(nr_bins-1):
+            Xl[i, k+1] = 2*x_axis[k]-Xl[i, k]
+            Xu[i, k] = Xl[i, k+1]
+        for k in range(nr_bins):
+            X[i, k] = x_axis[k]
 
         # Method 3: constructing x-axis based on lower and upper limits given in measurement file
         # also the two less indented lines after this block for calculating Xm and assigning it to X are required
-        const_dlogX = np.log10(add_info["Upper Size / nm"]/add_info["Lower Size / nm"])/nr_bins
-        Xl[i, 0] = add_info["Lower Size / nm"][i]
-        Xu[i, -1] = add_info["Upper Size / nm"][i]
-        for k in range(1, nr_bins):
-            Xl[i, k] = Xl[i, k-1]*10**(const_dlogX[i])
-            Xu[i, k-1] = Xl[i, k]
-    Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
-    X=Xm
+
+    #     const_dlogX = np.log10(add_info["Upper Size / nm"]/add_info["Lower Size / nm"])/nr_bins
+    #     Xl[i, 0] = add_info["Lower Size / nm"][i]
+    #     Xu[i, -1] = add_info["Upper Size / nm"][i]
+    #     for k in range(1, nr_bins):
+    #         Xl[i, k] = Xl[i, k-1]*10**(const_dlogX[i])
+    #         Xu[i, k-1] = Xl[i, k]
+    # Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
+    # X=Xm
+
+        # # Method 4: calculating dlogX from resolution in channels per decade (can be automized from log length of axis
+        # # / by number of bins) similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
+        # # Xl and Xu from midpoints.
+
+        # const_dlogX = 1/np.rint(nr_bins/np.log10(add_info["Upper Size / nm"] / add_info["Lower Size / nm"]))
+        # for k in range(nr_bins):
+        #     X[i, k] = x_axis[k]
+        #     Xl[i, k] = (2*X[i, k])/(np.pow(10,const_dlogX[i])+1)
+        #     Xu[i, k] = (2*X[i, k])/(1/np.pow(10,const_dlogX[i])+1)
+
+        # Method 5: calculating dlogX from resolution in channels per decade (can be automized from number of bins / by
+        # log length of axis) ;similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
+        # Xl and Xu iteratively from lowest Xl, then Xm from Xu and Xl; actually it is exactly the same as Method 3, but
+        # with dlogX from resolution
+
+    #     const_dlogX = 1/np.rint(nr_bins/np.log10(add_info["Upper Size / nm"] / add_info["Lower Size / nm"]))
+    #     Xl[i, 0] = add_info["Lower Size / nm"][i]
+    #     Xu[i, -1] = add_info["Upper Size / nm"][i]
+    #     for k in range(1, nr_bins):
+    #         Xl[i, k] = Xl[i, k-1]*10**(const_dlogX[i])
+    #         Xu[i, k-1] = Xl[i, k]
+    # Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
+    # X=Xm
 
     # end of the x-array generation, rest works with all three of them
 
