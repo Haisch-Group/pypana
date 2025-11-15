@@ -13,8 +13,9 @@ run particle_analysis.py
 
 data_identifier = get_data() 
     
-change identifier to something that identifies the dataset, like a device + date e.g.: cpc_20240515
-imports one file at a time as dictionary
+change data_identifier to something that identifies the dataset, like a device + date e.g.: cpc_20240515
+imports one file at a time as dictionary containing arrays with the major data and a dataframe with additional info
+also produces a results dataframe, in which following calculated values can be stored
 choose input prompt according to the used device and the desired data possible prompts are displayed in console
     
 # Typical Calculations
