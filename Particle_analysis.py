@@ -105,4 +105,3 @@ if __name__ == "__main__":
     print("Particle_analysis.py started")
     # data = get_data()
 
-    # plt.ioff()
