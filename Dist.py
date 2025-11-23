@@ -196,30 +196,37 @@ def geometric_mean(X_row, C_row, conc_row):
     """calculates the geometric mean from given X_row, C_row and concentration
     Adapted from Eq. 22-12 in Aerosol Measurement p. 485, Ed. P. Kulkarni, P.A. Baron, K. Willeke 2011
     for lognormal distributions, count median diameter = geometric mean diameter - maybe add a check for lognormality ?"""
-    # math.exp((1 / conc_row) * np.nansum(np.log(X_row)*C_row)) # using e as base
-    # both methods give the same result only varying by 10**-14 in some cases so negligible
-    # log10 is used, as data is also on log10 base
-    return math.pow(10, (np.nansum(np.log10(X_row) * C_row)) / conc_row)
+    if conc_row == 0:  # if the concentration of the array is 0, no distribution can be determined
+        dg = 0  # so, 0 is reported as geometric mean diameter
+    else:
+        dg = math.pow(10, (np.nansum(np.log10(X_row) * C_row)) / conc_row)
+        # dg = math.exp((1 / conc_row) * np.nansum(np.log(X_row)*C_row)) # using e as base
+        # both methods give the same result only varying by 10**-14 in some cases so negligible
+        # log10 is used, as data is also on log10 base
+    return dg
 
 
 def get_geometric_mean(X, C, conc):
     """calculates the geometric mean from given X, C and conc arrays by applying geometric mean function to array"""
     dg = []
     for k in np.arange(0, C.shape[0]):
-        if conc[k] == 0: # if the concentration of the array is 0, no distribution can be determined
-            dg.append(0) # so, 0 is reported as geometric mean diameter
-        else:
-            dg.append(geometric_mean(X[k], C[k], conc[k]))
+        dg.append(geometric_mean(X[k], C[k], conc[k]))
     return dg
 
 
 def geometric_std(X_row, C_row, conc_row, dg_row):
     """calculates the geometric standard deviation from given X, C, conc and dg can be used with different C
      Adapted from Eq. 22-12 in Aerosol Measurement p. 485, Ed. P. Kulkarni, P.A. Baron, K. Willeke 2011"""
-    # return math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
-    #                                                       - np.log(dg[k]))*C[k]))/(conc[k]-1))))
-    # changed to log10 as it is used everywhere else on 20250128 same result as above
-    return math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(X_row/dg_row))*C_row))/(conc_row-1))))
+    # gave a math error for conc < 1 because conc-1 in GSD is < 0 then, so division is not possible
+    if conc_row < 1.00001:
+        GSD = np.inf  # is infinity correct here? should it just be a massive value? if after that a std is
+        # calculated for example when using mean_of_n, the std of GSD is nan of course
+    else:
+        GSD = math.pow(10, (math.sqrt((np.nansum(np.square(np.log10(X_row / dg_row)) * C_row)) / (conc_row - 1))))
+        # GSD = math.exp(math.sqrt((np.nansum(np.square(np.log(X[k])
+        #                                                       - np.log(dg[k]))*C[k]))/(conc[k]-1))))
+        # changed to log10 as it is used everywhere else on 20250128 same result as above
+    return GSD
 
 
 def get_geometric_std(X, C, conc, dg):
@@ -227,12 +234,7 @@ def get_geometric_std(X, C, conc, dg):
      Adapted from Eq. 22-12 in Aerosol Measurement p. 485, Ed. P. Kulkarni, P.A. Baron, K. Willeke 2011"""
     GSD = []
     for k in range(0, len(conc)):
-        # gave a math error for conc < 1 because conc-1 in GSD is < 0 then, so division is not possible
-        if conc[k] < 1.00001:
-            GSD.append(np.inf) # is infinity correct here? should it just be a massive value? if after that a std is
-            # calculated for example when using mean_of_n, the std of GSD is nan of course
-        else:
-            GSD.append(geometric_std(X[k],C[k],conc[k],dg[k]))
+        GSD.append(geometric_std(X[k],C[k],conc[k],dg[k]))
     return GSD
 
 
@@ -637,8 +639,8 @@ def find_peaks_in_data(
                     right_ips,
                 modality = int: number of detected peaks)
     """
-    C_peaks, properties = find_peaks(C_row, height=height, width=width, distance=distance)  # also provides properties
-    # print(f"properties: {properties}")
+    C_peaks, properties = find_peaks(C_row, height=np.nansum(C_row)/100, width=width, distance=distance)  # also provides properties
+    print(f"properties: {properties}")
     modality = len(C_peaks)
     X_peaks = X_row[C_peaks]
     return X_peaks, properties, modality
@@ -667,14 +669,14 @@ def create_bounds(initial_guess, modality, allowed_deviation=0.1):
     lowerbounds = []
     upperbounds = []
     for i in range(modality):
-        lowerbounds.append(0)  # A_min
+        lowerbounds.append(1)  # A_min
         lowerbounds.append(initial_guess[3*i+1]*(1-allowed_deviation)) # mu_min
         lowerbounds.append(1)  # sigma_min
         upperbounds.append(np.inf) # A_max
         upperbounds.append(initial_guess[3*i+1]*(1+allowed_deviation)) # mu_max
         upperbounds.append(np.inf) # sigma_max
-    print(f'lower bounds {lowerbounds}')
-    print(f'upper bounds {upperbounds}')
+    # print(f'lower bounds {lowerbounds}')
+    # print(f'upper bounds {upperbounds}')
     bounds = (lowerbounds, upperbounds)
     return bounds
 
@@ -702,7 +704,7 @@ def monomodal_fit(X_row, C_row, fit_function="lognormal_function", initial_guess
         b = boundaries
     function_to_fit = create_n_modal_fit_function(modality, fit_function)
     popt_fit, pcov_fit = optimize.curve_fit(function_to_fit, XnoNaNs, CnoNaNs, p0=initial_guess,
-                                                            bounds=b, maxfev=1000)
+                                                            bounds=b)#, maxfev=10000)
     A_fit=popt_fit[0]
     mu_fit=popt_fit[1]
     sigma_fit=popt_fit[2]
@@ -758,7 +760,6 @@ def multimodal_fit(X_row, C_row, fit_function="lognormal_function", initial_gues
     # print(var)
     # in params for k = len measurements, every 0+(n*3) value is A, every 1+(n*3) value is mu and every 2+(n*3) value is
     # sigma -> have to be sorted into dataframe
-    print(params)
     fit_params_vars = np.full((modality, 6), np.nan)
     for k in range(0, modality):  # sort params A, mu, sigma into rows for each detected mode n as row
         fit_params_vars[k, 0] = params[0 + (k * 3)]  # A
@@ -776,12 +777,17 @@ def get_fit_modes(X_row, dlogX_row, modality, fit_params_vars, fit_function="log
     modes_no_dlogX = modes.copy()
     mode_descriptors = pd.DataFrame(columns=["dg", "GSD", "calc_conc"])
     function_to_fit = create_n_modal_fit_function(1, fit_function)
+    calc_conc = []
+    dg = []
+    GSD = []
     for k in range(modality):
-        modes[k][:] = function_to_fit(X_row, fit_params_vars[k, 0], fit_params_vars[k, 1], fit_params_vars[k, 2])
-        modes_no_dlogX[k][:] = modes[k][:]*dlogX_row
-    conc = get_conc(modes_no_dlogX)
-    dg, GSD = calc_geometry(X_row, modes_no_dlogX, conc)
-    mode_descriptors["calc_conc"] = conc
+        modes[k] = function_to_fit(X_row, fit_params_vars[k, 0], fit_params_vars[k, 1], fit_params_vars[k, 2])
+        modes_no_dlogX[k] = modes[k]*dlogX_row
+        conc = np.nansum(modes_no_dlogX[k])
+        calc_conc.append(conc)
+        dg.append(geometric_mean(X_row, modes_no_dlogX[k], conc))
+        GSD.append(geometric_std(X_row, modes_no_dlogX[k], conc, dg[k]))
+    mode_descriptors["calc_conc"] = calc_conc
     mode_descriptors["dg"] = dg
     mode_descriptors["GSD"] = GSD
     return modes, mode_descriptors
@@ -806,21 +812,33 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
 
     # fill arrays and store values in results
     for k in py_nrs:
-        modality, fit_params_vars, C_fit = (
-            multimodal_fit(X[k], C[k], fit_function=fit_function, initial_guess=initial_guess,
-                       boundaries=boundaries))
-        modes, mode_descriptors = get_fit_modes(X[k], dlogX[k], modality, fit_params_vars, fit_function="lognormal_function")
-        data["results"].loc[k, "modality"] = modality
-        data[f"fit_{used_C}"][k] = C_fit
+        if np.nansum(C[k]) == 0:
+            modality=0
+            modes=C[k]
+            mode_descriptors = {"calc_conc": [0], "dg": [0], "GSD": [np.inf]}
+            data["results"].loc[k, "modality"] = modality
+            data[f"fit_{used_C}"][k] = C[k]
+        else:
+            modality, fit_params_vars, C_fit = (
+                multimodal_fit(X[k], C[k], fit_function=fit_function, initial_guess=initial_guess,
+                        boundaries=boundaries))
+            modes, mode_descriptors = get_fit_modes(X[k], dlogX[k], modality, fit_params_vars, fit_function="lognormal_function")
+            data["results"].loc[k, "modality"] = modality
+            data[f"fit_{used_C}"][k] = C_fit
 
-        for i in range(modality):
+        # maximum number of modes should be 10, more are not transferred to results
+        if modality > 10:
+            maxmodality= 10
+        else:
+            maxmodality = modality
+
+        for i in range(maxmodality):
             data[f"fit_{used_C}_modes"][k][i] = modes[i]
-            data["results"].loc[k, f"dg {i+1}"] = mode_descriptors["dg"][i]
+            data["results"].loc[k, f"dg {i + 1}"] = mode_descriptors["dg"][i]
             data["results"].loc[k, f"GSD {i + 1}"] = mode_descriptors["GSD"][i]
             data["results"].loc[k, f"calc_conc_{used_C_no_dlogX} {i + 1}"] = mode_descriptors["calc_conc"][i]
 
     return data
-
 
 
 def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", colors=Def.tum_cm, a=1, legend="automatic", save_plot="off"):
@@ -857,7 +875,7 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", colors=Def.tum_cm, a=1, leg
         for k in py_nrs:
             # plot the distribution
             ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
-            plt.plot(X[k, :], C_fit[k, :], color='black', markers=markers[k])  # , lw=3, label='multimodal fit')
+            plt.scatter(X[k, :], C_fit[k, :], color='black', marker=markers[k])  # , lw=3, label='multimodal fit')
             #add the legend
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             ct += 1
@@ -914,7 +932,14 @@ if __name__ == "__main__":
     """"""
 
     import Particle_analysis as pa
-    data = pa.get_data("fixed", used_device=2, filename='C:/Users/kevin.maier/PycharmProjects/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt')
-    # data = pa.get_data("fixed", used_device=2, filename='C:/UniStuff/Code/Python/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt')
+    # data = pa.get_data("fixed", used_device=2, filename='C:/Users/kevin.maier/PycharmProjects/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt')
+    data = pa.get_data("fixed", used_device=2, filename='C:/UniStuff/Code/Python/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt')
     Dist.typical_calculations(data);
-    Dist.fit_data(data, [13])
+    n_msmts = len(data["X"])
+    Dist.typical_calculations(data);
+
+    for k in [1,2,3,4,5,6,10,16,29,31,35,36]:
+        Dist.fit_data(data, [k]);
+        Dist.plot_fit_data(data, [k])
+
+    #print(data["results"])
