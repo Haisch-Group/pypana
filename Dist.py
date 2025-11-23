@@ -415,7 +415,7 @@ def merge_mean_data(mean_data_list, used_C="Cn"):  ### rework
     """merges dictionaries of data, should best be used with mean data dicts
     currently also writes into the first dict it takes data from???"""
     merged_mean_data = {}
-    merged_mean_data["mean_X"] = mean_data_list[0]["mean_X"].copy()
+    merged_mean_data["X"] = mean_data_list[0]["X"].copy()
     merged_mean_data["mean_C"] = mean_data_list[0]["mean_C"].copy()
     merged_mean_data["std_C"] = mean_data_list[0]["std_C"].copy()
     merged_mean_data["dX"] = mean_data_list[0]["dX"].copy()
@@ -424,7 +424,7 @@ def merge_mean_data(mean_data_list, used_C="Cn"):  ### rework
     merged_mean_data["mean_dg"] = mean_data_list[0]["mean_dg"][:].copy()
     merged_mean_data["std_dg"] = mean_data_list[0]["std_dg"][:].copy()
     for i in mean_data_list[1:]:
-        merged_mean_data["mean_X"] = np.append(merged_mean_data["mean_X"], i["mean_X"], axis=0)
+        merged_mean_data["X"] = np.append(merged_mean_data["X"], i["X"], axis=0)
         merged_mean_data["mean_C"] = np.append(merged_mean_data["mean_C"], i["mean_C"], axis=0)
         merged_mean_data["std_C"] = np.append(merged_mean_data["std_C"], i["std_C"], axis=0)
         merged_mean_data["dX"] = np.append(merged_mean_data["dX"], i["dX"], axis=0)
@@ -530,7 +530,7 @@ def format_plot(fig, ax, used_C, used_device):
     return ax
 
 
-def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1, legend="automatic", save_plot="off"):
+def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", save_plot="off"):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
     X, dX, C = Sup.extract_from_dict(data, used_C)
@@ -543,17 +543,17 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1, legend=
     legend_entries = []
 
     ct=0
-    if len(py_nrs) == 1:
-        k = py_nrs[0]
-        ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[0])
+    # if len(py_nrs) == 1:
+    #     k = py_nrs[0]
+    #     ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=Def.default_cm[0])
+    #     Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+    #     # print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
+    # else:
+    for k in py_nrs:
+        ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=Def.default_cm[ct], alpha=a)
         Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
-        # print(f"scan {scan_nrs[0]} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
-    else:
-        for k in py_nrs:
-            ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
-            Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
-            # print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
-            ct += 1
+        # print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
+        ct += 1
 
     ax = format_plot(fig, ax, used_C, used_device)
     #plt.rcParams['figure.dpi'] = 600
@@ -567,45 +567,44 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1, legend=
     return ax
 
 
-def plot_add_stat_diameter(data, scan_nrs, diameter="dg", colors=Def.tum_cm):
+def plot_add_stat_diameter(data, scan_nrs, diameter="dg"):
     py_nrs = Sup.py_logic_converter(scan_nrs)
     for k in py_nrs:
         plt.axvline(data["results"][diameter][k])
     return
 
 
-def plot_meandata(mean_data, scan_nrs, colors=Def.fhg_cm, a=1):
+def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="automatic", save_plot="off"):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
+    py_nrs = Sup.py_logic_converter(scan_nrs)
     # add a mean of n in a corner of the plot
-    used_C = "mean_C"
-    mean_X = mean_data["mean_X"]
+    used_C = used_C
+    mean_X = mean_data["X"]
     mean_dX = mean_data["dX"]
-    mean_C = mean_data["mean_C"]
-    std_C = mean_data["std_C"]
-    mean_conc_n = mean_data["mean_conc"]
-    std_conc_n = mean_data["std_conc"]
-    mean_dg = mean_data["mean_dg"]
-    std_dg = mean_data["std_dg"]
+    mean_C = mean_data[used_C]
+    std_C = mean_data[used_C.replace("mean", "std")]
+
     used_device = mean_data["used_device"]
-    plot_nrs = Sup.py_logic_converter(scan_nrs)
+
     fig, ax = plt.subplots()  # height with title 12, without 10
     legend_entries = []
-    for k in plot_nrs:
-        ax.bar(mean_X[k, :], mean_C[k, :], width=mean_dX[k, :], edgecolor='black') #yerr=std_C[k, :]
-        user_input = input(f"Please enter the legend entry for scan {k+1}")
-        legend_entries.append(user_input)
-        # legend_entries.append(user_input + " (" + str("{:.2f}".format(float(mean_dg[k]))) + u"\u00B1" +
-        #    str("{:.2f}".format(float(std_dg[k]))) + " nm)")
-        # legend_entries.append(user_input) # scan_nrs is used here on purpose
-    # [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
-    #        "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
+    ct=0
+    for k in py_nrs:
+        ax.bar(mean_X[k, :], mean_C[k, :], width=mean_dX[k, :], edgecolor='black', color=Def.default_cm[ct], yerr=std_C[k, :],
+               alpha=a)
+
+        Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+        ct += 1
+
+        # [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
+        #        "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
     format_plot(fig, ax, used_C, used_device)
 
-    # maybe add savefig, but then filename must be entered differently as mean data can consist of different input files
-
     plt.legend(legend_entries)  # , loc='upper left')
+
+    Sup.save_plot(mean_data, save_plot)
     plt.show()
     return ax
 
@@ -848,7 +847,7 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
     return data
 
 
-def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", colors=Def.tum_cm, a=1, legend="automatic", save_plot="off"):
+def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", save_plot="off"):
     """plots the fit data, only plot one dataset at a time"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
     X = data["X"]
@@ -868,20 +867,20 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", colors=Def.tum_cm, a=1, leg
     if len(py_nrs) == 1:
         # plot the distribution and the fit
         k = py_nrs[0]
-        ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[0])
+        ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=Def.default_cm[0])
         plt.plot(X[k, :], C_fit[k, :], color='black') #, lw=3, label='multimodal fit')
         Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)  # work on build legend!
 
         #plot the modes one by one
         for i in range(int(modality[k])):
             plt.scatter(X[k, :], C_modes[k, i, :], color='black', marker=markers[i])
-                     # lw=3, ls=":", label=f"distribution {k + 1}", color=colors[ct])
+                     # lw=3, ls=":", label=f"distribution {k + 1}", color=Def.default_cm[ct])
             legend_entries.append(f"Mode {i+1}")
 
     else:
         for k in py_nrs:
             # plot the distribution
-            ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=colors[ct], alpha=a)
+            ax.bar(X[k, :], C[k, :], width=dX[k, :], edgecolor='black', color=Def.default_cm[ct], alpha=a)
             plt.scatter(X[k, :], C_fit[k, :], color='black', marker=markers[k])  # , lw=3, label='multimodal fit')
             #add the legend
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
