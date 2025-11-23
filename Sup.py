@@ -208,7 +208,10 @@ def build_legend(legend_entries, scan_nrs, ct, legend="automatic"):
 
 def save_plot(data, save_plot="off", fileaddition=""):
     if save_plot=="on":
-        #data_identifier = Sup.get_variable_name(data)
+        if len(fileaddition) > 0:
+            fileaddition = fileaddition
+        else:
+            fileaddition = input("Please enter a fileaddition")
         path = data["filename"][:-4] + "_" + fileaddition + ".png"
         # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
         plt.savefig(path, dpi=600, transparent=True, bbox_inches='tight')

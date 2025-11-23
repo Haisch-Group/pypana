@@ -76,7 +76,7 @@ tum_cm = (tum_cls["blue"], tum_cls["very-light-blue"], tum_cls["orange"], tum_cl
 kevin_cls = {"add 1": (157/256, 81/256, 140/256, 1), "add 2": (181/256, 89/256, 89/256, 1),
              "add 3": (194/256, 164/256, 17/256, 1), "add 4": (81/256, 128/256, 74/256,1)}
 kevin_cm = (tum_cls["blue"], kevin_cls["add 1"], kevin_cls["add 2"], tum_cls["orange"], kevin_cls["add 3"],
-          tum_cls["green"], tum_cls["add 4"], tum_cls["ivory"])
+          tum_cls["green"], kevin_cls["add 4"], tum_cls["ivory"])
 fhg_cls = {"black": (0, 0, 0, 1), "fhg-green": (23/256, 156/256, 125/256, 1), "steel-blue": (0/256, 91/256, 127/256, 1),
               "silver-grey": (166/256, 187/256, 200/256, 1), "orange": (245/256, 130/256, 32/256, 1),
               "graphit": (28/256, 63/256, 82/256, 1), "sand": (211/256, 199/256, 174/256, 1),
