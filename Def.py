@@ -73,7 +73,7 @@ tum_cls = {"black": (0, 0, 0, 1), "blue": (0, 101/256, 189/256, 1), "grey-80": (
               "green": (162/256, 173/256, 0, 1)}  # in RGBA red green blue alpha
 tum_cm = (tum_cls["blue"], tum_cls["very-light-blue"], tum_cls["orange"], tum_cls["green"], tum_cls["grey-50"],
           tum_cls["very-dark-blue"], tum_cls["light-blue"], tum_cls["ivory"])
-kevin_cls = {"add 1": (157/256, 81/256, 140/256, 1), "add 2": (181/256, 89/256, 89/256, 1),
+kevin_cls = {"add 1": (157/256, 81/256, 140/256, 1), "add 2": (183/256, 63/256, 63/256, 1),
              "add 3": (194/256, 164/256, 17/256, 1), "add 4": (81/256, 128/256, 74/256,1)}
 kevin_cm = (tum_cls["blue"], kevin_cls["add 1"], kevin_cls["add 2"], tum_cls["orange"], kevin_cls["add 3"],
           tum_cls["green"], kevin_cls["add 4"], tum_cls["ivory"])
