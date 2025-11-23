@@ -203,8 +203,8 @@ def import_data(filename, used_device):
         const_dlogX = 1/np.rint(nr_bins/np.log10(add_info["Upper Size / nm"] / add_info["Lower Size / nm"]))
         for k in range(nr_bins):
             X[i, k] = x_axis[k]
-            Xl[i, k] = (2*X[i, k])/(np.pow(10,const_dlogX[i])+1)
-            Xu[i, k] = (2*X[i, k])/(1/np.pow(10,const_dlogX[i])+1)
+            Xl[i, k] = (2*X[i, k])/(np.power(10,const_dlogX[i])+1)
+            Xu[i, k] = (2*X[i, k])/(1/np.power(10,const_dlogX[i])+1)
 
         # Method 5: calculating dlogX from resolution in channels per decade (can be automized from number of bins / by
         # log length of axis) ;similar to Method 3 but then rounded to actual even number (gives 64). Then calculating

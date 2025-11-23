@@ -148,8 +148,8 @@ def import_data(filename):
 
         for k in range(nr_bins):
             X[i, k] = x_axis [k]
-            Xl[i, k] = (2 * X[i, k]) / (np.pow(10, const_dlogX) + 1)
-            Xu[i, k] = (2 * X[i, k]) / (1 / np.pow(10, const_dlogX) + 1)
+            Xl[i, k] = (2 * X[i, k]) / (np.power(10, const_dlogX) + 1)
+            Xu[i, k] = (2 * X[i, k]) / (1 / np.power(10, const_dlogX) + 1)
 
     # end of the x-array generation
 

@@ -567,6 +567,13 @@ def plot_singledata(data, scan_nrs, used_C="Cn", colors=Def.tum_cm, a=1, legend=
     return ax
 
 
+def plot_add_stat_diameter(data, scan_nrs, diameter="dg", colors=Def.tum_cm):
+    py_nrs = Sup.py_logic_converter(scan_nrs)
+    for k in py_nrs:
+        plt.axvline(data["results"][diameter][k])
+    return
+
+
 def plot_meandata(mean_data, scan_nrs, colors=Def.fhg_cm, a=1):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
@@ -614,7 +621,7 @@ def lognormal_function(X_row, A, mu, sigma):
     standard deviation - from Aerosol-Measurement p. 42"""
     #return A / (np.log(sigma) * np.sqrt(2 * math.pi)) * np.exp(-((np.log(X_row / mu)) ** 2) / (2 * np.log(sigma) ** 2))
     # gives same result -> as log10 is used everywhere, also used here
-    return A / (np.log10(sigma) * np.sqrt(2 * math.pi)) * np.pow(10,(-((np.log10(X_row / mu)) ** 2) /
+    return A / (np.log10(sigma) * np.sqrt(2 * math.pi)) * np.power(10,(-((np.log10(X_row / mu)) ** 2) /
                                                                      (2 * np.log10(sigma) ** 2)))
 
 def find_peaks_in_data(
