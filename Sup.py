@@ -150,7 +150,7 @@ def decide_C_unit(used_C):
 def decide_y_label(used_C):
     C_unit = Sup.decide_C_unit(used_C)
     if "dlogX" in used_C:
-        y_label = 'dN/dlogD$_{p}$/ ' + C_unit
+        y_label = 'dN/dlogD$_{p}$ / ' + C_unit
     elif "cum" in used_C:
         y_label = 'Fraction of Total Particle Concentration %'
     elif "Cv" in used_C:
