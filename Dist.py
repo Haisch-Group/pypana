@@ -95,7 +95,7 @@ def cut_dist_data(X_row, C_row, C_dlogX_row, lowerbound, upperbound):  # merge w
     return cut_C_row, cut_C_dlogX_row, cut_conc_row
 
 
-def cut_dist(data, lowerbound, upperbound, scan_nrs, used_C="Cn"):
+def cut_dist(data, scan_nrs, lowerbound, upperbound, used_C="Cn"):
     X, dX, C = Sup.extract_from_dict(data, used_C)
     C_dlogX = data[f"{used_C}_dlogX"]
     py_nrs = Sup.py_logic_converter(scan_nrs)

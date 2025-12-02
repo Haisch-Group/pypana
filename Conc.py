@@ -117,7 +117,7 @@ def cut_time_data(C_row, el_time_row, start, end):
     return cut_C, cut_el_time
 
 
-def cut_time(data, start, end, scan_nrs, used_C="Cn"):
+def cut_time(data, scan_nrs, start, end, used_C="Cn"):
     py_nrs = Sup.py_logic_converter(scan_nrs)
     if "cut_el_time" in data:
         pass
