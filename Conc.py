@@ -151,8 +151,8 @@ def get_meanconc(data, used_C="Cn"):
     return data
 
 
-def typical_calculations(data):
-    get_meanconc(data, "Cn")
+def typical_calculations(data, used_C="Cn"):
+    get_meanconc(data, used_C)
     return data
 
 
