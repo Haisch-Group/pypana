@@ -1,6 +1,6 @@
 Particle_analysis.py
 =====
-***Dokumentation***
+***Documentation***
 
 **Authors:** 
 *Kevin Maier (kevin.r.maier@tum.de) and Nico Chrisam (nico.chrisam@tum.de)*
@@ -582,6 +582,7 @@ def plot_singledata(data, scan_nrs):
 
 #@home
 
+jupyter notebook --notebook-dir=Y:/PhD/AaaThesis/Data_Eval
 jupyter notebook --notebook-dir=C:/UniStuff/Code/Python/py_particleanalysis
 jupyter notebook --notebook-dir=Y:/PhD/Code/Py_particleanalysis
 jupyter notebook --notebook-dir=Z:/Projects/AeroCal/Measurements/

@@ -160,13 +160,14 @@ def format_plot(fig, ax):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(16 * cm, 10 * cm) # height with title 12, without 10
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    ax.ticklabel_format(style='sci', scilimits=(0, 0), axis='y', useMathText=True)
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     fig.tight_layout()
     return ax
 
 
-def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legend="automatic",
+def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legend="automatic", legend_loc="upper right",
                     save_plot="off"):
     """plots scan data"""
     py_nr = Sup.py_logic_converter(scan_nrs)
@@ -181,11 +182,20 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legen
     ct = 0
     if len(py_nr) == 1:
         k = py_nr[0]
-        ax.scatter(el_time[k, :], C[k, :], edgecolor='black', color=Def.default_cm[0])
+        ax.scatter(el_time[k, :],
+                   C[k, :],
+                   edgecolor='black',
+                   linewidth=0.5,
+                   color=Def.default_cm[0])
         Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
     else:
         for k in py_nr:
-            ax.scatter(el_time[k, :], C[k, :], edgecolor='black', color=Def.default_cm[ct], alpha=a)
+            ax.scatter(el_time[k, :],
+                       C[k, :],
+                       edgecolor='black',
+                       linewidth=0.5,
+                       color=Def.default_cm[ct],
+                       alpha=a)
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             ct+=1
 
@@ -194,7 +204,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legen
     ax.set(xlabel='Elapsed Time / s',
            ylabel=u'Particle Number Concentration / 1/cm\u00B3')
 
-    plt.legend(legend_entries)  # , loc='upper left')
+    plt.legend(legend_entries, loc=legend_loc, frameon=False)
 
     Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
 
@@ -225,8 +235,15 @@ def plot_mean_timeline(data, start_time, end_time, used_C="mean_Cn", save_plot="
     end_idx = np.where(time >= end_time)[-1][-1]
 
     fig, ax = plt.subplots()  # height with title 12, without 10
-    ax.scatter(time[start_idx:end_idx], mean_C[start_idx:end_idx], edgecolor='black', color=Def.default_cm[0])
-    ax.errorbar(time[start_idx:end_idx], mean_C[start_idx:end_idx], yerr=std_C[start_idx:end_idx], fmt="o")
+    ax.scatter(time[start_idx:end_idx],
+               mean_C[start_idx:end_idx],
+               edgecolor='black',
+               linewidth=0.5,
+               color=Def.default_cm[0])
+    ax.errorbar(time[start_idx:end_idx],
+                mean_C[start_idx:end_idx],
+                yerr=std_C[start_idx:end_idx],
+                fmt="o")
 
     ax = format_plot(fig, ax)
 
@@ -255,11 +272,21 @@ def plot_calc_conc_n(data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off"):
     ct=0
     if len(py_nrs) == 1:
         k = py_nrs[0]
-        ax.scatter(scan_nrs[0], calc_C[k], edgecolor="black", color=Def.default_cm[0], alpha=a)
+        ax.scatter(scan_nrs[0],
+                   calc_C[k],
+                   edgecolor="black",
+                   linewidth=0.5,
+                   color=Def.default_cm[0],
+                   alpha=a)
         # print(f"scan {k} conc. = " + "{:e}".format(float(calc_C[k])) + " P/cm" + u"\u00B3")
     else:
         for k in range(len(py_nrs)):
-            ax.scatter(scan_nrs[k], calc_C[py_nrs[k]], edgecolor="black", color=Def.default_cm[0], alpha=a)
+            ax.scatter(scan_nrs[k],
+                       calc_C[py_nrs[k]],
+                       edgecolor="black",
+                       linewidth=0.5,
+                       color=Def.default_cm[0],
+                       alpha=a)
             # print(f"scan {k} conc. = " + "{:e}".format(float(calc_C[k])) + " P/cm" + u"\u00B3")
             ct += 1
 
