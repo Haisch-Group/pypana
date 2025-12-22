@@ -65,26 +65,79 @@ TSI_standard_conditions = {'T / K': 294.26, 'Pressure / kPa': 101.3}  # values g
 # 21.11°C and 101.3 kPa
 
 std_cm = cmp["tab10"].colors
-tum_cls = {"black": (0, 0, 0, 1), "blue": (0, 101/256, 189/256, 1), "grey-80": (0, 0, 0, 0.8),
-              "grey-50": (0, 0, 0, 0.5), "grey-20": (0, 0, 0, 0.2),
-              "darker-blue": (0, 82/256, 147/256, 1), "very-dark-blue": (0, 51/256, 89/256, 1),
-              "very-light-blue": (152/256, 198/256, 234/256, 1), "light-blue": (100/256, 160/256, 200/256, 1),
-              "ivory": (218/256, 215/256, 203/256, 1), "orange": (227/256, 114/256, 34/256, 1),
-              "green": (162/256, 173/256, 0, 1)}  # in RGBA red green blue alpha
-tum_cm = (tum_cls["blue"], tum_cls["very-light-blue"], tum_cls["orange"], tum_cls["green"], tum_cls["grey-50"],
-          tum_cls["very-dark-blue"], tum_cls["light-blue"], tum_cls["ivory"])
-kevin_cls = {"add 1": (157/256, 81/256, 140/256, 1), "add 2": (183/256, 63/256, 63/256, 1),
-             "add 3": (194/256, 164/256, 17/256, 1), "add 4": (81/256, 128/256, 74/256,1)}
-kevin_cm = (tum_cls["blue"], kevin_cls["add 1"], kevin_cls["add 2"], tum_cls["orange"], kevin_cls["add 3"],
-          tum_cls["green"], kevin_cls["add 4"], tum_cls["ivory"])
-fhg_cls = {"black": (0, 0, 0, 1), "fhg-green": (23/256, 156/256, 125/256, 1), "steel-blue": (0/256, 91/256, 127/256, 1),
-              "silver-grey": (166/256, 187/256, 200/256, 1), "orange": (245/256, 130/256, 32/256, 1),
-              "graphit": (28/256, 63/256, 82/256, 1), "sand": (211/256, 199/256, 174/256, 1),
-              "petrol": (0/256, 133/256, 152/256, 1), "aqua": (57/256, 193/256, 205/256, 1),
-              "lime": (178/256, 210/256, 53/256, 1), "gelb": (253/256, 185/256, 19/256, 1),
-              "rot": (187/256, 0/256, 86/256, 1), "weinrot": (124/256, 21/256, 77/256, 1)}  # in RGBA red green blue alpha
-fhg_cm = (fhg_cls["fhg-green"], fhg_cls["steel-blue"], fhg_cls["orange"], fhg_cls["silver-grey"], fhg_cls["weinrot"],
-          fhg_cls["petrol"], fhg_cls["aqua"], fhg_cls["lime"])
+
+tum_corp_cls = {"black": (0, 0, 0, 1),
+           "blue": (0, 101/256, 189/256, 1),
+           "grey-80": (0, 0, 0, 0.8),
+           "grey-50": (0, 0, 0, 0.5),
+           "grey-20": (0, 0, 0, 0.2),
+           "darker-blue": (0, 82/256, 147/256, 1),
+           "very-dark-blue": (0, 51/256, 89/256, 1),
+           "very-light-blue": (152/256, 198/256, 234/256, 1),
+           "light-blue": (100/256, 160/256, 200/256, 1),
+           "ivory": (218/256, 215/256, 203/256, 1),
+           "orange": (227/256, 114/256, 34/256, 1),
+           "green": (162/256, 173/256, 0, 1)
+           }  # in RGBA red green blue alpha
+
+tum_plot_cls = {"purple": (105/256, 8/256, 90/256, 1),
+                "dark blue": (15/256, 27/256, 95/256, 1),
+                "light blue": (0, 119/256, 138/256, 1),
+                "green": (0, 124/256, 48/256, 1),
+                "grass green": (103/256, 154/256, 29/256, 1),
+                "yellow": (255/256, 220/256, 0, 1),
+                "dark yellow": (249/256, 186/256, 0/256, 1),
+                "orange": (214/256, 76/256, 19/256, 1),
+                "red": (196/256, 7/256, 27/256, 1),
+                "dark red": (156/256, 13/256, 22/256, 1)
+                }
+
+tum_cm = (tum_corp_cls["blue"],
+          tum_corp_cls["very-light-blue"],
+          tum_corp_cls["orange"],
+          tum_corp_cls["green"],
+          tum_corp_cls["grey-50"],
+          tum_corp_cls["very-dark-blue"],
+          tum_corp_cls["light-blue"],
+          tum_corp_cls["ivory"])
+
+kevin_cls = {"add 1": (157/256, 81/256, 140/256, 1),
+             "add 2": (183/256, 63/256, 63/256, 1),
+             "add 3": (194/256, 164/256, 17/256, 1),
+             "add 4": (81/256, 128/256, 74/256,1)}
+
+kevin_cm = (tum_corp_cls["blue"],
+            kevin_cls["add 1"],
+            kevin_cls["add 2"],
+            tum_corp_cls["orange"],
+            kevin_cls["add 3"],
+            tum_corp_cls["green"],
+            kevin_cls["add 4"],
+            tum_corp_cls["ivory"])
+
+fhg_cls = {"black": (0, 0, 0, 1),
+           "fhg-green": (23/256, 156/256, 125/256, 1),
+           "steel-blue": (0/256, 91/256, 127/256, 1),
+           "silver-grey": (166/256, 187/256, 200/256, 1),
+           "orange": (245/256, 130/256, 32/256, 1),
+           "graphit": (28/256, 63/256, 82/256, 1),
+           "sand": (211/256, 199/256, 174/256, 1),
+           "petrol": (0/256, 133/256, 152/256, 1),
+           "aqua": (57/256, 193/256, 205/256, 1),
+           "lime": (178/256, 210/256, 53/256, 1),
+           "gelb": (253/256, 185/256, 19/256, 1),
+           "rot": (187/256, 0/256, 86/256, 1),
+           "weinrot": (124/256, 21/256, 77/256, 1)
+           }  # in RGBA red green blue alpha
+
+fhg_cm = (fhg_cls["fhg-green"],
+          fhg_cls["steel-blue"],
+          fhg_cls["orange"],
+          fhg_cls["silver-grey"],
+          fhg_cls["weinrot"],
+          fhg_cls["petrol"],
+          fhg_cls["aqua"],
+          fhg_cls["lime"])
 
 default_cm = kevin_cm
 
