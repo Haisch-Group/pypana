@@ -27,7 +27,7 @@ from Sup import convert_mbar_to_kPa
 from Def import device_list
 
 
-def import_data(filename):
+def import_data(filename, data_choice=""):
     """takes the raw data and extracts the variables from it to return:
     X  = array with all the X values = particle size
     Xl = array with all the lower borders of the size bins (named Xu in the PALAS SMPS file)
@@ -73,8 +73,17 @@ def import_data(filename):
     Xu = np.full_like(X, np.nan) # necessary as within one file, the measuring range can be changed easily on the PALAS
     Cn = np.full_like(X, np.nan) # SMPS leading to differently sized data width
 
-    conc_data = input("Which of the available concentration data do you want to import? Type 3 for raw, 4 for "
-                           "inverted, 5 for inverted and diffusion corrected")
+    option_list = ["3", "4", "5"]
+    if data_choice in option_list:
+        conc_data = data_choice
+    else:
+        conc_data = input("Which of the available concentration data do you want to import? Type 3 for raw, 4 for "
+                  "inverted, 5 for inverted and diffusion corrected")
+
+    while conc_data not in option_list:
+        print(f"{conc_data} is not a viable option, please enter again.")
+        conc_data = input("Which of the available concentration data do you want to import? Type 3 for raw, 4 for "
+                          "inverted, 5 for inverted and diffusion corrected")
 
     if conc_data == "3":
         print("Raw data is imported")
@@ -82,10 +91,6 @@ def import_data(filename):
         print("Inverted data is imported")
     elif conc_data == "5":
         print("Inverted diffusion corrected data is imported")
-    else:
-        print(f"{conc_data} is not a viable option, please enter again.")
-        input("Which of the available concentration data do you want to import? Type 3 for raw, 4 for "
-              "inverted, 5 for inverted and diffusion corrected")
 
     for i in range(nr_scans):  # filling the arrays with the values from the data list of lists
         for k in range(2, data_len[int(0 + i * 6)]):  # lower bin boundary values contained in each second line in the
@@ -161,9 +166,9 @@ def import_data(filename):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict(used_device, filename):
+def import_data_dict(used_device, filename, data_choice=""):
     # filename = get_filename()
-    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
+    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, data_choice=data_choice)
     data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
                  "used_device": used_device, "add_info": add_info}
     return data_dict

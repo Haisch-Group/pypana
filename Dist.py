@@ -121,7 +121,7 @@ def cut_dist(data, scan_nrs, lowerbound, upperbound, used_C="Cn"):
     return data
 
 
-def merge_data(sel_data_list, used_C="Cn"):
+def merge_data(sel_data_list, used_C="Cn", path="manual"):
     """merges dictionaries of data, should best be used with selected data dicts"""
     merged_data_X = []  # create lists to fill with list of 1D arrays
     merged_data_dX =[]
@@ -172,15 +172,14 @@ def merge_data(sel_data_list, used_C="Cn"):
     merged_data[used_C] = merged_array_C
     merged_data[f"{used_C}_dlogX"] = merged_array_C_dlogX
     merged_data["used_device"] = sel_data_list[0]["used_device"]  # use info from first data set
-    merged_data["filename"] = input("Please enter a Path this data should be associated with. - "
-                                    "Used for naming figures")
+    merged_data["filename"] = Sup.add_path(path)
     merged_add_info.insert(loc=1, column="Origin", value=origin)
     merged_data["add_info"] = merged_add_info
     merged_data["results"] = merged_results
     return merged_data
 
 
-def select_multiple_data(list_of_tuples, used_C="Cn"):
+def select_multiple_data(list_of_tuples, used_C="Cn", path="manual"):
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)
     can only easily select data from one day for comparison
@@ -188,7 +187,7 @@ def select_multiple_data(list_of_tuples, used_C="Cn"):
     sel_data_list = []
     for tuple in list_of_tuples:
         sel_data_list.append(select_data(tuple[0], tuple[1]))
-    sel_merged_data = merge_data(sel_data_list, used_C=used_C)
+    sel_merged_data = merge_data(sel_data_list, used_C=used_C, path=path)
     return sel_merged_data
 
 

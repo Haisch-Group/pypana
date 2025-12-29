@@ -108,7 +108,7 @@ def import_single_data(filename):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data(filenames):
+def import_data(filenames, data_choice=""):
     scan_nr = []
     counter = 1
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_single_data(filenames[0])
@@ -128,7 +128,7 @@ def import_data(filenames):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict(used_device, filename): # here list of filenames is required -> get_filenames
+def import_data_dict(used_device, filename, data_choice=""): # here list of filenames is required -> get_filenames
     # filenames = get_filenames()
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
     data_dict = {}

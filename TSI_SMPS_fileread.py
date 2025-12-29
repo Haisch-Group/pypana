@@ -97,7 +97,7 @@ def def_used_smps(used_device):
     return parameter_list, header_pos, time_format
 
 
-def import_data(filename, used_device):
+def import_data(filename, used_device, data_choice=""):
     """import smps data from txt file with name filename to pd dataframe, also includes time, some settings and some
     statistical values calculated by the TSI program
     then extract the actual measuring data from the dataframe and give X, dX, Cn and time
@@ -228,21 +228,25 @@ def import_data(filename, used_device):
     # calculate dlogX from upper and lower boundary
     dlogX = np.log10(Xu/Xl)
 
-    conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/dlogDp, "
-                      "1 for Cn")
+    option_list = ["0", "1"]
+    if data_choice in option_list:
+        conc_data = data_choice
+    else:
+        conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
+                          ", 1 for Cn")
 
+    while conc_data not in option_list:
+        print(f"{conc_data} is not a viable option, please enter again.")
+        conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
+                          ", 1 for Cn")
     if conc_data == "0":
         Cn_dlogX = conc
-        Cn = Cn_dlogX*dlogX
+        Cn = Cn_dlogX * dlogX
         print("Data imported from dCn/dlogDp")
     elif conc_data == "1":
         Cn = conc
-        Cn_dlogX = Cn/dlogX
+        Cn_dlogX = Cn / dlogX
         print("Data imported from dCn")
-    else:
-        print(f"{conc_data} is not a viable option, please enter again.")
-        conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
-                          ",1 for Cn")
 
     # calculating time list from dates and times given in measurement file
     time = []
@@ -258,9 +262,9 @@ def import_data(filename, used_device):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict(used_device, filename):
+def import_data_dict(used_device, filename, data_choice=""):
     # filename = get_filename()
-    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device)
+    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device, data_choice=data_choice)
     data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
                  "used_device": used_device, "add_info": add_info}
     return data_dict

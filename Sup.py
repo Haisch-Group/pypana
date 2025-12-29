@@ -182,6 +182,15 @@ def decide_filename_function(used_device):
     return filename
 
 
+def add_path(path):
+    if path == "manual":
+        path = input("Please enter a Path this data should be associated with. - "
+                                        "Used for naming figures")
+    else:
+        path = path
+    return path
+
+
 def pack_to_dict_df(data, variables):
     """function to pack variables into a dict and the contained dataframe - maybe use if X and so on are packed to df"""
     data

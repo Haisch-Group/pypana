@@ -80,6 +80,15 @@ tum_corp_cls = {"black": (0, 0, 0, 1),
            "green": (162/256, 173/256, 0, 1)
            }  # in RGBA red green blue alpha
 
+tum_corp_cm = (tum_corp_cls["blue"],
+          tum_corp_cls["very-light-blue"],
+          tum_corp_cls["orange"],
+          tum_corp_cls["green"],
+          tum_corp_cls["grey-50"],
+          tum_corp_cls["very-dark-blue"],
+          tum_corp_cls["light-blue"],
+          tum_corp_cls["ivory"])
+
 tum_plot_cls = {"purple": (105/256, 8/256, 90/256, 1),
                 "dark blue": (15/256, 27/256, 95/256, 1),
                 "light blue": (0, 119/256, 138/256, 1),
@@ -92,14 +101,16 @@ tum_plot_cls = {"purple": (105/256, 8/256, 90/256, 1),
                 "dark red": (156/256, 13/256, 22/256, 1)
                 }
 
-tum_cm = (tum_corp_cls["blue"],
-          tum_corp_cls["very-light-blue"],
-          tum_corp_cls["orange"],
-          tum_corp_cls["green"],
-          tum_corp_cls["grey-50"],
-          tum_corp_cls["very-dark-blue"],
-          tum_corp_cls["light-blue"],
-          tum_corp_cls["ivory"])
+tum_plot_cm = (tum_plot_cls["purple"],
+               tum_plot_cls["dark blue"],
+               tum_plot_cls["light blue"],
+               tum_plot_cls["green"],
+               tum_plot_cls["grass green"],
+               tum_plot_cls["yellow"],
+               tum_plot_cls["dark yellow"],
+               tum_plot_cls["orange"],
+               tum_plot_cls["red"],
+               tum_plot_cls["dark red"])
 
 kevin_cls = {"add 1": (157/256, 81/256, 140/256, 1),
              "add 2": (183/256, 63/256, 63/256, 1),

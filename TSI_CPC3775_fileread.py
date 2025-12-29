@@ -28,7 +28,7 @@ def rename_columns(df):
     return df
 
 
-def import_data(filename):
+def import_data(filename, data_choice=""):
     """import cpc data from txt file with name filename to pd dataframe, also includes time, some settings and some
     statistical values calculated by the TSI program
     then extract the actual measuring data from the dataframe and give Cn, el_time, start_time
@@ -90,7 +90,7 @@ def import_data(filename):
     return Cn, el_time, add_info
 
 
-def import_data_dict(used_device, filename):
+def import_data_dict(used_device, filename, data_choice=""):
     # filename = get_filename()
     Cn, el_time, add_info = import_data(filename)
     data_dict = {"Cn": Cn, "el_time": el_time, "filename": filename, "used_device": used_device, "add_info": add_info}

@@ -42,18 +42,18 @@ import TSI_LAS3340A_fileread
 import TSI_SMPS_fileread
 
 
-def get_data(method="prompt" ,used_device="", filename=""):
+def get_data(method="prompt" ,used_device="", filename="", data_choice=""):
     if method == "fixed":
         used_device = Sup.check_device(used_device)
         fr = __import__(Def.device_list["Import_Script"][used_device])
-        data = fr.import_data_dict(used_device=used_device, filename=filename)
+        data = fr.import_data_dict(used_device=used_device, filename=filename, data_choice=data_choice)
     else:
         print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
         used_device = int(input("Which instrument do you want to import data from? Enter as int."))
         used_device = Sup.check_device(used_device)
         fr = __import__(Def.device_list["Import_Script"][used_device])
         filename = Sup.decide_filename_function(used_device)
-        data = fr.import_data_dict(used_device, filename)
+        data = fr.import_data_dict(used_device, filename, data_choice=data_choice)
 
     # data["add_info"].dropna(axis=1, how="all", inplace=True)
     data["results"] = data["add_info"][["Scan Nr", "Time", "Comment"]].copy()

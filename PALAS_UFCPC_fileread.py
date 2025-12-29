@@ -127,7 +127,7 @@ def import_data(filename):
     return Cn, el_time, add_info
 
 
-def import_data_dict(used_device, filename):
+def import_data_dict(used_device, filename, data_choice=""):
     # filename = get_filename()
     Cn, el_time, add_info = import_data(filename)
     data_dict = {"Cn": Cn, "el_time": el_time, "filename": filename, "used_device": used_device, "add_info":add_info}

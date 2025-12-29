@@ -29,7 +29,7 @@ def voltage_to_conc(voltage, flowrate_ccs, n_charges=1):
     return conc
 
 
-def import_data(filename):
+def import_data(filename, data_choice=""):
     """"""
     data = np.genfromtxt(filename, delimiter='\t', skip_header=1)
     # load data into numpy array delimited by tab
@@ -116,7 +116,7 @@ def import_data(filename):
     return Cn, el_time, add_info
 
 
-def import_data_dict(used_device, filename):
+def import_data_dict(used_device, filename, data_choice=""):
     # filename = get_filename()
     Cn, el_time, add_info = import_data(filename)
     data_dict = {"Cn": Cn, "el_time": el_time, "filename": filename, "used_device": used_device, "add_info": add_info}
