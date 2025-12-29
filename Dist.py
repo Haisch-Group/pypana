@@ -412,12 +412,12 @@ def mean_of_n(data, nr_mean, used_C="Cn"):
     return mean_data
 
 
-def merge_mean_data(mean_data_list, used_C="Cn"):
+def merge_mean_data(mean_data_list, used_C="Cn", path="manual"):
     """merges dictionaries of data, should best be used with mean data dicts"""
     mean_C = f"mean_{used_C}"
     std_C = f"std_{used_C}"
     std_C_dlogX = f"{std_C}_dlogX"
-    merged_mean_data = merge_data(mean_data_list, mean_C)
+    merged_mean_data = merge_data(mean_data_list, mean_C, path=path)
     merged_mean_data[std_C] = mean_data_list[0][std_C].copy()
     merged_mean_data[std_C_dlogX] = mean_data_list[0][std_C_dlogX].copy()
     for i in mean_data_list[1:]:
