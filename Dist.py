@@ -87,7 +87,7 @@ def cut_dist_data(X_row, dX_row, dlogX_row, C_row, C_dlogX_row, lowerbound, uppe
     cut_C_dlogX_row = np.full_like(C_dlogX_row, np.nan)
     cut_X_row[start_idx:end_idx] = X_row[start_idx:end_idx]
     cut_dX_row[start_idx:end_idx] = dX_row[start_idx:end_idx]
-    cut_dlogX_row[start_idx:end_idx] = dX_row[start_idx:end_idx]
+    cut_dlogX_row[start_idx:end_idx] = dlogX_row[start_idx:end_idx]
     cut_C_row[start_idx:end_idx] = C_row[start_idx:end_idx]
     cut_C_dlogX_row[start_idx:end_idx] = C_dlogX_row[start_idx:end_idx]
     cut_conc_row = np.nansum(cut_C_row)
@@ -624,7 +624,7 @@ def lognormal_function(X_row, A, mu, sigma):
 def find_peaks_in_data(
         X_row,
         C_row,
-        height=1,  # -> minimum height in scipy.signal.find_peaks
+        height=0.01,  # -> minimum height in scipy.signal.find_peaks
         width=1,  # -> minimum width in scipy.signal.find_peaks
         # threshold = could be added here which describes the difference in height between neighboring peaks
         distance=5):  # horizontal distance between neighboring peaks
@@ -643,7 +643,7 @@ def find_peaks_in_data(
                     right_ips,
                 modality = int: number of detected peaks)
     """
-    C_peaks, properties = find_peaks(C_row, height=np.nansum(C_row)/100, width=width, distance=distance)  # also provides properties
+    C_peaks, properties = find_peaks(C_row, height=np.nansum(C_row)*height, width=width, distance=distance)  # also provides properties
     print(f"properties: {properties}")
     modality = len(C_peaks)
     X_peaks = X_row[C_peaks]
@@ -661,8 +661,8 @@ def generate_initial_guesses_from_data(X_peaks, properties): # horizontal distan
     initial_guess = []
     for k in range(len(X_peaks)):
         mu = X_peaks[k]  # Use x value at peak position -> actually close to dg
-        A = properties["prominences"][k]  # not really height, but starting estimate
-        sigma = properties["widths"][k]  # with in n bins i guess - translates badly in sigma
+        A = properties["prominences"][k]  # height in dlogX distribution
+        sigma = 1.5 # before properties["widths"][k] but that is in number of bins and leads to bad initial guesses
         initial_guess.extend([A, mu, sigma])
     # print(f' initial_guess: {initial_guess}')
     # print(f'modality: {modality}')
@@ -678,7 +678,9 @@ def create_bounds(initial_guess, modality, allowed_deviation=0.1):
         lowerbounds.append(1)  # sigma_min
         upperbounds.append(np.inf) # A_max
         upperbounds.append(initial_guess[3*i+1]*(1+allowed_deviation)) # mu_max
-        upperbounds.append(np.inf) # sigma_max
+        upperbounds.append(5) # sigma_max # when initial guess is bad, sigma > upperbound sigma -> error x0 infeasible
+        # as setting sigma via vidth from find_peaks it is determined by number of bins and not the actual sigma
+        # that happens a lot, so in generatr_initial_guess sigma is now set to 1.5 and here to 5 as max value
     # print(f'lower bounds {lowerbounds}')
     # print(f'upper bounds {upperbounds}')
     bounds = (lowerbounds, upperbounds)
@@ -747,7 +749,7 @@ def multimodal_fit(X_row, C_row, fit_function="lognormal_function", initial_gues
         initial_guess = generate_initial_guesses_from_data(X_peaks, properties)
     else:
         initial_guess=initial_guess
-        modality=len(initial_guess)/3
+        modality=int(len(initial_guess)/3)
     if boundaries =="automatic":
         b = create_bounds(initial_guess, modality, allowed_deviation=0.1)
     else:
