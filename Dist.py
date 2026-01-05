@@ -831,7 +831,6 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
             modality=0
             modes=C[k]
             mode_descriptors = {"calc_conc": [0], "dg": [0], "GSD": [np.inf]}
-            data["results"].loc[k, "modality"] = modality
             data[f"fit_{used_C}"][k] = C[k]
         else:
             modality, fit_params_vars, C_fit = (
@@ -845,8 +844,14 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
                                                     modality,
                                                     fit_params_vars,
                                                     fit_function="lognormal_function")
-            data["results"].loc[k, "modality"] = modality
             data[f"fit_{used_C}"][k] = C_fit
+        data["results"].loc[k, "modality"] = modality
+
+        conc_list = []
+        for i in range(modality):
+            conc_list.append(np.nansum(modes[i] * dlogX[k]))
+
+        data["results"].loc[k, f"calc_conc_fit_{used_C_no_dlogX}"] = sum(conc_list)
 
         # maximum number of modes should be 10, more are not transferred to results
         if modality > 10:
@@ -856,12 +861,12 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
 
         for i in range(maxmodality):
             data[f"fit_{used_C}_modes"][k][i] = modes[i]
-            data["results"].loc[k, f"dg {i + 1}"] = mode_descriptors["dg"][i]
-            data["results"].loc[k, f"GSD {i + 1}"] = mode_descriptors["GSD"][i]
-            data["results"].loc[k, f"calc_conc_{used_C_no_dlogX} {i + 1}"] = mode_descriptors["calc_conc"][i]
+            data["results"].loc[k, f"dg fit {i + 1}"] = mode_descriptors["dg"][i]
+            data["results"].loc[k, f"GSD fit {i + 1}"] = mode_descriptors["GSD"][i]
+            data["results"].loc[k, f"calc_conc_fit_{used_C_no_dlogX} {i + 1}"] = mode_descriptors["calc_conc"][i]
 
-        data[f"fit_{used_C}_modes"] = data[f"fit_{used_C}_modes"].reshape(data["Cn"].shape[0]*10, data["Cn"].shape[1])
-        # reshape to get 2D array which can be saved to xlsx and viewd in workspace
+    data[f"fit_{used_C}_modes"] = data[f"fit_{used_C}_modes"].reshape(C.shape[0]*10, C.shape[1])
+    # reshape to get 2D array which can be saved to xlsx and viewd in workspace
 
     return data
 
