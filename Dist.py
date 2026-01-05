@@ -817,11 +817,13 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
 
     # create arrays to place data in if not already there
     if f"fit_{used_C}" in data:
+        data[f"fit_{used_C}_modes"] = data[f"fit_{used_C}_modes"].reshape(C.shape[0], 10, C.shape[1])
         pass
     else:
         data[f"fit_{used_C}"] = np.full_like(data[used_C], np.nan)
-        data[f"fit_{used_C}_modes"] = np.full((data["Cn"].shape[0], 10, data["Cn"].shape[1]),np.nan)
+        data[f"fit_{used_C}_modes"] = np.full((C.shape[0], 10, C.shape[1]),np.nan)
         # creates array that is 3D with manymany NaNs - plot function needs removal of all completely nan rows in iterator
+        # saving to excel requires 2D array -> conversion below
 
     # fill arrays and store values in results
     for k in py_nrs:
@@ -858,6 +860,9 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
             data["results"].loc[k, f"GSD {i + 1}"] = mode_descriptors["GSD"][i]
             data["results"].loc[k, f"calc_conc_{used_C_no_dlogX} {i + 1}"] = mode_descriptors["calc_conc"][i]
 
+        data[f"fit_{used_C}_modes"] = data[f"fit_{used_C}_modes"].reshape(data["Cn"].shape[0]*10, data["Cn"].shape[1])
+        # reshape to get 2D array which can be saved to xlsx and viewd in workspace
+
     return data
 
 
@@ -868,7 +873,7 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", le
     dX = data["dX"]
     C = data[used_C]
     C_fit = data["fit_"+used_C]
-    C_modes = data["fit_"+used_C+"_modes"]
+    C_modes = data["fit_"+used_C+"_modes"].reshape(C.shape[0], 10, C.shape[1]) # reshape from 2D to 3D
     modality = data["results"]["modality"]
     used_device = data["used_device"]
     markers = [".", "x", "o", "v", "^", "s", "8",
