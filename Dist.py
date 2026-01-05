@@ -74,47 +74,48 @@ def get_conc(C):
     return calc_conc
 
 
-def cut_dist_data(X_row, C_row, C_dlogX_row, lowerbound, upperbound):  # merge with select_data
+def cut_dist_data(X_row, dX_row, dlogX_row, C_row, C_dlogX_row, lowerbound, upperbound):  # merge with select_data
     """to cut a part of the spectrum - this formerly created an array smaller than the original array
     -> changed to now produce an array of same size for easier handling afterwards be just changing all values outside
     of cut area to np.nan"""
-    # is only done here for entire arry but woudld need to be done row by row, right? !maybe not -> check
     start_idx = np.where(X_row >= lowerbound)[0][0]
     end_idx = np.where(X_row <= upperbound)[-1][-1] + 1
-    # cut_X_row = np.full_like(X_row, np.nan)  # actually this would not be needed, just the C-array as nans should be enough
-    # cut_dX_row = np.full_like(dX_row, np.nan)
-    # cut_dlogX_row = np.full_like(dlogX_row, np.nan)
+    cut_X_row = np.full_like(X_row, np.nan)  # actually this would not be needed, just the C-array as nans should be enough
+    cut_dX_row = np.full_like(dX_row, np.nan)
+    cut_dlogX_row = np.full_like(dlogX_row, np.nan)
     cut_C_row = np.full_like(C_row, np.nan)
     cut_C_dlogX_row = np.full_like(C_dlogX_row, np.nan)
-    # cut_X_row[start_idx:end_idx] = X_row[start_idx:end_idx]
-    # cut_dX_row[start_idx:end_idx] = dX_row[start_idx:end_idx]
-    # cut_dlogX_row[start_idx:end_idx] = dX_row[start_idx:end_idx]
+    cut_X_row[start_idx:end_idx] = X_row[start_idx:end_idx]
+    cut_dX_row[start_idx:end_idx] = dX_row[start_idx:end_idx]
+    cut_dlogX_row[start_idx:end_idx] = dX_row[start_idx:end_idx]
     cut_C_row[start_idx:end_idx] = C_row[start_idx:end_idx]
     cut_C_dlogX_row[start_idx:end_idx] = C_dlogX_row[start_idx:end_idx]
     cut_conc_row = np.nansum(cut_C_row)
-    return cut_C_row, cut_C_dlogX_row, cut_conc_row
+    return cut_X_row, cut_dX_row, cut_dlogX_row, cut_C_row, cut_C_dlogX_row, cut_conc_row
 
 
 def cut_dist(data, scan_nrs, lowerbound, upperbound, used_C="Cn"):
     X, dX, C = Sup.extract_from_dict(data, used_C)
+    dlogX = data["dlogX"]
     C_dlogX = data[f"{used_C}_dlogX"]
     py_nrs = Sup.py_logic_converter(scan_nrs)
-    # if "cut_X" in data:
-    #     pass
-    # else:
-    #     data["cut_X"] = np.full_like(data["X"], np.nan)
-    #     data["cut_dX"] = np.full_like(data["X"], np.nan)
-    #     data["cut_dlogX"] = np.full_like(data["X"], np.nan)
+    if "cut_X" in data:
+        pass
+    else:
+        data["cut_X"] = np.full_like(data["X"], np.nan)
+        data["cut_dX"] = np.full_like(data["X"], np.nan)
+        data["cut_dlogX"] = np.full_like(data["X"], np.nan)
     if f"cut_{used_C}" in data:
         pass
     else:
         data[f"cut_{used_C}"] = np.full_like(data[used_C], np.nan)
         data[f"cut_{used_C}_dlogX"] = np.full_like(data[used_C], np.nan)
     for k in py_nrs:
-        cut_C_row, cut_C_dlogX_row, cut_conc_row = (cut_dist_data(X[k], C[k], C_dlogX[k], lowerbound, upperbound))
-        # data["cut_X"][k] = cut_X_row
-        # data["cut_dX"][k] = cut_dX_row
-        # data["cut_dlogX"][k] = cut_dlogX
+        cut_X_row, cut_dX_row, cut_dlogX_row, cut_C_row, cut_C_dlogX_row, cut_conc_row = \
+            cut_dist_data(X[k], dX[k], dlogX[k], C[k], C_dlogX[k], lowerbound, upperbound)
+        data["cut_X"][k] = cut_X_row
+        data["cut_dX"][k] = cut_dX_row
+        data["cut_dlogX"][k] = cut_dlogX_row
         data[f"cut_{used_C}"][k] = cut_C_row
         data[f"cut_{used_C}_dlogX"][k] = cut_C_dlogX_row
         data["results"].loc[k, f"cut_conc_{used_C}"] = cut_conc_row # dropped a SettingWithCopyWarning so using .loc now
@@ -800,10 +801,17 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
              initial_guess = "automatic", boundaries = "automatic"):
     """wrapper for the above functions - use with C_dlogX !"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
-    X, _, C = Sup.extract_from_dict(data, used_C)
-    dlogX = data["dlogX"]
+    C = data[used_C]
+    if "cut" in used_C:
+        X = data["cut_X"]
+        dlogX = data["cut_dlogX"]
+    else:
+        X = data["X"]
+        dlogX = data["dlogX"]
 
     used_C_no_dlogX = used_C.replace("_dlogX", "")
+    # if C_dlogX was used (which is standard), the concentration has to be calculated from the non dlogX C -> see below
+    # if no "_dlogX" in used_C, nothing changes and conc is still correctly calculated
 
     # create arrays to place data in if not already there
     if f"fit_{used_C}" in data:
