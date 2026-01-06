@@ -907,7 +907,8 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", le
             plt.scatter(X[k, :],
                         C_modes[k, i, :],
                         color='black',
-                        marker=markers[i])
+                        marker=markers[i],
+                        s=5)
                      # lw=3, ls=":", label=f"distribution {k + 1}", color=Def.default_cm[ct])
             legend_entries.append(f"Mode {i+1}")
 
@@ -922,7 +923,8 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", le
                    alpha=a)
             plt.scatter(X[k, :], C_fit[k, :],
                         color='black',
-                        marker=markers[k])  # , lw=3, label='multimodal fit')
+                        marker=markers[k],
+                        s=5)  # , lw=3, label='multimodal fit')
             #add the legend
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             ct += 1
