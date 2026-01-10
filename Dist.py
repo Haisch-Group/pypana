@@ -483,41 +483,25 @@ def mean_and_std(data):
     return mean, std
 
 
-def format_plot(fig, ax, used_C, used_device):
+def format_plot(fig, ax, used_C, used_device, size_range="standard"):
     cm = 1 / 2.54  # inches to cm
     fig.set_size_inches(16 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.ticklabel_format(style='sci', scilimits=(0, 0), axis='y', useMathText=True)
+    size_unit = Sup.decide_size_unit(used_device)
+    x_label = ("Particle Diameter / "+size_unit)
+    size_range = Sup.decide_size_range(used_device, size_range)
     y_label = Sup.decide_y_label(used_C)
-    if used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m'")["Device_Identifier"].values):
-        # for micrometer instruments TSI APS, PALAS WELAS
-        ax.set(xscale='log',
-               xticks=[0.5, 1, 2, 5, 10], xticklabels=[0.5, 1, 2, 5, 10],
-               xlabel=u'Particle Diameter / \xb5m',
-               ylabel=y_label)
-    elif used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m in nm'")["Device_Identifier"].values):
-        # for micrometer instruments with nm x-axis
-        ax.set(xscale='log',
-               xticks=[100, 500, 1000, 2000, 5000, 10000], xticklabels=[0.1, 0.5, 1, 2, 5, 10],
-               xlabel=u'Particle Diameter / \xb5m',
-               ylabel=y_label)
-    elif used_device in list(Def.device_list.query("Size_Plot_Range=='nm'")["Device_Identifier"].values):
-        # for nanometer instruments SMPS
-        ax.set(xscale='log',
-               xticks=[10, 20, 50, 100, 200, 400, 800], xticklabels=[10, 20, 50, 100, 200, 400, 800],
-               xlabel='Particle Diameter / nm',
-               ylabel=y_label)
-    else:
-        x_label = input("Please enter the desired x-label as string.")
-        y_label = input("Please enter the desired y-label as string.")
-        ax.set(xlabel=x_label, ylabel=y_label)
+    ax.set(xscale='log', xlabel=x_label, ylabel=y_label, xticks=size_range[0], xticklabels=size_range[1])
+    if size_range not in ["standard", ""]:
+        ax.set_xlim(left=min(size_range[0]), right=max(size_range[0])) # why is this chanigng my plots even if condition is met?
     # yscale='log', xscale='log', xlabel='$\mathregular{dlog D_p}$ / nm', ylabel='dN / $\mathregular{P/cm^3}$'
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
     fig.subplots_adjust(top=0.95)  # 0.8 when title is active, when not 0.95 looks good also change figsize!
     return ax
 
 
-def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", legend_loc="upper right", save_plot="off"):
+def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard"):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
     X, dX, C = Sup.extract_from_dict(data, used_C)
@@ -547,7 +531,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", legend
         # print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
         ct += 1
 
-    ax = format_plot(fig, ax, used_C, used_device)
+    ax = format_plot(fig, ax, used_C, used_device, size_range)
     #plt.rcParams['figure.dpi'] = 600
     #plt.rcParams['savefig.dpi'] = 600
 
@@ -559,14 +543,14 @@ def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", legend
     return ax
 
 
-def plot_add_stat_diameter(data, scan_nrs, diameter="dg"):
+def plot_add_stat_diameter(data, scan_nrs, diameter="dg"): # does not work in jupyter as it is not interactively plotting
     py_nrs = Sup.py_logic_converter(scan_nrs)
     for k in py_nrs:
         plt.axvline(data["results"][diameter][k])
     return
 
 
-def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off"):
+def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard"):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
@@ -598,7 +582,7 @@ def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="auto
         # [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
         #        "{:e}".format(float(std_conc_n[k])) + " P/cm" + u"\u00B3") for k in plot_nrs]
 
-    format_plot(fig, ax, used_C, used_device)
+    format_plot(fig, ax, used_C, used_device, size_range=size_range)
 
     plt.legend(legend_entries, loc=legend_loc, frameon=False)
 
@@ -871,7 +855,7 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
     return data
 
 
-def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off"):
+def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard"):
     """plots the fit data, only plot one dataset at a time"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
     X = data["X"]
@@ -932,7 +916,7 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", le
 
     plt.xscale("log")
 
-    ax = format_plot(fig, ax, used_C, used_device)
+    ax = format_plot(fig, ax, used_C, used_device, size_range=size_range)
 
     plt.legend(legend_entries, loc=legend_loc , frameon=False)
     Sup.save_plot(data, save_plot)

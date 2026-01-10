@@ -164,10 +164,23 @@ def decide_y_label(used_C):
 
 def decide_size_unit(used_device):
     if used_device in list(Def.device_list["Device_Identifier"].values):
-        size_unit = Def.device_list["Device_Identifier"]["Size_Unit"]
+        size_unit = Def.device_list["Size_Unit"][used_device]
     else:
-        size_unit = input("Please enter the given x-size_unit as string.")
+        size_unit = input("Please enter the size_unit as string.")
     return size_unit
+
+
+def decide_size_range(used_device, size_range="standard"):
+    if size_range in ["standard", ""]:
+        if used_device in list(Def.device_list["Device_Identifier"].values):
+            size_range = Def.device_list["Standard_Size_Range (xticks, xticklabels)"][used_device]
+        else:
+            size_range = input("Please enter the size range as tuple of two lists: ([xticks], [xticklabels]).")
+    elif type(size_range) is tuple:
+        pass
+    else:
+        size_range = input("Please enter the size range as tuple of two lists: ([xticks], [xticklabels]).")
+    return size_range
 
 
 def decide_filename_function(used_device):
