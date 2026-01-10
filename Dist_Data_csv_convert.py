@@ -24,7 +24,7 @@ data = Particle_analysis.get_data()
 X, dX, dlogX, Cn, add_info, filename, used_device = data["X"], data["dX"], data["dlogX"], data["Cn"], data["add_info"],\
     data["filename"], data["used_device"]
 
-x_unit = Sup.decide_x_unit(used_device)
+size_unit = Sup.decide_size_unit(used_device)
 
 with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='iso-8859-1', newline="") as f:
     writer = csv.writer(f)
@@ -36,13 +36,13 @@ with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='iso-8859-1', ne
 
     for msmt in range((len(Cn))):
         scan_nr = msmt+1
-        x_row = ["Scan Nr", "X", x_unit]
+        x_row = ["Scan Nr", "X", size_unit]
         [x_row.append(i) for i in X[msmt]]
         writer.writerow(x_row)
-        dx_row= [scan_nr, "dX", x_unit]
+        dx_row= [scan_nr, "dX", size_unit]
         [dx_row.append(i) for i in dX[msmt]]
         writer.writerow(dx_row)
-        dlogx_row = [comment, "dlogX", x_unit]
+        dlogx_row = [comment, "dlogX", size_unit]
         [dlogx_row.append(i) for i in dlogX[msmt]]
         writer.writerow(dlogx_row)
         Cn_row = [f"{add_info[comment][msmt]}", "Conc.", "1" + u"/cm\u00B3"]

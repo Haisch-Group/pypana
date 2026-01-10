@@ -12,19 +12,31 @@ import pandas as pd
 from matplotlib import colormaps as cmp
 
 device_list = pd.DataFrame([
-    [0, "SMPS 3071", "TSI", "Number Distribution", "Electrodynamic", "nm", "TSI_SMPS_fileread"],
-    [1, "SMPS 3938", "TSI", "Number Distribution", "Electrodynamic", "nm", "TSI_SMPS_fileread"],
-    [2, "U-SMPS", "PALAS", "Number Distribution", "Electrodynamic", "nm", "PALAS_USMPS_fileread"],
-    [3, "APS 3321", "TSI", "Number Distribution", "Aerodynamic", u"\xb5m", "TSI_APS3321_fileread"],
-    [4, "WELAS", "PALAS", "Number Distribution", "Optical", u"\xb5m", "PALAS_WELAS_fileread"],
-    [5, "LAS 3340A", "TSI", "Number Distribution", "Optical", u"\xb5m in nm", "TSI_LAS3340A_fileread"],
-    [6, "CPC 3775", "TSI", "Number Concentration", "Condensation", u"\xb5m", "TSI_CPC3775_fileread"],
-    [7, "UF-CPC", "PALAS", "Number Concentration", "Condensation", u"\xb5m", "PALAS_UFCPC_fileread"],
-    [8, "ELPI+", "DEKATI", "Number Distribution", "Aerodynamic", u"\xb5m", "DEKATI_ELPIplus_fileread"],
-    [9, "APS 3310", "TSI", "Number Concentration", "Aerodynamic", u"\xb5m", "TSI_APS3310_fileread"],
-    [10, "EM 3068", "TSI", "Number Concentration", "Electrical Charge", "nm", "TSI_EM3068_fileread"]
-], columns=["Device_Identifier", "Device", "Manufacturer", "Accquired_Data", "Working_Principle", "Size_Plot_Range",
-            "Import_Script"])
+    [0, "SMPS 3071",
+     "TSI", "Number Distribution", "Electrodynamic", "nm", "TSI_SMPS_fileread", ([10, 20, 50, 100, 200, 400, 800], [10, 20, 50, 100, 200, 400, 800])],
+    [1, "SMPS 3938",
+     "TSI", "Number Distribution", "Electrodynamic", "nm", "TSI_SMPS_fileread", ([10, 20, 50, 100, 200, 400, 800], [10, 20, 50, 100, 200, 400, 800])],
+    [2, "U-SMPS",
+     "PALAS", "Number Distribution", "Electrodynamic", "nm", "PALAS_USMPS_fileread", ([10, 20, 50, 100, 200, 400, 800], [10, 20, 50, 100, 200, 400, 800])],
+    [3, "APS 3321",
+     "TSI", "Number Distribution", "Aerodynamic", u"\xb5m", "TSI_APS3321_fileread", ([0.5, 1, 2, 5, 10],[0.5, 1, 2, 5, 10])],
+    [4, "WELAS",
+     "PALAS", "Number Distribution", "Optical", u"\xb5m", "PALAS_WELAS_fileread", ([0.5, 1, 2, 5, 10],[0.5, 1, 2, 5, 10])],
+    [5, "LAS 3340A",
+     "TSI", "Number Distribution", "Optical", u"nm", "TSI_LAS3340A_fileread", ([100, 500, 1000, 2000, 5000, 10000], [0.1, 0.5, 1, 2, 5, 10])],
+    [6, "CPC 3775",
+     "TSI", "Number Concentration", "Condensation", "nm", "TSI_CPC3775_fileread", ""],
+    [7, "UF-CPC",
+     "PALAS", "Number Concentration", "Condensation", u"nm", "PALAS_UFCPC_fileread", ""],
+    [8, "ELPI+",
+     "DEKATI", "Number Distribution", "Aerodynamic", u"\xb5m", "DEKATI_ELPIplus_fileread", ([0.5, 1, 2, 5, 10],[0.5, 1, 2, 5, 10])],
+    [9, "APS 3310",
+     "TSI", "Number Concentration", "Aerodynamic", u"\xb5m", "TSI_APS3310_fileread", ([0.5, 1, 2, 5, 10],[0.5, 1, 2, 5, 10])],
+    [10, "EM 3068",
+     "TSI", "Number Concentration", "Electrical Charge", "nm", "TSI_EM3068_fileread", ""]
+    ],
+    columns=["Device_Identifier", "Device", "Manufacturer", "Accquired_Data", "Working_Principle", "Size_Unit",
+            "Import_Script", "Standard_Size_Range (xticks, xticklabels)"])
 
 all_parameters = [['Absolute Pressure / mbar', 'Actual Differential Pressure / Pa', 'Aerodynamic Diameter',
                    'Aerosol Flow / L/min', 'Analog Input Voltage 0', 'Analog Input Voltage 1',

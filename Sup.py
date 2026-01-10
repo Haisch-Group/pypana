@@ -162,16 +162,12 @@ def decide_y_label(used_C):
     return y_label
 
 
-def decide_x_unit(used_device):
-    if used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m'")["Device_Identifier"].values):
-        x_unit = u'\xb5m'
-    elif used_device in list(Def.device_list.query("Size_Plot_Range==u'\xb5m in nm'")["Device_Identifier"].values):
-        x_unit = 'nm'
-    elif used_device in list(Def.device_list.query("Size_Plot_Range=='nm'")["Device_Identifier"].values):
-        x_unit = 'nm'
+def decide_size_unit(used_device):
+    if used_device in list(Def.device_list["Device_Identifier"].values):
+        size_unit = Def.device_list["Device_Identifier"]["Size_Unit"]
     else:
-        x_unit = input("Please enter the given x-x_unit as string.")
-    return x_unit
+        size_unit = input("Please enter the given x-size_unit as string.")
+    return size_unit
 
 
 def decide_filename_function(used_device):
