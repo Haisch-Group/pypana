@@ -167,7 +167,7 @@ def format_plot(fig, ax):
 
 
 def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legend="automatic", legend_loc="upper right",
-                    save_plot="off"):
+                    save_plot="off", color_map=Def.default_cm):
     """plots scan data"""
     py_nr = Sup.py_logic_converter(scan_nrs)
     C = data[used_C]
@@ -185,7 +185,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legen
                    C[k, :],
                    edgecolor='black',
                    linewidth=0.5,
-                   color=Def.default_cm[0])
+                   color=color_map[0])
         Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
     else:
         for k in py_nr:
@@ -193,7 +193,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legen
                        C[k, :],
                        edgecolor='black',
                        linewidth=0.5,
-                       color=Def.default_cm[ct],
+                       color=color_map[ct],
                        alpha=a)
             Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             ct+=1
@@ -211,7 +211,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legen
     return ax
 
 
-def plot_mean_timeline(data, start_time, end_time, used_C="mean_Cn", save_plot="off"):
+def plot_mean_timeline(data, start_time, end_time, used_C="mean_Cn", save_plot="off", color_map=Def.default_cm):
     """plots concentration timeline with mean conc of chosen single CPC scans
     only works with more than 1 datapoints, enter time as datetime in format 'YYYY-MM-DD HH:MM:SS'"""
     # should use only samples of same length to make sense -> should be useable with cut_Cn and sel_Cn, but from cut_Cn
@@ -238,7 +238,7 @@ def plot_mean_timeline(data, start_time, end_time, used_C="mean_Cn", save_plot="
                mean_C[start_idx:end_idx],
                edgecolor='black',
                linewidth=0.5,
-               color=Def.default_cm[0])
+               color=color_map[0])
     ax.errorbar(time[start_idx:end_idx],
                 mean_C[start_idx:end_idx],
                 yerr=std_C[start_idx:end_idx],
@@ -261,7 +261,7 @@ def plot_mean_timeline(data, start_time, end_time, used_C="mean_Cn", save_plot="
     return ax
 
 
-def plot_calc_conc_n(data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off"):
+def plot_calc_conc_n(data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off", color_map=Def.default_cm):
     """ function by Nico: this is a function for distribution derived concentrations"""
 
     py_nrs = Sup.py_logic_converter(scan_nrs)
@@ -275,7 +275,7 @@ def plot_calc_conc_n(data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off"):
                    calc_C[k],
                    edgecolor="black",
                    linewidth=0.5,
-                   color=Def.default_cm[0],
+                   color=color_map[0],
                    alpha=a)
         # print(f"scan {k} conc. = " + "{:e}".format(float(calc_C[k])) + " P/cm" + u"\u00B3")
     else:
@@ -284,7 +284,7 @@ def plot_calc_conc_n(data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off"):
                        calc_C[py_nrs[k]],
                        edgecolor="black",
                        linewidth=0.5,
-                       color=Def.default_cm[0],
+                       color=color_map[0],
                        alpha=a)
             # print(f"scan {k} conc. = " + "{:e}".format(float(calc_C[k])) + " P/cm" + u"\u00B3")
             ct += 1

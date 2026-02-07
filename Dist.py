@@ -501,7 +501,7 @@ def format_plot(fig, ax, used_C, used_device, size_range="standard"):
     return ax
 
 
-def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard"):
+def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard", color_map=Def.default_cm):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
     X, dX, C = Sup.extract_from_dict(data, used_C)
@@ -525,7 +525,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", a=1, legend="automatic", legend
                width=dX[k, :],
                edgecolor='black',
                linewidth=0.5,
-               color=Def.default_cm[ct],
+               color=color_map[ct],
                alpha=a)
         Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
         # print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
@@ -550,7 +550,7 @@ def plot_add_stat_diameter(data, scan_nrs, diameter="dg"): # does not work in ju
     return
 
 
-def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard"):
+def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard", color_map=Def.default_cm):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
@@ -572,7 +572,7 @@ def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="auto
                width=mean_dX[k, :],
                edgecolor='black',
                linewidth=0.5,
-               color=Def.default_cm[ct],
+               color=color_map[ct],
                yerr=std_C[k, :],
                alpha=a)
 
@@ -855,7 +855,7 @@ def fit_data(data, scan_nrs, used_C="Cn_dlogX", fit_function="lognormal_function
     return data
 
 
-def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard"):
+def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard", color_map=Def.default_cm):
     """plots the fit data, only plot one dataset at a time"""
     py_nrs = Sup.py_logic_converter(scan_nrs)
     X = data["X"]
@@ -880,7 +880,7 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", le
                width=dX[k, :],
                edgecolor='black',
                linewidth=0.5,
-               color=Def.default_cm[0])
+               color=color_map[0])
         plt.plot(X[k, :],
                  C_fit[k, :],
                  color='black') #, lw=3, label='multimodal fit')
@@ -893,7 +893,7 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", le
                         color='black',
                         marker=markers[i],
                         s=5)
-                     # lw=3, ls=":", label=f"distribution {k + 1}", color=Def.default_cm[ct])
+                     # lw=3, ls=":", label=f"distribution {k + 1}", color=color_map[ct])
             legend_entries.append(f"Mode {i+1}")
 
     else:
@@ -903,7 +903,7 @@ def plot_fit_data(data, scan_nrs, used_C="Cn_dlogX", a=1, legend="automatic", le
                    width=dX[k, :],
                    edgecolor='black',
                    linewidth=0.5,
-                   color=Def.default_cm[ct],
+                   color=color_map[ct],
                    alpha=a)
             plt.scatter(X[k, :], C_fit[k, :],
                         color='black',
