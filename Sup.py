@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Sup.py
 
@@ -10,14 +9,16 @@ Created 2024-03-20 from get_filenames.py and other small scripts
 """
 
 
+import math
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename
-import numpy as np
-import math
-import matplotlib.pyplot as plt
 
-import Sup
+import matplotlib.pyplot as plt
+import numpy as np
+
 import Def
+import Sup
+
 
 def get_filename():
     """get one filename via UI"""
@@ -135,15 +136,15 @@ def lognormal_test(x_lower=5, x_upper=1000, x_steps=99, conc=1E5, dg=80, sigma_g
 
 def decide_C_unit(used_C):
     if used_C == "Cs":
-        C_unit = u" \u00B5m\u00B2" + u"/cm\u00B3"
+        C_unit = " \u00B5m\u00B2" + "/cm\u00B3"
     elif used_C == "Cv":
-        C_unit = u" \u00B5m\u00B3" + u"/cm\u00B3"
+        C_unit = " \u00B5m\u00B3" + "/cm\u00B3"
     elif used_C == "Cm":
-        C_unit = " mg" + u"/cm\u00B3"
+        C_unit = " mg" + "/cm\u00B3"
     elif used_C == "Cn_dlogX":
-        C_unit = " 1" + u"/cm\u00B3"
+        C_unit = " 1" + "/cm\u00B3"
     else:
-        C_unit = " 1" + u"/cm\u00B3"
+        C_unit = " 1" + "/cm\u00B3"
     return C_unit
 
 
@@ -221,7 +222,6 @@ def build_legend(legend_entries, scan_nrs, ct, legend="automatic"):
         legend_entries.append(legend[ct])
     else:
         legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-    return
 
 
 def save_plot(data, save_plot="off"):
@@ -236,7 +236,6 @@ def save_plot(data, save_plot="off"):
         # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
         plt.savefig(path, dpi=600, transparent=True, bbox_inches='tight')
         print(f"file saved to {path}")
-    return
 
 
 def norm_C(C, calc_conc):

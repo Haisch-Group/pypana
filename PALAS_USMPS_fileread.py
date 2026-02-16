@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PALAS_USMPS_fileread.py
 
@@ -17,14 +16,13 @@ Created 2020-09-14
 2024-06 to 2025-11 changed file to now work with common data structure and functions
 """
 
-import numpy as np
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 
-from Sup import get_filename
-from Sup import convert_mbar_to_kPa
 from Def import device_list
+from Sup import convert_mbar_to_kPa, get_filename
 
 
 def import_data(filename, data_choice=""):
@@ -135,7 +133,6 @@ def import_data(filename, data_choice=""):
     time = []  # defining time list
     for i in range(nr_scans):
         time.append(datetime.strptime(parametersDF["Date"][i] + " " + parametersDF["Time"][i], '%m/%d/%Y %I:%M %p'))
-        #
 
     scan_nr = []
     [scan_nr.append(k + 1) for k in range(len(Cn))]

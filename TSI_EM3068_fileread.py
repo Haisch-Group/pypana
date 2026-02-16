@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TSI_EM3068_fileread.py
 
@@ -9,14 +8,13 @@ Created 2024-08-29
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 """
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 
+from Def import device_list, elementary_charge
 from Sup import get_filename
-from Def import device_list
-from datetime import datetime
-from datetime import timedelta
-from Def import elementary_charge
 
 
 def voltage_to_conc(voltage, flowrate_ccs, n_charges=1):
@@ -75,7 +73,7 @@ def import_data(filename, data_choice=""):
                 tot_el_time.append(sub_el_time)
                 flow_list.append(sub_flow_list)
                 scan_nr.append(counter)  # also a scan number is added to the scan_nr list
-                comment_list.append((data[k, 0]))
+                comment_list.append(data[k, 0])
                 counter += 1  # the new scan number for the next measurement is set
                 sub_em_voltage = []  # the sub... lists are reset for saving the next measurements
                 sub_el_time = []

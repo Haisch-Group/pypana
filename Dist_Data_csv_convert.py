@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Dist_Data_csv_convert.py
 
@@ -15,7 +14,7 @@ Created 2022-06-20 as PALAS_SMPS2100_csv_convert.py
 
 import csv
 import os
-import pandas as pd
+
 import Particle_analysis
 import Sup
 
@@ -34,7 +33,7 @@ with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='iso-8859-1', ne
     else:
         comment = "Scan Nr"
 
-    for msmt in range((len(Cn))):
+    for msmt in range(len(Cn)):
         scan_nr = msmt+1
         x_row = ["Scan Nr", "X", size_unit]
         [x_row.append(i) for i in X[msmt]]
@@ -45,7 +44,7 @@ with open(f'{os.path.splitext(filename)[0]}.csv', 'w', encoding='iso-8859-1', ne
         dlogx_row = [comment, "dlogX", size_unit]
         [dlogx_row.append(i) for i in dlogX[msmt]]
         writer.writerow(dlogx_row)
-        Cn_row = [f"{add_info[comment][msmt]}", "Conc.", "1" + u"/cm\u00B3"]
+        Cn_row = [f"{add_info[comment][msmt]}", "Conc.", "1" + "/cm\u00B3"]
         [Cn_row.append(i) for i in Cn[msmt]]
         writer.writerow(Cn_row)
 

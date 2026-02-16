@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TSI_APS3321_fileread.py
 
@@ -11,12 +10,13 @@ Recreated on 2025-09-24 from TSI_SMPS_fileread due to changes in import of addit
 !!first data column is all particles below the given size!!
 """
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from Sup import get_filename
-from Sup import convert_kPa_to_mbar
+
 from Def import device_list
+from Sup import get_filename
 
 
 def rename_columns(df):
@@ -28,9 +28,9 @@ def rename_columns(df):
                         'Box Temperature': 'Box Temperature / °C',
                         'Avalanch Photo Diode Temperature': 'Avalanch Photo Diode Temperature / °C',
                         'Avalanch Photo Diode Voltage': 'Avalanch Photo Diode Voltage / V',
-                        u'Median(\xb5m)': u'Median / \xb5m', u'Mean(\xb5m)': u'Mean / \xb5m',
-                        u'Geo. Mean(\xb5m)': u'Geo. Mean / \xb5m', u'Mode(\xb5m)': u'Mode / \xb5m',
-                        'Total Conc.':  u'Total Conc. / 1/cm\u00B3'}
+                        'Median(\xb5m)': 'Median / \xb5m', 'Mean(\xb5m)': 'Mean / \xb5m',
+                        'Geo. Mean(\xb5m)': 'Geo. Mean / \xb5m', 'Mode(\xb5m)': 'Mode / \xb5m',
+                        'Total Conc.':  'Total Conc. / 1/cm\u00B3'}
     df.rename(columns=mapping, inplace=True)
 
     return df
@@ -47,8 +47,8 @@ def def_parameter_list():
                       'Digital Input Level 1', 'Digital Input Level 2', 'Laser Power %', 'Laser Current / mA',
                       'Sheath Pump Voltage / V', 'Total Pump Voltage / V', 'Box Temperature / °C',
                       'Avalanch Photo Diode Temperature / °C', 'Avalanch Photo Diode Voltage / V', 'Status Flags',
-                      u'Median / \xb5m', u'Mean / \xb5m', u'Geo. Mean / \xb5m', u'Mode / \xb5m', 'Geo. Std. Dev.',
-                      u'Total Conc. / 1/cm\u00B3', 'Comment']
+                      'Median / \xb5m', 'Mean / \xb5m', 'Geo. Mean / \xb5m', 'Mode / \xb5m', 'Geo. Std. Dev.',
+                      'Total Conc. / 1/cm\u00B3', 'Comment']
     # Comment just added here even though it is not in file, works because of the bug fix implemented for coping with
     # additional columns in slightly different files. :D
     header_pos = 6

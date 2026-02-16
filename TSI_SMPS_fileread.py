@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TSI_SMPS_fileread.py
 
@@ -11,12 +10,13 @@ Created 2024-05-01 as copy of script limited to older SMPS: TSI_SMPS3071_filerea
 2024-06 to 2025-11: adjusted to new data structure and to work with the TSI SMPS 3938 data acquired in AIM 10
 """
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from Sup import get_filename
-from Sup import convert_kPa_to_mbar
+
 from Def import device_list
+from Sup import convert_kPa_to_mbar, get_filename
 
 
 def rename_columns(df, used_device):
@@ -24,31 +24,31 @@ def rename_columns(df, used_device):
     if used_device == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]:
         mapping = {'Sample Temp (C)': 'Sample Temp / °C', 'Sample Pressure (kPa)': 'Sample Pressure / kPa',
                             'Relative Humidity (%)': 'Relative Humidity %', 'Mean Free Path (m)': 'Mean Free Path / m',
-                            'Gas Viscosity (Pa*s)': u'Gas Viscosity / Pa\u00B7s', 'Diameter Midpoint (nm)':
+                            'Gas Viscosity (Pa*s)': 'Gas Viscosity / Pa\u00B7s', 'Diameter Midpoint (nm)':
                             'Diameter Midpoint / nm', 'Scan Time (s)': 'Scan Time / s', 'Retrace Time (s)':
                             'Retrace Time / s', 'Scan Resolution (Hz)': 'Scan Resolution / Hz', 'Sheath Flow (L/min)':
                             'Sheath Flow / L/min', 'Aerosol Flow (L/min)': 'Aerosol Flow / L/min',
                             'Bypass Flow (L/min)': 'Bypass Flow / L/min', 'Low Voltage (V)': 'Low Voltage / V',
                             'High Voltage (V)': 'High Voltage / V', 'Lower Size (nm)': 'Lower Size / nm',
-                            'Upper Size (nm)': 'Upper Size / nm', 'Density (g/cm³)': u'Density / g/cm\u00B3',
+                            'Upper Size (nm)': 'Upper Size / nm', 'Density (g/cm³)': 'Density / g/cm\u00B3',
                             'td + 0.5 (s)': 'td + 0.5 / s', 'tf (s)': 'tf / s', 'D50 (nm)': 'D50 / nm',
                             'Neutralizer Status ': 'Neutralizer Status', 'Median (nm)': 'Median / nm', 'Mean (nm)':
                             'Mean / nm', 'Geo. Mean (nm)': 'Geo. Mean / nm', 'Mode (nm)': 'Mode / nm',
-                            'Total Conc. (#/cm³)': u'Total Conc. / 1/cm\u00B3'}
+                            'Total Conc. (#/cm³)': 'Total Conc. / 1/cm\u00B3'}
         df.rename(columns=mapping, inplace=True)
     elif used_device == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]:
         mapping = {'Sample Temp (C)': 'Sample Temp / °C', 'Sample Pressure (kPa)': 'Sample Pressure / kPa',
-                    'Mean Free Path (m)': 'Mean Free Path / m', 'Gas Viscosity (Pa*s)': u'Gas Viscosity / Pa\u00B7s',
+                    'Mean Free Path (m)': 'Mean Free Path / m', 'Gas Viscosity (Pa*s)': 'Gas Viscosity / Pa\u00B7s',
                     'Diameter Midpoint': 'Diameter Midpoint / nm', 'Scan Up Time(s)': 'Scan Time / s',
                     'Retrace Time(s)': 'Retrace Time / s', 'Impactor Type(cm)': 'Impactor Type / cm',
                     'Sheath Flow(lpm)': 'Sheath Flow / L/min', 'Aerosol Flow(lpm)': 'Aerosol Flow / L/min',
                     'CPC Inlet Flow(lpm)': 'CPC Inlet Flow / L/min', 'CPC Sample Flow(lpm)': 'CPC Sample Flow / L/min',
                     'Low Voltage': 'Low Voltage / V', 'High Voltage': 'High Voltage / V',
                     'Lower Size(nm)': 'Lower Size / nm', 'Upper Size(nm)': 'Upper Size / nm',
-                    'Density(g/cc)': u'Density / g/cm\u00B3', 'td(s)': 'td / s', 'tf(s)': 'tf / s',
+                    'Density(g/cc)': 'Density / g/cm\u00B3', 'td(s)': 'td / s', 'tf(s)': 'tf / s',
                     'D50(nm)': 'D50 / nm', 'Median(nm)': 'Median / nm', 'Mean(nm)': 'Mean / nm',
                     'Geo. Mean(nm)': 'Geo. Mean / nm', 'Mode(nm)': 'Mode / nm',
-                    'Total Conc.(#/cm³)': u'Total Conc. / 1/cm\u00B3'}
+                    'Total Conc.(#/cm³)': 'Total Conc. / 1/cm\u00B3'}
         df.rename(columns=mapping, inplace=True)
     else:
         pass
@@ -64,13 +64,13 @@ def def_used_smps(used_device):
         # compare the used_device parameter taken from particle_analysis.get_data() to the values defined in
         # Def.device_list - done this way, so device_list can be changed easily without having to rewrite everything
         parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp / °C', 'Sample Pressure / kPa',
-                            'Relative Humidity %', 'Mean Free Path / m', u'Gas Viscosity / Pa\u00B7s',
+                            'Relative Humidity %', 'Mean Free Path / m', 'Gas Viscosity / Pa\u00B7s',
                             'Diameter Midpoint / nm', 'Scan Time / s', 'Retrace Time / s', 'Scan Resolution / Hz',
                             'Scans Per Sample', 'Sheath Flow / L/min', 'Aerosol Flow / L/min', 'Bypass Flow / L/min',
                             'Low Voltage / V', 'High Voltage / V', 'Lower Size / nm', 'Upper Size / nm',
-                            u'Density / g/cm\u00B3', 'td + 0.5 / s', 'tf / s', 'D50 / nm', 'Neutralizer Status',
+                            'Density / g/cm\u00B3', 'td + 0.5 / s', 'tf / s', 'D50 / nm', 'Neutralizer Status',
                             'Median / nm', 'Mean / nm', 'Geo. Mean / nm', 'Mode / nm', 'Geo. Std. Dev.',
-                            u'Total Conc. / 1/cm\u00B3', 'Title', 'User Name', 'Sample ID', 'Instrument ID', 'Lab ID',
+                            'Total Conc. / 1/cm\u00B3', 'Title', 'User Name', 'Sample ID', 'Instrument ID', 'Lab ID',
                             'Leak Test and Leakage Rate', 'Instrument Errors', 'Comment']
         header_pos = 25
         time_format = '%m/%d/%Y %H:%M:%S'
@@ -79,13 +79,13 @@ def def_used_smps(used_device):
 
     elif used_device == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]:
         parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp / °C', 'Sample Pressure / kPa',
-                            'Relative Humidity %', 'Mean Free Path / m', u'Gas Viscosity / Pa\u00B7s',
+                            'Relative Humidity %', 'Mean Free Path / m', 'Gas Viscosity / Pa\u00B7s',
                             'Diameter Midpoint / nm', 'Scan Time / s', 'Retrace Time / s', 'Down Scan First',
                             'Scans Per Sample', 'Impactor Type / cm', 'Sheath Flow / L/min', 'Aerosol Flow / L/min',
                             'CPC Inlet Flow / L/min', 'CPC Sample Flow / L/min', 'Low Voltage / V', 'High Voltage / V',
-                            'Lower Size / nm', 'Upper Size / nm', u'Density / g/cm\u00B3', 'td / s', 'tf / s',
+                            'Lower Size / nm', 'Upper Size / nm', 'Density / g/cm\u00B3', 'td / s', 'tf / s',
                             'D50 / nm', 'Median / nm', 'Mean / nm', 'Geo. Mean / nm', 'Mode / nm', 'Geo. Std. Dev.',
-                            u'Total Conc. / 1/cm\u00B3', 'Title', 'Status Flag', 'Comment']
+                            'Total Conc. / 1/cm\u00B3', 'Title', 'Status Flag', 'Comment']
         header_pos = 17
         time_format = '%m/%d/%y %H:%M:%S'
     else:

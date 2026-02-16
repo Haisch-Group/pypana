@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Conc.py
 
@@ -13,15 +12,17 @@ Created 2022-03-24
 2024-06 to 2025-11 adapted to new data structure
 """
 
-from matplotlib import ticker
-from matplotlib import pyplot as plt
+import datetime
+
 import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
-import datetime
+from matplotlib import pyplot as plt
+from matplotlib import ticker
 
 import Def
 import Sup
+
 # import mpldatacursor  # not used atm
 
 
@@ -75,7 +76,7 @@ def merge_data(sel_data_list, used_C="Cn", path="manual"):
     merged_array_C = np.full((n_scans, x_len), np.nan)  # preallocate data arrays
     merged_array_el_time = np.full((n_scans, x_len), np.nan)
 
-    for k in range((n_scans)):  # fill arrays row wise with data from list elements
+    for k in range(n_scans):  # fill arrays row wise with data from list elements
         merged_array_C[k, 0:len(merged_data_C[k])] = merged_data_C[k]
         merged_array_el_time[k, 0:len(merged_data_el_time[k])] = merged_data_el_time[k]
 
@@ -201,7 +202,7 @@ def plot_singledata(data, scan_nrs, used_C="Cn", used_time="el_time", a=1, legen
     ax = format_plot(fig, ax)
 
     ax.set(xlabel='Elapsed Time / s',
-           ylabel=u'Particle Number Concentration / 1/cm\u00B3')
+           ylabel='Particle Number Concentration / 1/cm\u00B3')
 
     plt.legend(legend_entries, loc=legend_loc, frameon=False)
 
@@ -249,7 +250,7 @@ def plot_mean_timeline(data, start_time, end_time, used_C="mean_Cn", save_plot="
     ax.xaxis.set_tick_params(reset=True)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     ax.set(xlabel='Time / HH:MM',
-           ylabel=u'Mean Particle Number Concentration / 1/cm\u00B3')
+           ylabel='Mean Particle Number Concentration / 1/cm\u00B3')
 
     # plt.title(input("Please enter the title of the figure"), wrap=True, y=1.08)
 
@@ -291,7 +292,7 @@ def plot_calc_conc_n(data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off", col
 
     format_plot(fig, ax)
     ax.set(xlabel='Scan Nr.',
-           ylabel=u'Calculated Particle Number Concentration / 1/cm\u00B3')
+           ylabel='Calculated Particle Number Concentration / 1/cm\u00B3')
 
     Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
     plt.show()

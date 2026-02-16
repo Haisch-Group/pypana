@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TSI_CPC3775_fileread.py
 
@@ -12,18 +11,20 @@ Created 2022-03-10
 2024-06 to 2025-11 updated to work with new data structure
 """
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from Sup import get_filename
+
 from Def import device_list
+from Sup import get_filename
 
 
 def rename_columns(df):
     """rename the columns, so they follow the same schematic for all devices"""
     mapping = {"Sample Length": "Sample Length / s", "Averaging Interval (s)": "Averaging Interval / s",
-               "Conc Mean": u"Conc Mean / 1/cm\u00B3", "Conc Min": u"Conc Min / 1/cm\u00B3",
-               "Conc Max": u"Conc Max / 1/cm\u00B3", "Conc Std Dev": u"Conc Std Dev / 1/cm\u00B3"}
+               "Conc Mean": "Conc Mean / 1/cm\u00B3", "Conc Min": "Conc Min / 1/cm\u00B3",
+               "Conc Max": "Conc Max / 1/cm\u00B3", "Conc Std Dev": "Conc Std Dev / 1/cm\u00B3"}
     df.rename(columns=mapping, inplace=True)
     return df
 
@@ -43,8 +44,8 @@ def import_data(filename, data_choice=""):
     data = rename_columns(data)  # change names of the array to match the other input files schematic
 
     parameter_list = ["Sample #", "Start Date", "Start Time", "Sample Length / s", "Averaging Interval / s", "Title",
-                      "Instrument ID", "Instrument Errors", u"Conc Mean / 1/cm\u00B3", u"Conc Min / 1/cm\u00B3",
-                      u"Conc Max / 1/cm\u00B3", u"Conc Std Dev / 1/cm\u00B3"]
+                      "Instrument ID", "Instrument Errors", "Conc Mean / 1/cm\u00B3", "Conc Min / 1/cm\u00B3",
+                      "Conc Max / 1/cm\u00B3", "Conc Std Dev / 1/cm\u00B3"]
     # parameters as displayed in txt file
 
     conc = data[data.columns.difference(parameter_list, sort=False)].to_numpy()  # somehow in the file there is an empty

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PALAS_UFCPC_fileread.py
 
@@ -16,17 +15,19 @@ Works by assigning a scan number to a set of measured data points based on the c
 the data
 """
 
-import numpy as np
 from datetime import datetime
-from Sup import get_filename
+
+import numpy as np
 import pandas as pd
+
 from Def import device_list
+from Sup import get_filename
 
 
 def import_data(filename):
     """"""
-    parameter_list = ["Date", "Time", "Comment", u"1s Mean Particle Concentration / 1/cm\u00B3",
-                      u"10s Mean Particle Concentration / 1/cm\u00B3", u"Mean Droplet size / \u00B5m",
+    parameter_list = ["Date", "Time", "Comment", "1s Mean Particle Concentration / 1/cm\u00B3",
+                      "10s Mean Particle Concentration / 1/cm\u00B3", "Mean Droplet size / \u00B5m",
                       "Aerosol Flow / L/min", "Empty Field", "T Condenser / °C", "T Saturator / °C",
                       "Operating Mode DSI (0=off, 1=Humidity, 2=Differential Pressure)",
                       "Target Relative Humidity %", "Target Differential Pressure / Pa",
@@ -36,7 +37,7 @@ def import_data(filename):
     # parameters given in PALAS CPC manual 4597-de_V1.0_06/17 page 23, Operating Mode to T Aerosol Inlet only relevant
     # for ENVI CPC
 
-    nonusedcolumns = ["Date", "Time", "Comment", u"1s Mean Particle Concentration / 1/cm\u00B3", "Empty Field",
+    nonusedcolumns = ["Date", "Time", "Comment", "1s Mean Particle Concentration / 1/cm\u00B3", "Empty Field",
                       "Operating Mode DSI (0=off, 1=Humidity, 2=Differential Pressure)",
                       "Target Relative Humidity %", "Target Differential Pressure / Pa",
                       "Actual Differential Pressure / Pa",  "Relative Humidity %", "T Aerosol Inlet / °C",
@@ -83,12 +84,12 @@ def import_data(filename):
         # with data from indexlist (startindex of msmt till startindex of next msmt -1 )
         if k == msmt_counter-1:  # for last msmt, no startindex of next is available so end of file is used
             Cn[k, 0:msmt_len_list[k]] = \
-                data[u"1s Mean Particle Concentration / 1/cm\u00B3"][indexlist[k]:len_file]
+                data["1s Mean Particle Concentration / 1/cm\u00B3"][indexlist[k]:len_file]
             start_time.append(datetime.strptime(data["Date"][indexlist[k]] + " " + data["Time"][indexlist[k]],
                                                 '%m/%d/%Y %I:%M:%S %p'))
         else:
             Cn[k, 0:msmt_len_list[k]] = \
-                data[u"1s Mean Particle Concentration / 1/cm\u00B3"][indexlist[k]:indexlist[k+1]]
+                data["1s Mean Particle Concentration / 1/cm\u00B3"][indexlist[k]:indexlist[k+1]]
             start_time.append(datetime.strptime(data["Date"][indexlist[k]] + " " + data["Time"][indexlist[k]],
                                                 '%m/%d/%Y %I:%M:%S %p'))
 

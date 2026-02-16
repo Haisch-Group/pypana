@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PALAS_WELAS_fileread.py
 
@@ -8,13 +7,13 @@ Created 2025-07-20
 @written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
-import numpy as np
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 
-from Sup import get_filename
 from Def import device_list
+from Sup import get_filename
 
 
 def import_data(filename):
@@ -73,8 +72,8 @@ def import_data(filename):
             Xl[i, k-1] = data[int(0 + i * 5)][int(k)]
             X[i, k-1] = data[int(1 + i * 5)][int(k)]  #  X should be equal to Xo-(Xo-Xu)/2 or Xu+(Xo-Xu)/2
             Xu[i, k-1] = data[int(2 + i * 5)][int(k)]
-            dX[i, k-1] = data[int(int(3) + i * 5)][int(k)]
-            Cn[i, k-1] = data[int(int(4) + i * 5)][int(k)]
+            dX[i, k-1] = data[int(3 + i * 5)][int(k)]
+            Cn[i, k-1] = data[int(4 + i * 5)][int(k)]
             # k-1 in new array as field 0 in it is filled with field 1 of list as first column in data is "header2
 
     parameter_list = ["Date", "Time", "whatever", "whatever2", "accumulation", "mode"]

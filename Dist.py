@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Dist.py
 
@@ -11,17 +10,18 @@ Created 2024-03-20 by moving functions from Particle_analysis.py
 """
 
 
-from matplotlib import ticker
-from matplotlib import pyplot as plt
-import numpy as np
 import math
+
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+from matplotlib import ticker
 from scipy import optimize
 from scipy.signal import find_peaks
-import pandas as pd
 
+import Def
 import Dist
 import Sup
-import Def
 
 
 def select_data(data, scan_nrs, used_C="Cn"):
@@ -159,7 +159,7 @@ def merge_data(sel_data_list, used_C="Cn", path="manual"):
     merged_array_C = np.full((n_scans, x_len), np.nan)
     merged_array_C_dlogX = np.full((n_scans, x_len), np.nan)
 
-    for k in range((n_scans)):  # fill arrays row wise with data from list elements
+    for k in range(n_scans):  # fill arrays row wise with data from list elements
         merged_array_X[k, 0:len(merged_data_X[k])] = merged_data_X[k]
         merged_array_dX[k, 0:len(merged_data_dX[k])] = merged_data_dX[k]
         merged_array_dlogX[k, 0:len(merged_data_dlogX[k])] = merged_data_dlogX[k]
@@ -547,7 +547,6 @@ def plot_add_stat_diameter(data, scan_nrs, diameter="dg"): # does not work in ju
     py_nrs = Sup.py_logic_converter(scan_nrs)
     for k in py_nrs:
         plt.axvline(data["results"][diameter][k])
-    return
 
 
 def plot_meandata(mean_data, scan_nrs, used_C="mean_Cn_dlogX", a=1, legend="automatic", legend_loc="upper right", save_plot="off", size_range="standard", color_map=Def.default_cm):
@@ -966,12 +965,12 @@ if __name__ == "__main__":
     import Particle_analysis as pa
     # data = pa.get_data("fixed", used_device=2, filename='C:/Users/kevin.maier/PycharmProjects/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt')
     data = pa.get_data("fixed", used_device=2, filename='C:/UniStuff/Code/Python/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt')
-    Dist.typical_calculations(data);
+    Dist.typical_calculations(data)
     n_msmts = len(data["X"])
-    Dist.typical_calculations(data);
+    Dist.typical_calculations(data)
 
     for k in [1,2,3,4,5,6,10,16,29,31,35,36]:
-        Dist.fit_data(data, [k]);
+        Dist.fit_data(data, [k])
         Dist.plot_fit_data(data, [k])
 
     #print(data["results"])

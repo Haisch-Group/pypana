@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Particle_analysis.py
 
@@ -12,34 +11,18 @@ Modified 2024-03-20 to also run CPC_analysis.py which was renamed to Conc.py
 modified 2024-06 to 2025-11 to work with new data structure
 """
 
-import pandas as pd
-import numpy as np # leave in to start with console
-import math # leave in to start with console
+
 import dill
-from matplotlib import pyplot as plt
-import openpyxl
+import pandas as pd
+
 # from matplotlib import ticker
 # from scipy import optimize
-
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
-
 import Def  #definitions
-import Sup  #supporting functions
-# import Imp  #import functions
-import Dist  #distribution functions
-import Conc  #concentration functions
 
-import DEKATI_ELPIplus_fileread
-import PALAS_UFCPC_fileread
-import PALAS_USMPS_fileread
-import PALAS_WELAS_fileread
-import TSI_APS3310_fileread
-import TSI_APS3321_fileread
-import TSI_CPC3775_fileread
-import TSI_EM3068_fileread
-import TSI_LAS3340A_fileread
-import TSI_SMPS_fileread
+# import Imp  #import functions
+import Sup  #supporting functions
 
 
 def get_data(method="prompt" ,used_device="", filename="", data_choice=""):
@@ -84,20 +67,17 @@ def save_data_to_xlsx(data_dict, fileaddition="particleDF", save_arrays="all"):
             for array in save_arrays:  # choose specific keys and give them as list of strings
                 pd.DataFrame(data_dict[array]).to_excel(writer, sheet_name=array)
     print(f"wrote data to file with name {path}")
-    return
 
 
 def save_session():
     filename = Sup.set_filename()
     path = (f"{filename}" + ".dill")
     dill.dump_module(path,"__main__")
-    return
 
 
 def load_session():
     path = Sup.get_filename()
     dill.load_module(path)
-    return
 
 
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TSI_APS3310_fileread.py
 
@@ -8,13 +7,12 @@ Created 2021-10-26
 @written by Kevin Maier (kevin.r.maier@tum.de)
 """
 
-from matplotlib import ticker
-from matplotlib import pyplot as plt
-import numpy as np
-import pandas as pd
 from tkinter import Tk
-from tkinter.filedialog import askopenfilenames #plural here
-from Def import device_list
+from tkinter.filedialog import askopenfilenames  #plural here
+
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import ticker
 
 
 def import_data(filenames):
@@ -59,7 +57,7 @@ def plot_data(x_axis, mean_data, std_data):
         ax.bar(x_axis, mean_data[:, k], width=bar_width, yerr=std_data[:, k], edgecolor='black')
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set(xscale='log', xticks=[20, 50, 100, 200, 400], xticklabels=[20, 50, 100, 200, 400],
-           xlabel='$\mathregular{log D_p}$ / ${\mu m}$', ylabel='dW / $\mathregular{P/cm^3}$')
+           xlabel=r'$\mathregular{log D_p}$ / ${\mu m}$', ylabel=r'dW / $\mathregular{P/cm^3}$')
     plt.title(input("Please enter the title of the figure"), y=1.08)
     #legend_entries = []
     #for k in measurement_nr:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TSI_LAS3340A_fileread.py
 
@@ -11,23 +10,22 @@ Created 2023
 !data also has to have 99 bins as import is hardcoded atm!
 """
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from Sup import get_filename
-from Sup import get_filenames
-from Sup import convert_standard_to_volumetric_flow
-from Def import device_list
-from Def import TSI_standard_conditions
+
+from Def import TSI_standard_conditions, device_list
+from Sup import convert_standard_to_volumetric_flow, get_filenames
 
 
 def rename_columns(df):
     """rename the columns, so they follow the same schematic for all devices"""
     mapping = {'Accum.': 'Accum. / s', 'Scatter': 'Scatter / V', 'Current': 'Current / V',
-               'Sample': u'Aerosol Flow / scm\u00B3/min', 'Ref.': 'Ref. / V', 'Temp.': 'Temp. / V',
-               'Sheath': u'Sheath Flow / scm\u00B3/min', 'Diff.': 'Diff. / V', 'Box': 'Box / K', 'Purge':
-                   u'Purge / scm\u00B3/min', 'Pres.': 'Pressure / kPa', 'Aux.': 'Aux. / V',
-               'Flow': u'Flow / scm\u00B3/min'}
+               'Sample': 'Aerosol Flow / scm\u00B3/min', 'Ref.': 'Ref. / V', 'Temp.': 'Temp. / V',
+               'Sheath': 'Sheath Flow / scm\u00B3/min', 'Diff.': 'Diff. / V', 'Box': 'Box / K', 'Purge':
+                   'Purge / scm\u00B3/min', 'Pres.': 'Pressure / kPa', 'Aux.': 'Aux. / V',
+               'Flow': 'Flow / scm\u00B3/min'}
     df.rename(columns=mapping, inplace=True)
     return df
 
@@ -40,17 +38,17 @@ def import_single_data(filename):
     # rename data given in non concentration columns as stated in manual to naming scheme used in other imports
 
     parameter_list = ['Date', 'Time', 'Accum. / s', 'Scatter / V', 'Current / V',
-                      u'Aerosol Flow / Aerosol Flow / scm\u00B3/min',
-                      'Ref. / V', 'Temp. / V', u'Sheath Flow / scm\u00B3/min', 'Diff. / V', 'Box / K',
-                      u'Purge / scm\u00B3/min', 'Pressure / kPa', 'Aux. / V', u'Flow / scm\u00B3/min']
+                      'Aerosol Flow / Aerosol Flow / scm\u00B3/min',
+                      'Ref. / V', 'Temp. / V', 'Sheath Flow / scm\u00B3/min', 'Diff. / V', 'Box / K',
+                      'Purge / scm\u00B3/min', 'Pressure / kPa', 'Aux. / V', 'Flow / scm\u00B3/min']
     # parameters as given in the LASER AEROSOL SPECTROMETER MODEL 3340A Operation and service manual P/N 6012274
     # Revision C April 2019 Section B-10
 
     # Ref. is the laser reference voltage for monitoring relative laser power, should be between 1 and 2.8 V, idealy
     # between 2.2 and 2.7 V
 
-    usedcolumns = ['Accum. / s', 'Scatter / V', 'Current / V', u'Aerosol Flow / scm\u00B3/min',
-                      'Ref. / V', 'Temp. / V', u'Sheath Flow / scm\u00B3/min', 'Box / K', 'Pressure / kPa', ]
+    usedcolumns = ['Accum. / s', 'Scatter / V', 'Current / V', 'Aerosol Flow / scm\u00B3/min',
+                      'Ref. / V', 'Temp. / V', 'Sheath Flow / scm\u00B3/min', 'Box / K', 'Pressure / kPa', ]
     # columns actually used for building add_info, other columns are either datetime, conc data, or not used in the
     # TSI 3340A according to the manual
 
@@ -71,7 +69,7 @@ def import_single_data(filename):
     mid_x = (Xu + Xl)/2  # midpoint = arithmetic mean of upper and lower bin boundary
     dlog_x = np.log10(Xu/Xl)  # logarithmic bin width = log of upper- log of lower bin boundary
 
-    corr_aerosol_flow = convert_standard_to_volumetric_flow(add_info[u'Aerosol Flow / scm\u00B3/min'].astype(float),
+    corr_aerosol_flow = convert_standard_to_volumetric_flow(add_info['Aerosol Flow / scm\u00B3/min'].astype(float),
                                                             add_info['Box / K'].astype(float),
                                                             add_info['Pressure / kPa'].astype(float),
                                                             TSI_standard_conditions['T / K'],

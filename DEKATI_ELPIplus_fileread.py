@@ -19,15 +19,14 @@ To Do:
     correct data
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates
 from datetime import datetime
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename, askopenfilenames
 from math import pi
-from scipy import signal
-from Def import device_list
+from tkinter import Tk
+from tkinter.filedialog import askopenfilenames
+
+import matplotlib.dates
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def file_reader(filename):
@@ -93,7 +92,6 @@ def plot_profile(time, data, stage_min, stage_max):
     plt.legend(loc='upper right')
     # plt.title(filename)
     plt.show()
-    return
 
 
 def concentration_correction(data):
