@@ -1,7 +1,7 @@
 """
-Sup.py
+sup.py
 
-Functions for running Particle_analysis.py
+Functions for running particle_analysis.py
 
 Created 2024-03-20 from get_filenames.py and other small scripts
 @written by Kevin Maier (kevin.r.maier@tum.de)
@@ -15,8 +15,8 @@ from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilen
 import matplotlib.pyplot as plt
 import numpy as np
 
-import Def
-import Sup
+import defs
+import sup
 
 
 def get_filename():
@@ -63,13 +63,13 @@ def get_variable_name(some_variable):
 
 
 def check_device(used_device):
-    if int(used_device) in Def.device_list["Device_Identifier"]:
+    if int(used_device) in defs.device_list["Device_Identifier"]:
         used_device = int(used_device)
     else:
-        while int(used_device) not in Def.device_list["Device_Identifier"]:
+        while int(used_device) not in defs.device_list["Device_Identifier"]:
             print(f"Device {used_device} is not a viable option")
             print(
-                Def.device_list[
+                defs.device_list[
                     ["Device_Identifier", "Device", "Manufacturer"]
                 ].to_string(justify="left", index=False)
             )
@@ -166,7 +166,7 @@ def decide_C_unit(used_C):
 
 
 def decide_y_label(used_C):
-    C_unit = Sup.decide_C_unit(used_C)
+    C_unit = sup.decide_C_unit(used_C)
     if "dlogX" in used_C:
         y_label = "dN/dlogD$_{p}$ / " + C_unit
     elif "cum" in used_C:
@@ -181,8 +181,8 @@ def decide_y_label(used_C):
 
 
 def decide_size_unit(used_device):
-    if used_device in list(Def.device_list["Device_Identifier"].values):
-        size_unit = Def.device_list["Size_Unit"][used_device]
+    if used_device in list(defs.device_list["Device_Identifier"].values):
+        size_unit = defs.device_list["Size_Unit"][used_device]
     else:
         size_unit = input("Please enter the size_unit as string.")
     return size_unit
@@ -190,8 +190,8 @@ def decide_size_unit(used_device):
 
 def decide_size_range(used_device, size_range="standard"):
     if size_range in ["standard", ""]:
-        if used_device in list(Def.device_list["Device_Identifier"].values):
-            size_range = Def.device_list["Standard_Size_Range (xticks, xticklabels)"][
+        if used_device in list(defs.device_list["Device_Identifier"].values):
+            size_range = defs.device_list["Standard_Size_Range (xticks, xticklabels)"][
                 used_device
             ]
         else:
@@ -209,9 +209,9 @@ def decide_size_range(used_device, size_range="standard"):
 
 def decide_filename_function(used_device):
     if used_device == 5:
-        filename = Sup.get_filenames()
+        filename = sup.get_filenames()
     else:
-        filename = Sup.get_filename()
+        filename = sup.get_filename()
     return filename
 
 

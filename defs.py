@@ -1,7 +1,7 @@
 """
-Def.py
+defs.py
 
-Definitions for running Particle_analysis.py
+Definitions for running particle_analysis.py
 
 Created 2024-08-29
 @written by Kevin Maier (kevin.r.maier@tum.de)

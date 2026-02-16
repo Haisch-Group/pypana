@@ -1,11 +1,11 @@
 """
-Particle_analysis.py
+particle_analysis.py
 
 Script for Particle Data Evaluation
 Data has to be imported by the import function suitable for the used device
 
 Created 2023-05 from SMPS_analysis.py
-Modified 2024-03-20 to also run CPC_analysis.py which was renamed to Conc.py
+Modified 2024-03-20 to also run CPC_analysis.py which was renamed to conc.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 modified 2024-06 to 2025-11 to work with new data structure
@@ -18,31 +18,31 @@ import pandas as pd
 # from scipy import optimize
 # import scipy.integrate as integrate
 # from matplotlib import cm as colormap
-import Def  # definitions
+import defs  # definitions
 
 # import Imp  #import functions
-import Sup  # supporting functions
+import sup  # supporting functions
 
 
 def get_data(method="prompt", used_device="", filename="", data_choice=""):
     if method == "fixed":
-        used_device = Sup.check_device(used_device)
-        fr = __import__(Def.device_list["Import_Script"][used_device])
+        used_device = sup.check_device(used_device)
+        fr = __import__(defs.device_list["Import_Script"][used_device])
         data = fr.import_data_dict(
             used_device=used_device, filename=filename, data_choice=data_choice
         )
     else:
         print(
-            Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(
+            defs.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(
                 justify="left", index=False
             )
         )
         used_device = int(
             input("Which instrument do you want to import data from? Enter as int.")
         )
-        used_device = Sup.check_device(used_device)
-        fr = __import__(Def.device_list["Import_Script"][used_device])
-        filename = Sup.decide_filename_function(used_device)
+        used_device = sup.check_device(used_device)
+        fr = __import__(defs.device_list["Import_Script"][used_device])
+        filename = sup.decide_filename_function(used_device)
         data = fr.import_data_dict(used_device, filename, data_choice=data_choice)
 
     # data["add_info"].dropna(axis=1, how="all", inplace=True)
@@ -88,16 +88,16 @@ def save_data_to_xlsx(data_dict, fileaddition="particleDF", save_arrays="all"):
 
 
 def save_session():
-    filename = Sup.set_filename()
+    filename = sup.set_filename()
     path = f"{filename}" + ".dill"
     dill.dump_module(path, "__main__")
 
 
 def load_session():
-    path = Sup.get_filename()
+    path = sup.get_filename()
     dill.load_module(path)
 
 
 if __name__ == "__main__":
-    print("Particle_analysis.py started")
+    print("particle_analysis.py started")
     # data = get_data()

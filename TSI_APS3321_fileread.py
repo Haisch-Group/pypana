@@ -15,8 +15,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from Def import device_list
-from Sup import get_filename
+from defs import device_list
+from sup import get_filename
 
 
 def rename_columns(df):

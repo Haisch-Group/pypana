@@ -1,14 +1,14 @@
 """
-Conc.py
+conc.py
 
 Script for Evaluation of Concentration Data
-Run from Particle_analysis.py
+Run from particle_analysis.py
 
 Created 2022-03-24
 @written by Kevin Maier (kevin.r.maier@tum.de)
 2022-10-17: transferred to gitlab, old versioning was removed, so all referenced files ..._vX were renamed without
     version number
-2024-03-20: integrated in Particle_analysis.py
+2024-03-20: integrated in particle_analysis.py
 2024-06 to 2025-11 adapted to new data structure
 """
 
@@ -20,8 +20,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib import ticker
 
-import Def
-import Sup
+import defs
+import sup
 
 # import mpldatacursor  # not used atm
 
@@ -29,7 +29,7 @@ import Sup
 def select_data(data, scan_nrs, used_C="Cn"):
     """select specific CPC msmts from the imported raw data, scan_nrs defines, which measurements to take
     in normal non-pythonian logic (starting count at 1)"""
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     sel_C = np.full((len(py_nrs), data[used_C].shape[1]), np.nan)
     # preallocate the np array in the correct size (nr of measurements, nr of measuring data)
     sel_el_time = np.full_like(sel_C, np.nan)
@@ -113,7 +113,7 @@ def merge_data(sel_data_list, used_C="Cn", path="manual"):
     merged_data["used_device"] = sel_data_list[0][
         "used_device"
     ]  # use info from first data set
-    merged_data["filename"] = Sup.add_path(path)
+    merged_data["filename"] = sup.add_path(path)
     merged_add_info.insert(loc=1, column="Origin", value=origin)
     merged_data["add_info"] = merged_add_info
     merged_data["results"] = merged_results
@@ -209,10 +209,10 @@ def plot_singledata(
     legend="automatic",
     legend_loc="upper right",
     save_plot="off",
-    color_map=Def.default_cm,
+    color_map=defs.default_cm,
 ):
     """plots scan data"""
-    py_nr = Sup.py_logic_converter(scan_nrs)
+    py_nr = sup.py_logic_converter(scan_nrs)
     C = data[used_C]
     el_time = data[
         used_time
@@ -229,7 +229,7 @@ def plot_singledata(
         ax.scatter(
             el_time[k, :], C[k, :], edgecolor="black", linewidth=0.5, color=color_map[0]
         )
-        Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+        sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
     else:
         for k in py_nr:
             ax.scatter(
@@ -240,7 +240,7 @@ def plot_singledata(
                 color=color_map[ct],
                 alpha=a,
             )
-            Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+            sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             ct += 1
 
     ax = format_plot(fig, ax)
@@ -251,7 +251,7 @@ def plot_singledata(
 
     plt.legend(legend_entries, loc=legend_loc, frameon=False)
 
-    Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
+    sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
 
     plt.show()
     return ax
@@ -263,7 +263,7 @@ def plot_mean_timeline(
     end_time,
     used_C="mean_Cn",
     save_plot="off",
-    color_map=Def.default_cm,
+    color_map=defs.default_cm,
 ):
     """plots concentration timeline with mean conc of chosen single CPC scans
     only works with more than 1 datapoints, enter time as datetime in format 'YYYY-MM-DD HH:MM:SS'"""
@@ -315,18 +315,18 @@ def plot_mean_timeline(
 
     # mpldatacursor.datacursor(ax)
 
-    Sup.save_plot(data, save_plot)
+    sup.save_plot(data, save_plot)
 
     plt.show()
     return ax
 
 
 def plot_calc_conc_n(
-    data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off", color_map=Def.default_cm
+    data, scan_nrs, used_C="calc_Cn", a=1, save_plot="off", color_map=defs.default_cm
 ):
     """function by Nico: this is a function for distribution derived concentrations"""
 
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     calc_C = data["results"][used_C]
     fig, ax = plt.subplots()
 
@@ -361,7 +361,7 @@ def plot_calc_conc_n(
         ylabel="Calculated Particle Number Concentration / 1/cm\u00b3",
     )
 
-    Sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
+    sup.save_plot(data, save_plot)  # , fileaddition=scan_nr_fileaddition)
     plt.show()
     return ax
 

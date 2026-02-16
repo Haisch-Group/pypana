@@ -1,5 +1,5 @@
 """
-Conc_Data_csv_convert.py
+conc_data_csv_convert.py
 
 writing of Concentration data to Excel for student internship
 
@@ -11,9 +11,9 @@ Created and modified 2023-06-04 from Dist_Data_csv_convert
 import csv
 import os
 
-import Particle_analysis
+import particle_analysis
 
-data = Particle_analysis.get_data()
+data = particle_analysis.get_data()
 
 el_time, Cn, add_info, filename = (
     data["el_time"],

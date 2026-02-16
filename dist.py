@@ -1,10 +1,10 @@
 """
-Dist.py
+dist.py
 
 Script for Evaluation of Particle Size Distributions
-Run from Particle_analysis.py
+Run from particle_analysis.py
 
-Created 2024-03-20 by moving functions from Particle_analysis.py
+Created 2024-03-20 by moving functions from particle_analysis.py
 @written by Kevin Maier (kevin.r.maier@tum.de)
 2024-06 to 2025-11 adjusted to work with new data structure
 """
@@ -18,16 +18,16 @@ from matplotlib import ticker
 from scipy import optimize
 from scipy.signal import find_peaks
 
-import Def
-import Dist
-import Sup
+import defs
+import dist
+import sup
 
 
 def select_data(data, scan_nrs, used_C="Cn"):
     """select specific scans from the imported raw data to then process them, scan_nrs defines, which scans to take
     in normal non-pythonian logic (starting count at 1)
     can only easily select data from one day for comparison"""
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     sel_C = np.full((len(py_nrs), data[used_C].shape[1]), np.nan)
     # preallocate the np arrays in the correct size (nr of measurements, nr of measuring data)
     sel_X = np.full_like(
@@ -127,10 +127,10 @@ def cut_dist_data(
 
 
 def cut_dist(data, scan_nrs, lowerbound, upperbound, used_C="Cn"):
-    X, dX, C = Sup.extract_from_dict(data, used_C)
+    X, dX, C = sup.extract_from_dict(data, used_C)
     dlogX = data["dlogX"]
     C_dlogX = data[f"{used_C}_dlogX"]
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     if "cut_X" in data:
         pass
     else:
@@ -231,7 +231,7 @@ def merge_data(sel_data_list, used_C="Cn", path="manual"):
     merged_data["used_device"] = sel_data_list[0][
         "used_device"
     ]  # use info from first data set
-    merged_data["filename"] = Sup.add_path(path)
+    merged_data["filename"] = sup.add_path(path)
     merged_add_info.insert(loc=1, column="Origin", value=origin)
     merged_data["add_info"] = merged_add_info
     merged_data["results"] = merged_results
@@ -475,7 +475,7 @@ def typical_calculations(data, used_C="Cn"):
         data["results"][f"CMD_{used_C}"], data["results"][f"GSD_{used_C}"]
     )
     data[f"cum_{used_C}"] = cumulative_distribution(data[used_C])
-    data[f"norm_cum_{used_C}"] = Sup.norm_C(
+    data[f"norm_cum_{used_C}"] = sup.norm_C(
         data[f"cum_{used_C}"], data["results"][f"calc_conc_{used_C}"]
     )
     (
@@ -492,7 +492,7 @@ def mean_of_n(data, nr_mean, used_C="Cn"):
     """calculates a mean of every n consecutive measurements and also gives the standard deviation
     select the desired data in an array before, to correctly work with it, if the number of repetitions was not always n
     only works with more than 3 measurements"""
-    X, dX, C = Sup.extract_from_dict(data, used_C)
+    X, dX, C = sup.extract_from_dict(data, used_C)
     dlogX = data["dlogX"]
     C_dlogX = data[f"{used_C}_dlogX"]
     calc_conc = data["results"][f"calc_conc_{used_C}"]
@@ -666,10 +666,10 @@ def format_plot(fig, ax, used_C, used_device, size_range="standard"):
     fig.set_size_inches(16 * cm, 10 * cm)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.ticklabel_format(style="sci", scilimits=(0, 0), axis="y", useMathText=True)
-    size_unit = Sup.decide_size_unit(used_device)
+    size_unit = sup.decide_size_unit(used_device)
     x_label = "Particle Diameter / " + size_unit
-    size_range = Sup.decide_size_range(used_device, size_range)
-    y_label = Sup.decide_y_label(used_C)
+    size_range = sup.decide_size_range(used_device, size_range)
+    y_label = sup.decide_y_label(used_C)
     ax.set(
         xscale="log",
         xlabel=x_label,
@@ -698,16 +698,16 @@ def plot_singledata(
     legend_loc="upper right",
     save_plot="off",
     size_range="standard",
-    color_map=Def.default_cm,
+    color_map=defs.default_cm,
 ):
     """plots the given data, specify used_C to use "Cn", or "Cn_dlogX" measurement to use"""
-    py_nrs = Sup.py_logic_converter(scan_nrs)
-    X, dX, C = Sup.extract_from_dict(data, used_C)
+    py_nrs = sup.py_logic_converter(scan_nrs)
+    X, dX, C = sup.extract_from_dict(data, used_C)
     calc_conc = get_conc(data[used_C])
     used_device = data["used_device"]
 
     fig, ax = plt.subplots()  # height with title 12, without 10
-    C_unit = Sup.decide_C_unit(used_C)
+    C_unit = sup.decide_C_unit(used_C)
 
     legend_entries = []
 
@@ -728,7 +728,7 @@ def plot_singledata(
             color=color_map[ct],
             alpha=a,
         )
-        Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+        sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
         # print(f"scan {k+1} conc. = " + "{:e}".format(float(calc_conc[k])) + C_unit)
         ct += 1
 
@@ -738,7 +738,7 @@ def plot_singledata(
 
     plt.legend(legend_entries, loc=legend_loc, frameon=False)
 
-    Sup.save_plot(data, save_plot)
+    sup.save_plot(data, save_plot)
 
     plt.show()
     return ax
@@ -747,7 +747,7 @@ def plot_singledata(
 def plot_add_stat_diameter(
     data, scan_nrs, diameter="dg"
 ):  # does not work in jupyter as it is not interactively plotting
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     for k in py_nrs:
         plt.axvline(data["results"][diameter][k])
 
@@ -761,11 +761,11 @@ def plot_meandata(
     legend_loc="upper right",
     save_plot="off",
     size_range="standard",
-    color_map=Def.default_cm,
+    color_map=defs.default_cm,
 ):
     """plots the given data, use range(start, end), or a list to specify the measurements to use, these are the indices
     in the given Cn and C arrays"""
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     # add a mean of n in a corner of the plot
     used_C = used_C
     mean_X = mean_data["X"]
@@ -790,7 +790,7 @@ def plot_meandata(
             alpha=a,
         )
 
-        Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+        sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
         ct += 1
 
         # [print(f"measurement {k+1} conc. = " + "{:e}".format(float(mean_conc_n[k])) + u"\u00B1" +
@@ -800,7 +800,7 @@ def plot_meandata(
 
     plt.legend(legend_entries, loc=legend_loc, frameon=False)
 
-    Sup.save_plot(mean_data, save_plot)
+    sup.save_plot(mean_data, save_plot)
     plt.show()
     return ax
 
@@ -1058,7 +1058,7 @@ def fit_data(
     boundaries="automatic",
 ):
     """wrapper for the above functions - use with C_dlogX !"""
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     C = data[used_C]
     if "cut" in used_C:
         X = data["cut_X"]
@@ -1145,10 +1145,10 @@ def plot_fit_data(
     legend_loc="upper right",
     save_plot="off",
     size_range="standard",
-    color_map=Def.default_cm,
+    color_map=defs.default_cm,
 ):
     """plots the fit data, only plot one dataset at a time"""
-    py_nrs = Sup.py_logic_converter(scan_nrs)
+    py_nrs = sup.py_logic_converter(scan_nrs)
     X = data["X"]
     dX = data["dX"]
     C = data[used_C]
@@ -1176,7 +1176,7 @@ def plot_fit_data(
             color=color_map[0],
         )
         plt.plot(X[k, :], C_fit[k, :], color="black")  # , lw=3, label='multimodal fit')
-        Sup.build_legend(
+        sup.build_legend(
             legend_entries, scan_nrs, ct, legend=legend
         )  # work on build legend!
 
@@ -1204,7 +1204,7 @@ def plot_fit_data(
                 X[k, :], C_fit[k, :], color="black", marker=markers[k], s=5
             )  # , lw=3, label='multimodal fit')
             # add the legend
-            Sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
+            sup.build_legend(legend_entries, scan_nrs, ct, legend=legend)
             ct += 1
 
     plt.xscale("log")
@@ -1255,7 +1255,7 @@ def plot_fit_data(
 if __name__ == "__main__":
     """"""
 
-    import Particle_analysis as pa
+    import particle_analysis as pa
 
     # data = pa.get_data("fixed", used_device=2, filename='C:/Users/kevin.maier/PycharmProjects/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt')
     data = pa.get_data(
@@ -1263,12 +1263,12 @@ if __name__ == "__main__":
         used_device=2,
         filename="C:/UniStuff/Code/Python/py_particleanalysis/ExampleFiles/20230704_PALAS_USMPS.txt",
     )
-    Dist.typical_calculations(data)
+    dist.typical_calculations(data)
     n_msmts = len(data["X"])
-    Dist.typical_calculations(data)
+    dist.typical_calculations(data)
 
     for k in [1, 2, 3, 4, 5, 6, 10, 16, 29, 31, 35, 36]:
-        Dist.fit_data(data, [k])
-        Dist.plot_fit_data(data, [k])
+        dist.fit_data(data, [k])
+        dist.plot_fit_data(data, [k])
 
     # print(data["results"])

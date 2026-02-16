@@ -1,5 +1,5 @@
 """
-Dist_Data_csv_convert.py
+dist_data_csv_convert.py
 
 writing of SMPS data to Excel for student internship
 
@@ -15,10 +15,10 @@ Created 2022-06-20 as PALAS_SMPS2100_csv_convert.py
 import csv
 import os
 
-import Particle_analysis
-import Sup
+import particle_analysis
+import sup
 
-data = Particle_analysis.get_data()
+data = particle_analysis.get_data()
 
 X, dX, dlogX, Cn, add_info, filename, used_device = (
     data["X"],
@@ -30,7 +30,7 @@ X, dX, dlogX, Cn, add_info, filename, used_device = (
     data["used_device"],
 )
 
-size_unit = Sup.decide_size_unit(used_device)
+size_unit = sup.decide_size_unit(used_device)
 
 with open(
     f"{os.path.splitext(filename)[0]}.csv", "w", encoding="iso-8859-1", newline=""
