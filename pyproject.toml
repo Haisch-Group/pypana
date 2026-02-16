@@ -1,0 +1,65 @@
+[project]
+name = "py-particleanalysis"
+version = "0.1.0"
+description = "Scripts for import and evaluation of aerosol measurements"
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = [
+    "dill==0.4.0",
+    "matplotlib>=3.10.8",
+    "numpy==2.4.2",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.0",
+    "pandas-stubs~=3.0.0",
+    "scikit-learn>=1.8.0",
+    "scipy>=1.17.0",
+    "scipy-stubs~=1.17.0",
+    "simdkalman>=1.0.4",
+    "statsmodels>=0.14.6",
+    "tqdm>=4.67.3",
+    "unidip>=0.1.1",
+]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = [
+    "E501",
+    "ANN101",
+    "ANN102",
+    "ANN003",
+    "PLR0913"
+]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "SIM",
+    "ANN",
+    "PLR",
+    "PLE",
+    "PLW",
+    "PLC",
+    "UP",
+    "N",
+    "PTH",
+    "PD"
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 72
+
+[tool.coverage.run]
+dynamic_context = "test_function"
+
+[tool.coverage.html]
+show_contexts = true
