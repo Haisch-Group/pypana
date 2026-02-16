@@ -21,34 +21,66 @@ from Sup import convert_standard_to_volumetric_flow, get_filenames
 
 def rename_columns(df):
     """rename the columns, so they follow the same schematic for all devices"""
-    mapping = {'Accum.': 'Accum. / s', 'Scatter': 'Scatter / V', 'Current': 'Current / V',
-               'Sample': 'Aerosol Flow / scm\u00B3/min', 'Ref.': 'Ref. / V', 'Temp.': 'Temp. / V',
-               'Sheath': 'Sheath Flow / scm\u00B3/min', 'Diff.': 'Diff. / V', 'Box': 'Box / K', 'Purge':
-                   'Purge / scm\u00B3/min', 'Pres.': 'Pressure / kPa', 'Aux.': 'Aux. / V',
-               'Flow': 'Flow / scm\u00B3/min'}
+    mapping = {
+        "Accum.": "Accum. / s",
+        "Scatter": "Scatter / V",
+        "Current": "Current / V",
+        "Sample": "Aerosol Flow / scm\u00b3/min",
+        "Ref.": "Ref. / V",
+        "Temp.": "Temp. / V",
+        "Sheath": "Sheath Flow / scm\u00b3/min",
+        "Diff.": "Diff. / V",
+        "Box": "Box / K",
+        "Purge": "Purge / scm\u00b3/min",
+        "Pres.": "Pressure / kPa",
+        "Aux.": "Aux. / V",
+        "Flow": "Flow / scm\u00b3/min",
+    }
     df.rename(columns=mapping, inplace=True)
     return df
 
 
 def import_single_data(filename):
-    data = pd.read_table(filename, sep='\t', header=0, engine='python')
+    data = pd.read_table(filename, sep="\t", header=0, engine="python")
     # import all data from a txt file with first line as header
 
     data = rename_columns(data)
     # rename data given in non concentration columns as stated in manual to naming scheme used in other imports
 
-    parameter_list = ['Date', 'Time', 'Accum. / s', 'Scatter / V', 'Current / V',
-                      'Aerosol Flow / Aerosol Flow / scm\u00B3/min',
-                      'Ref. / V', 'Temp. / V', 'Sheath Flow / scm\u00B3/min', 'Diff. / V', 'Box / K',
-                      'Purge / scm\u00B3/min', 'Pressure / kPa', 'Aux. / V', 'Flow / scm\u00B3/min']
+    parameter_list = [
+        "Date",
+        "Time",
+        "Accum. / s",
+        "Scatter / V",
+        "Current / V",
+        "Aerosol Flow / Aerosol Flow / scm\u00b3/min",
+        "Ref. / V",
+        "Temp. / V",
+        "Sheath Flow / scm\u00b3/min",
+        "Diff. / V",
+        "Box / K",
+        "Purge / scm\u00b3/min",
+        "Pressure / kPa",
+        "Aux. / V",
+        "Flow / scm\u00b3/min",
+    ]
     # parameters as given in the LASER AEROSOL SPECTROMETER MODEL 3340A Operation and service manual P/N 6012274
     # Revision C April 2019 Section B-10
 
     # Ref. is the laser reference voltage for monitoring relative laser power, should be between 1 and 2.8 V, idealy
     # between 2.2 and 2.7 V
 
-    usedcolumns = ['Accum. / s', 'Scatter / V', 'Current / V', 'Aerosol Flow / scm\u00B3/min',
-                      'Ref. / V', 'Temp. / V', 'Sheath Flow / scm\u00B3/min', 'Box / K', 'Pressure / kPa', ]
+    usedcolumns = [
+        "Accum. / s",
+        "Scatter / V",
+        "Current / V",
+        "Aerosol Flow / scm\u00b3/min",
+        "Ref. / V",
+        "Temp. / V",
+        "Sheath Flow / scm\u00b3/min",
+        "Box / K",
+        "Pressure / kPa",
+    ]
     # columns actually used for building add_info, other columns are either datetime, conc data, or not used in the
     # TSI 3340A according to the manual
 
@@ -66,14 +98,19 @@ def import_single_data(filename):
 
     # calculation of bin widths delta_x, logarithmic bin widths dlog_X and midpoint diameter mid_x arrays
     delta_x = Xu - Xl  # boundary of same bin
-    mid_x = (Xu + Xl)/2  # midpoint = arithmetic mean of upper and lower bin boundary
-    dlog_x = np.log10(Xu/Xl)  # logarithmic bin width = log of upper- log of lower bin boundary
+    mid_x = (Xu + Xl) / 2  # midpoint = arithmetic mean of upper and lower bin boundary
+    dlog_x = np.log10(
+        Xu / Xl
+    )  # logarithmic bin width = log of upper- log of lower bin boundary
 
-    corr_aerosol_flow = convert_standard_to_volumetric_flow(add_info['Aerosol Flow / scm\u00B3/min'].astype(float),
-                                                            add_info['Box / K'].astype(float),
-                                                            add_info['Pressure / kPa'].astype(float),
-                                                            TSI_standard_conditions['T / K'],
-                                                            TSI_standard_conditions['Pressure / kPa'], 'K')
+    corr_aerosol_flow = convert_standard_to_volumetric_flow(
+        add_info["Aerosol Flow / scm\u00b3/min"].astype(float),
+        add_info["Box / K"].astype(float),
+        add_info["Pressure / kPa"].astype(float),
+        TSI_standard_conditions["T / K"],
+        TSI_standard_conditions["Pressure / kPa"],
+        "K",
+    )
 
     X = np.full_like(counts, np.nan)
     dX = np.full_like(counts, np.nan)
@@ -89,17 +126,26 @@ def import_single_data(filename):
         X[i] = mid_x
         dX[i] = delta_x
         dlogX[i] = dlog_x
-        time.append(datetime.strptime(data.loc[i+1, "Date"] + " " + data.loc[i+1, "Time"],
-                                      '%m/%d/%Y %I:%M:%S.%f %p'))
-        subscan_nr.append(i+1)
-        Cn[i] = (Cn[i] * (60 / float(data.loc[i+1, "Accum. / s"]))) / corr_aerosol_flow[i+1]
+        time.append(
+            datetime.strptime(
+                data.loc[i + 1, "Date"] + " " + data.loc[i + 1, "Time"],
+                "%m/%d/%Y %I:%M:%S.%f %p",
+            )
+        )
+        subscan_nr.append(i + 1)
+        Cn[i] = (
+            Cn[i] * (60 / float(data.loc[i + 1, "Accum. / s"]))
+        ) / corr_aerosol_flow[i + 1]
         # raw counts are saved -> counts/accumulation_time*60s/min*corrected flowrate in cm^3/min
         n_scan_list.append(n_scans)
 
-    Cn_dlogX = Cn.copy()/dlogX
+    Cn_dlogX = Cn.copy() / dlogX
 
-    add_info.insert(loc=add_info.columns.get_loc("Aerosol Flow / scm\u00B3/min") + 1,
-                    column="Aerosol Flow / cm\u00B3/min", value=corr_aerosol_flow)
+    add_info.insert(
+        loc=add_info.columns.get_loc("Aerosol Flow / scm\u00b3/min") + 1,
+        column="Aerosol Flow / cm\u00b3/min",
+        value=corr_aerosol_flow,
+    )
     add_info.insert(loc=0, column="Time", value=time)
     add_info.insert(loc=0, column="Nr Scans", value=n_scan_list)
     add_info.insert(loc=0, column="Subscan Nr", value=subscan_nr)
@@ -126,19 +172,28 @@ def import_data(filenames, data_choice=""):
     return X, dX, dlogX, Cn, Cn_dlogX, add_info
 
 
-def import_data_dict(used_device, filename, data_choice=""): # here list of filenames is required -> get_filenames
+def import_data_dict(
+    used_device, filename, data_choice=""
+):  # here list of filenames is required -> get_filenames
     # filenames = get_filenames()
     X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
     data_dict = {}
     for k in range(len(filename)):
-        data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename[0],
-                 "used_device": used_device, "add_info": add_info}
+        data_dict = {
+            "X": X,
+            "dX": dX,
+            "dlogX": dlogX,
+            "Cn": Cn,
+            "Cn_dlogX": Cn_dlogX,
+            "filename": filename[0],
+            "used_device": used_device,
+            "add_info": add_info,
+        }
         # killed the list of strings, so an error saving plots is avoided
     return data_dict
 
 
 if __name__ == "__main__":
-
     filename = get_filenames()
     # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_single_data(filename)
     # print(f"imported {filename}")
@@ -147,6 +202,10 @@ if __name__ == "__main__":
     # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filenames)
     # print(f"imported {filenames}")
 
-    data_dict = \
-        import_data_dict(device_list.query("Import_Script=='TSI_LAS3340A_fileread'")["Device_Identifier"].values[0], filename)
+    data_dict = import_data_dict(
+        device_list.query("Import_Script=='TSI_LAS3340A_fileread'")[
+            "Device_Identifier"
+        ].values[0],
+        filename,
+    )
     print(f"imported {data_dict['filename']} as dictionary")

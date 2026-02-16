@@ -21,34 +21,70 @@ from Sup import convert_kPa_to_mbar, get_filename
 
 def rename_columns(df, used_device):
     """rename the colums, so they follow the same schematic for all devices"""
-    if used_device == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]:
-        mapping = {'Sample Temp (C)': 'Sample Temp / °C', 'Sample Pressure (kPa)': 'Sample Pressure / kPa',
-                            'Relative Humidity (%)': 'Relative Humidity %', 'Mean Free Path (m)': 'Mean Free Path / m',
-                            'Gas Viscosity (Pa*s)': 'Gas Viscosity / Pa\u00B7s', 'Diameter Midpoint (nm)':
-                            'Diameter Midpoint / nm', 'Scan Time (s)': 'Scan Time / s', 'Retrace Time (s)':
-                            'Retrace Time / s', 'Scan Resolution (Hz)': 'Scan Resolution / Hz', 'Sheath Flow (L/min)':
-                            'Sheath Flow / L/min', 'Aerosol Flow (L/min)': 'Aerosol Flow / L/min',
-                            'Bypass Flow (L/min)': 'Bypass Flow / L/min', 'Low Voltage (V)': 'Low Voltage / V',
-                            'High Voltage (V)': 'High Voltage / V', 'Lower Size (nm)': 'Lower Size / nm',
-                            'Upper Size (nm)': 'Upper Size / nm', 'Density (g/cm³)': 'Density / g/cm\u00B3',
-                            'td + 0.5 (s)': 'td + 0.5 / s', 'tf (s)': 'tf / s', 'D50 (nm)': 'D50 / nm',
-                            'Neutralizer Status ': 'Neutralizer Status', 'Median (nm)': 'Median / nm', 'Mean (nm)':
-                            'Mean / nm', 'Geo. Mean (nm)': 'Geo. Mean / nm', 'Mode (nm)': 'Mode / nm',
-                            'Total Conc. (#/cm³)': 'Total Conc. / 1/cm\u00B3'}
+    if (
+        used_device
+        == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]
+    ):
+        mapping = {
+            "Sample Temp (C)": "Sample Temp / °C",
+            "Sample Pressure (kPa)": "Sample Pressure / kPa",
+            "Relative Humidity (%)": "Relative Humidity %",
+            "Mean Free Path (m)": "Mean Free Path / m",
+            "Gas Viscosity (Pa*s)": "Gas Viscosity / Pa\u00b7s",
+            "Diameter Midpoint (nm)": "Diameter Midpoint / nm",
+            "Scan Time (s)": "Scan Time / s",
+            "Retrace Time (s)": "Retrace Time / s",
+            "Scan Resolution (Hz)": "Scan Resolution / Hz",
+            "Sheath Flow (L/min)": "Sheath Flow / L/min",
+            "Aerosol Flow (L/min)": "Aerosol Flow / L/min",
+            "Bypass Flow (L/min)": "Bypass Flow / L/min",
+            "Low Voltage (V)": "Low Voltage / V",
+            "High Voltage (V)": "High Voltage / V",
+            "Lower Size (nm)": "Lower Size / nm",
+            "Upper Size (nm)": "Upper Size / nm",
+            "Density (g/cm³)": "Density / g/cm\u00b3",
+            "td + 0.5 (s)": "td + 0.5 / s",
+            "tf (s)": "tf / s",
+            "D50 (nm)": "D50 / nm",
+            "Neutralizer Status ": "Neutralizer Status",
+            "Median (nm)": "Median / nm",
+            "Mean (nm)": "Mean / nm",
+            "Geo. Mean (nm)": "Geo. Mean / nm",
+            "Mode (nm)": "Mode / nm",
+            "Total Conc. (#/cm³)": "Total Conc. / 1/cm\u00b3",
+        }
         df.rename(columns=mapping, inplace=True)
-    elif used_device == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]:
-        mapping = {'Sample Temp (C)': 'Sample Temp / °C', 'Sample Pressure (kPa)': 'Sample Pressure / kPa',
-                    'Mean Free Path (m)': 'Mean Free Path / m', 'Gas Viscosity (Pa*s)': 'Gas Viscosity / Pa\u00B7s',
-                    'Diameter Midpoint': 'Diameter Midpoint / nm', 'Scan Up Time(s)': 'Scan Time / s',
-                    'Retrace Time(s)': 'Retrace Time / s', 'Impactor Type(cm)': 'Impactor Type / cm',
-                    'Sheath Flow(lpm)': 'Sheath Flow / L/min', 'Aerosol Flow(lpm)': 'Aerosol Flow / L/min',
-                    'CPC Inlet Flow(lpm)': 'CPC Inlet Flow / L/min', 'CPC Sample Flow(lpm)': 'CPC Sample Flow / L/min',
-                    'Low Voltage': 'Low Voltage / V', 'High Voltage': 'High Voltage / V',
-                    'Lower Size(nm)': 'Lower Size / nm', 'Upper Size(nm)': 'Upper Size / nm',
-                    'Density(g/cc)': 'Density / g/cm\u00B3', 'td(s)': 'td / s', 'tf(s)': 'tf / s',
-                    'D50(nm)': 'D50 / nm', 'Median(nm)': 'Median / nm', 'Mean(nm)': 'Mean / nm',
-                    'Geo. Mean(nm)': 'Geo. Mean / nm', 'Mode(nm)': 'Mode / nm',
-                    'Total Conc.(#/cm³)': 'Total Conc. / 1/cm\u00B3'}
+    elif (
+        used_device
+        == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]
+    ):
+        mapping = {
+            "Sample Temp (C)": "Sample Temp / °C",
+            "Sample Pressure (kPa)": "Sample Pressure / kPa",
+            "Mean Free Path (m)": "Mean Free Path / m",
+            "Gas Viscosity (Pa*s)": "Gas Viscosity / Pa\u00b7s",
+            "Diameter Midpoint": "Diameter Midpoint / nm",
+            "Scan Up Time(s)": "Scan Time / s",
+            "Retrace Time(s)": "Retrace Time / s",
+            "Impactor Type(cm)": "Impactor Type / cm",
+            "Sheath Flow(lpm)": "Sheath Flow / L/min",
+            "Aerosol Flow(lpm)": "Aerosol Flow / L/min",
+            "CPC Inlet Flow(lpm)": "CPC Inlet Flow / L/min",
+            "CPC Sample Flow(lpm)": "CPC Sample Flow / L/min",
+            "Low Voltage": "Low Voltage / V",
+            "High Voltage": "High Voltage / V",
+            "Lower Size(nm)": "Lower Size / nm",
+            "Upper Size(nm)": "Upper Size / nm",
+            "Density(g/cc)": "Density / g/cm\u00b3",
+            "td(s)": "td / s",
+            "tf(s)": "tf / s",
+            "D50(nm)": "D50 / nm",
+            "Median(nm)": "Median / nm",
+            "Mean(nm)": "Mean / nm",
+            "Geo. Mean(nm)": "Geo. Mean / nm",
+            "Mode(nm)": "Mode / nm",
+            "Total Conc.(#/cm³)": "Total Conc. / 1/cm\u00b3",
+        }
         df.rename(columns=mapping, inplace=True)
     else:
         pass
@@ -60,34 +96,101 @@ def def_used_smps(used_device):
     """define parameters that are different between the different smps systems, here already renamed values are used, as
     the following comparison of columns is done based upon general naming scheme of the whole script"""
 
-    if used_device == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]:
+    if (
+        used_device
+        == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]
+    ):
         # compare the used_device parameter taken from particle_analysis.get_data() to the values defined in
         # Def.device_list - done this way, so device_list can be changed easily without having to rewrite everything
-        parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp / °C', 'Sample Pressure / kPa',
-                            'Relative Humidity %', 'Mean Free Path / m', 'Gas Viscosity / Pa\u00B7s',
-                            'Diameter Midpoint / nm', 'Scan Time / s', 'Retrace Time / s', 'Scan Resolution / Hz',
-                            'Scans Per Sample', 'Sheath Flow / L/min', 'Aerosol Flow / L/min', 'Bypass Flow / L/min',
-                            'Low Voltage / V', 'High Voltage / V', 'Lower Size / nm', 'Upper Size / nm',
-                            'Density / g/cm\u00B3', 'td + 0.5 / s', 'tf / s', 'D50 / nm', 'Neutralizer Status',
-                            'Median / nm', 'Mean / nm', 'Geo. Mean / nm', 'Mode / nm', 'Geo. Std. Dev.',
-                            'Total Conc. / 1/cm\u00B3', 'Title', 'User Name', 'Sample ID', 'Instrument ID', 'Lab ID',
-                            'Leak Test and Leakage Rate', 'Instrument Errors', 'Comment']
+        parameter_list = [
+            "Sample #",
+            "Date",
+            "Start Time",
+            "Sample Temp / °C",
+            "Sample Pressure / kPa",
+            "Relative Humidity %",
+            "Mean Free Path / m",
+            "Gas Viscosity / Pa\u00b7s",
+            "Diameter Midpoint / nm",
+            "Scan Time / s",
+            "Retrace Time / s",
+            "Scan Resolution / Hz",
+            "Scans Per Sample",
+            "Sheath Flow / L/min",
+            "Aerosol Flow / L/min",
+            "Bypass Flow / L/min",
+            "Low Voltage / V",
+            "High Voltage / V",
+            "Lower Size / nm",
+            "Upper Size / nm",
+            "Density / g/cm\u00b3",
+            "td + 0.5 / s",
+            "tf / s",
+            "D50 / nm",
+            "Neutralizer Status",
+            "Median / nm",
+            "Mean / nm",
+            "Geo. Mean / nm",
+            "Mode / nm",
+            "Geo. Std. Dev.",
+            "Total Conc. / 1/cm\u00b3",
+            "Title",
+            "User Name",
+            "Sample ID",
+            "Instrument ID",
+            "Lab ID",
+            "Leak Test and Leakage Rate",
+            "Instrument Errors",
+            "Comment",
+        ]
         header_pos = 25
-        time_format = '%m/%d/%Y %H:%M:%S'
+        time_format = "%m/%d/%Y %H:%M:%S"
 
         # "Neutralizer Status " is not contained in every measurement file... additionally it has a space in the column
 
-    elif used_device == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]:
-        parameter_list = ['Sample #', 'Date', 'Start Time', 'Sample Temp / °C', 'Sample Pressure / kPa',
-                            'Relative Humidity %', 'Mean Free Path / m', 'Gas Viscosity / Pa\u00B7s',
-                            'Diameter Midpoint / nm', 'Scan Time / s', 'Retrace Time / s', 'Down Scan First',
-                            'Scans Per Sample', 'Impactor Type / cm', 'Sheath Flow / L/min', 'Aerosol Flow / L/min',
-                            'CPC Inlet Flow / L/min', 'CPC Sample Flow / L/min', 'Low Voltage / V', 'High Voltage / V',
-                            'Lower Size / nm', 'Upper Size / nm', 'Density / g/cm\u00B3', 'td / s', 'tf / s',
-                            'D50 / nm', 'Median / nm', 'Mean / nm', 'Geo. Mean / nm', 'Mode / nm', 'Geo. Std. Dev.',
-                            'Total Conc. / 1/cm\u00B3', 'Title', 'Status Flag', 'Comment']
+    elif (
+        used_device
+        == device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]
+    ):
+        parameter_list = [
+            "Sample #",
+            "Date",
+            "Start Time",
+            "Sample Temp / °C",
+            "Sample Pressure / kPa",
+            "Relative Humidity %",
+            "Mean Free Path / m",
+            "Gas Viscosity / Pa\u00b7s",
+            "Diameter Midpoint / nm",
+            "Scan Time / s",
+            "Retrace Time / s",
+            "Down Scan First",
+            "Scans Per Sample",
+            "Impactor Type / cm",
+            "Sheath Flow / L/min",
+            "Aerosol Flow / L/min",
+            "CPC Inlet Flow / L/min",
+            "CPC Sample Flow / L/min",
+            "Low Voltage / V",
+            "High Voltage / V",
+            "Lower Size / nm",
+            "Upper Size / nm",
+            "Density / g/cm\u00b3",
+            "td / s",
+            "tf / s",
+            "D50 / nm",
+            "Median / nm",
+            "Mean / nm",
+            "Geo. Mean / nm",
+            "Mode / nm",
+            "Geo. Std. Dev.",
+            "Total Conc. / 1/cm\u00b3",
+            "Title",
+            "Status Flag",
+            "Comment",
+        ]
         header_pos = 17
-        time_format = '%m/%d/%y %H:%M:%S'
+        time_format = "%m/%d/%y %H:%M:%S"
     else:
         print(f"Device {used_device} is not a viable option")
         parameter_list = used_device
@@ -108,7 +211,9 @@ def import_data(filename, used_device, data_choice=""):
 
     parameter_list, header_pos, time_format = def_used_smps(used_device)
 
-    data = pd.read_table(filename, sep='\t', header=header_pos, engine='python', encoding='iso-8859-1')
+    data = pd.read_table(
+        filename, sep="\t", header=header_pos, engine="python", encoding="iso-8859-1"
+    )
     # originally ansi which is superset of iso; smps file is in encoding = ansi which caused an import error off cm^3
     # due to wrong encoding setting changed to iso as ansi is windows only and iso also works on linux
 
@@ -129,13 +234,18 @@ def import_data(filename, used_device, data_choice=""):
             pass
         else:
             data[k] = np.zeros((nr_scans,))
-            data[k] = np.nan  # with np.empty, it somehow filled the newly created column with some values from another
+            data[k] = (
+                np.nan
+            )  # with np.empty, it somehow filled the newly created column with some values from another
             # existing column??
 
     add_info = data[(parameter_list[3:])]
 
     # converting Sample Pressure from kPa to mbar
-    if used_device == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]:
+    if (
+        used_device
+        == device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]
+    ):
         sample_p_mbar = convert_kPa_to_mbar(data["Sample Pressure / kPa"].copy())
 
     conc = data[data.columns.difference(parameter_list, sort=False)].to_numpy()
@@ -162,7 +272,6 @@ def import_data(filename, used_device, data_choice=""):
     # Method 3 has the lowest deviation to the actual TSI values in X-perspective, but for Conc, i dont know
 
     for i in range(nr_scans):
-
         # Method 1: calculating xu and xl based on midpoint diameters:  # (gives x-axis with gaps between bins in lower
         # size range and  overlapping bins in higher size range and variable dlogX especially in lower size range)
 
@@ -187,24 +296,27 @@ def import_data(filename, used_device, data_choice=""):
         # Method 3: constructing x-axis based on lower and upper limits given in measurement file
         # also the two less indented lines after this block for calculating Xm and assigning it to X are required
 
-    #     const_dlogX = np.log10(add_info["Upper Size / nm"]/add_info["Lower Size / nm"])/nr_bins
-    #     Xl[i, 0] = add_info["Lower Size / nm"][i]
-    #     Xu[i, -1] = add_info["Upper Size / nm"][i]
-    #     for k in range(1, nr_bins):
-    #         Xl[i, k] = Xl[i, k-1]*10**(const_dlogX[i])
-    #         Xu[i, k-1] = Xl[i, k]
-    # Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
-    # X=Xm
+        #     const_dlogX = np.log10(add_info["Upper Size / nm"]/add_info["Lower Size / nm"])/nr_bins
+        #     Xl[i, 0] = add_info["Lower Size / nm"][i]
+        #     Xu[i, -1] = add_info["Upper Size / nm"][i]
+        #     for k in range(1, nr_bins):
+        #         Xl[i, k] = Xl[i, k-1]*10**(const_dlogX[i])
+        #         Xu[i, k-1] = Xl[i, k]
+        # Xm=(Xl+Xu)/2  # new array for midpoint diameters that are evenly spaced on log axis
+        # X=Xm
 
         # # Method 4: calculating dlogX from resolution in channels per decade (can be automized from log length of axis
         # # / by number of bins) similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
         # # Xl and Xu from midpoints.
 
-        const_dlogX = 1/np.rint(nr_bins/np.log10(add_info["Upper Size / nm"] / add_info["Lower Size / nm"]))
+        const_dlogX = 1 / np.rint(
+            nr_bins
+            / np.log10(add_info["Upper Size / nm"] / add_info["Lower Size / nm"])
+        )
         for k in range(nr_bins):
             X[i, k] = x_axis[k]
-            Xl[i, k] = (2*X[i, k])/(np.power(10,const_dlogX[i])+1)
-            Xu[i, k] = (2*X[i, k])/(1/np.power(10,const_dlogX[i])+1)
+            Xl[i, k] = (2 * X[i, k]) / (np.power(10, const_dlogX[i]) + 1)
+            Xu[i, k] = (2 * X[i, k]) / (1 / np.power(10, const_dlogX[i]) + 1)
 
         # Method 5: calculating dlogX from resolution in channels per decade (can be automized from number of bins / by
         # log length of axis) ;similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
@@ -226,19 +338,23 @@ def import_data(filename, used_device, data_choice=""):
     dX = np.subtract(Xu, Xl)
 
     # calculate dlogX from upper and lower boundary
-    dlogX = np.log10(Xu/Xl)
+    dlogX = np.log10(Xu / Xl)
 
     option_list = ["0", "1"]
     if data_choice in option_list:
         conc_data = data_choice
     else:
-        conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
-                          ", 1 for Cn")
+        conc_data = input(
+            "Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
+            ", 1 for Cn"
+        )
 
     while conc_data not in option_list:
         print(f"{conc_data} is not a viable option, please enter again.")
-        conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
-                          ", 1 for Cn")
+        conc_data = input(
+            "Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
+            ", 1 for Cn"
+        )
     if conc_data == "0":
         Cn_dlogX = conc
         Cn = Cn_dlogX * dlogX
@@ -251,7 +367,11 @@ def import_data(filename, used_device, data_choice=""):
     # calculating time list from dates and times given in measurement file
     time = []
     for i in range(nr_scans):
-        time.append(datetime.strptime(data["Date"][i] + " " + data["Start Time"][i], time_format))
+        time.append(
+            datetime.strptime(
+                data["Date"][i] + " " + data["Start Time"][i], time_format
+            )
+        )
 
     # adding columns to the add_info dataframe in specific positions to match the common scheme
     # add_info.insert(loc=add_info.columns.get_loc("Sample Pressure / kPa") + 1, column="Sample Pressure / mbar",
@@ -264,16 +384,29 @@ def import_data(filename, used_device, data_choice=""):
 
 def import_data_dict(used_device, filename, data_choice=""):
     # filename = get_filename()
-    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, used_device, data_choice=data_choice)
-    data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
-                 "used_device": used_device, "add_info": add_info}
+    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(
+        filename, used_device, data_choice=data_choice
+    )
+    data_dict = {
+        "X": X,
+        "dX": dX,
+        "dlogX": dlogX,
+        "Cn": Cn,
+        "Cn_dlogX": Cn_dlogX,
+        "filename": filename,
+        "used_device": used_device,
+        "add_info": add_info,
+    }
     return data_dict
 
 
 if __name__ == "__main__":
-
-    SMPS_3071_id = device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[0]
-    SMPS_3938_id = device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[0]
+    SMPS_3071_id = device_list.query("Device=='SMPS 3071'")["Device_Identifier"].values[
+        0
+    ]
+    SMPS_3938_id = device_list.query("Device=='SMPS 3938'")["Device_Identifier"].values[
+        0
+    ]
     print(f"{SMPS_3071_id} = SMPS 3071; {SMPS_3938_id} = SMPS 3938")
     used_device = int(input("Which instrument did you use? Enter as int."))
 
