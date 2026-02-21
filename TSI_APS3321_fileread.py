@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 TSI_APS3321_fileread.py
 
@@ -11,26 +10,34 @@ Recreated on 2025-09-24 from TSI_SMPS_fileread due to changes in import of addit
 !!first data column is all particles below the given size!!
 """
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from Sup import get_filename
-from Sup import convert_kPa_to_mbar
-from Def import device_list
+
+from defs import device_list
+from sup import get_filename
 
 
 def rename_columns(df):
     """rename the colums, so they follow the same schematic for all devices"""
-    mapping = {'Inlet Pressure': 'Sample Pressure / mbar', 'Total Flow': 'Total Flow / L/min', 'Sheath Flow':
-                        'Sheath Flow / L/min', 'Laser Power': 'Laser Power %',
-                        'Laser Current': 'Laser Current / mA', 'Sheath Pump Voltage':
-                        'Sheath Pump Voltage / V', 'Total Pump Voltage': 'Total Pump Voltage / V',
-                        'Box Temperature': 'Box Temperature / °C',
-                        'Avalanch Photo Diode Temperature': 'Avalanch Photo Diode Temperature / °C',
-                        'Avalanch Photo Diode Voltage': 'Avalanch Photo Diode Voltage / V',
-                        u'Median(\xb5m)': u'Median / \xb5m', u'Mean(\xb5m)': u'Mean / \xb5m',
-                        u'Geo. Mean(\xb5m)': u'Geo. Mean / \xb5m', u'Mode(\xb5m)': u'Mode / \xb5m',
-                        'Total Conc.':  u'Total Conc. / 1/cm\u00B3'}
+    mapping = {
+        "Inlet Pressure": "Sample Pressure / mbar",
+        "Total Flow": "Total Flow / L/min",
+        "Sheath Flow": "Sheath Flow / L/min",
+        "Laser Power": "Laser Power %",
+        "Laser Current": "Laser Current / mA",
+        "Sheath Pump Voltage": "Sheath Pump Voltage / V",
+        "Total Pump Voltage": "Total Pump Voltage / V",
+        "Box Temperature": "Box Temperature / °C",
+        "Avalanch Photo Diode Temperature": "Avalanch Photo Diode Temperature / °C",
+        "Avalanch Photo Diode Voltage": "Avalanch Photo Diode Voltage / V",
+        "Median(\xb5m)": "Median / \xb5m",
+        "Mean(\xb5m)": "Mean / \xb5m",
+        "Geo. Mean(\xb5m)": "Geo. Mean / \xb5m",
+        "Mode(\xb5m)": "Mode / \xb5m",
+        "Total Conc.": "Total Conc. / 1/cm\u00b3",
+    }
     df.rename(columns=mapping, inplace=True)
 
     return df
@@ -40,19 +47,43 @@ def def_parameter_list():
     """define parameters that are different between the different devices, here already renamed values are used, as
     the following comparison of columns is done based upon general naming scheme of the whole script"""
 
-
-    parameter_list = ['Sample #', 'Date', 'Start Time', 'Aerodynamic Diameter','Event 1', 'Event 3', 'Event 4',
-                      'Dead Time', 'Sample Pressure / mbar', 'Total Flow / L/min', 'Sheath Flow / L/min',
-                      'Analog Input Voltage 0', 'Analog Input Voltage 1', 'Digital Input Level 0',
-                      'Digital Input Level 1', 'Digital Input Level 2', 'Laser Power %', 'Laser Current / mA',
-                      'Sheath Pump Voltage / V', 'Total Pump Voltage / V', 'Box Temperature / °C',
-                      'Avalanch Photo Diode Temperature / °C', 'Avalanch Photo Diode Voltage / V', 'Status Flags',
-                      u'Median / \xb5m', u'Mean / \xb5m', u'Geo. Mean / \xb5m', u'Mode / \xb5m', 'Geo. Std. Dev.',
-                      u'Total Conc. / 1/cm\u00B3', 'Comment']
+    parameter_list = [
+        "Sample #",
+        "Date",
+        "Start Time",
+        "Aerodynamic Diameter",
+        "Event 1",
+        "Event 3",
+        "Event 4",
+        "Dead Time",
+        "Sample Pressure / mbar",
+        "Total Flow / L/min",
+        "Sheath Flow / L/min",
+        "Analog Input Voltage 0",
+        "Analog Input Voltage 1",
+        "Digital Input Level 0",
+        "Digital Input Level 1",
+        "Digital Input Level 2",
+        "Laser Power %",
+        "Laser Current / mA",
+        "Sheath Pump Voltage / V",
+        "Total Pump Voltage / V",
+        "Box Temperature / °C",
+        "Avalanch Photo Diode Temperature / °C",
+        "Avalanch Photo Diode Voltage / V",
+        "Status Flags",
+        "Median / \xb5m",
+        "Mean / \xb5m",
+        "Geo. Mean / \xb5m",
+        "Mode / \xb5m",
+        "Geo. Std. Dev.",
+        "Total Conc. / 1/cm\u00b3",
+        "Comment",
+    ]
     # Comment just added here even though it is not in file, works because of the bug fix implemented for coping with
     # additional columns in slightly different files. :D
     header_pos = 6
-    time_format = '%m/%d/%y %H:%M:%S'
+    time_format = "%m/%d/%y %H:%M:%S"
 
     return parameter_list, header_pos, time_format
 
@@ -68,7 +99,9 @@ def import_data(filename, data_choice=""):
 
     parameter_list, header_pos, time_format = def_parameter_list()
 
-    data = pd.read_table(filename, sep='\t', header=header_pos, engine='python', encoding='iso-8859-1')
+    data = pd.read_table(
+        filename, sep="\t", header=header_pos, engine="python", encoding="iso-8859-1"
+    )
     # originally ansi which is superset of iso; file is in encoding = ansi which caused an import error off cm^3
     # due to wrong encoding setting changed to iso as ansi is windows only and iso also works on linux
 
@@ -97,7 +130,9 @@ def import_data(filename, data_choice=""):
 
     x_axis = data[data.columns.difference(parameter_list, sort=False)].columns.values
     # extracts the midpoint diameter from the pd.dataframe header similar to how conc was extracted
-    x_axis[0] = x_axis[0].replace("<", "")  # first x-axis value contains "<" as this bin is particles below ca 500 nm
+    x_axis[0] = x_axis[0].replace(
+        "<", ""
+    )  # first x-axis value contains "<" as this bin is particles below ca 500 nm
     x_axis = x_axis.astype(float)
 
     nr_bins = len(x_axis)
@@ -108,7 +143,7 @@ def import_data(filename, data_choice=""):
     Xl = np.full_like(conc, np.nan)
     Xu = np.full_like(conc, np.nan)
 
-   # multiple methods for building an x-array are implemented in TSI_SMPS_fileread, they could also be used here
+    # multiple methods for building an x-array are implemented in TSI_SMPS_fileread, they could also be used here
     # method 4 gave best results for SMPS, so also used here
 
     with open(filename) as f_in:  # open file and keep open
@@ -143,11 +178,12 @@ def import_data(filename, data_choice=""):
     # / by number of bins) similar to Method 3 but then rounded to actual even number (gives 64). Then calculating
     # Xl and Xu from midpoints.
 
-    const_dlogX = 1 / np.rint(nr_bins / np.log10(upper_size / lower_size)) # -> only one number not a row -> Xl and Xu
+    const_dlogX = 1 / np.rint(
+        nr_bins / np.log10(upper_size / lower_size)
+    )  # -> only one number not a row -> Xl and Xu
     for i in range(nr_scans):
-
         for k in range(nr_bins):
-            X[i, k] = x_axis [k]
+            X[i, k] = x_axis[k]
             Xl[i, k] = (2 * X[i, k]) / (np.power(10, const_dlogX) + 1)
             Xu[i, k] = (2 * X[i, k]) / (1 / np.power(10, const_dlogX) + 1)
 
@@ -157,19 +193,23 @@ def import_data(filename, data_choice=""):
     dX = np.subtract(Xu, Xl)
 
     # calculate dlogX from upper and lower boundary
-    dlogX = np.log10(Xu/Xl)
+    dlogX = np.log10(Xu / Xl)
 
     option_list = ["0", "1"]
     if data_choice in option_list:
         conc_data = data_choice
     else:
-        conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
-                          ", 1 for Cn")
+        conc_data = input(
+            "Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
+            ", 1 for Cn"
+        )
 
     while conc_data not in option_list:
         print(f"{conc_data} is not a viable option, please enter again.")
-        conc_data = input("Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
-                          ", 1 for Cn")
+        conc_data = input(
+            "Which of the possible concentration data is contained in the txt-file? Type 0 for dCn/glogDp"
+            ", 1 for Cn"
+        )
     if conc_data == "0":
         Cn_dlogX = conc
         Cn = Cn_dlogX * dlogX
@@ -182,7 +222,11 @@ def import_data(filename, data_choice=""):
     # calculating time list from dates and times given in measurement file
     time = []
     for i in range(nr_scans):
-        time.append(datetime.strptime(data["Date"][i] + " " + data["Start Time"][i], time_format))
+        time.append(
+            datetime.strptime(
+                data["Date"][i] + " " + data["Start Time"][i], time_format
+            )
+        )
 
     # adding columns to the add_info dataframe in specific positions to match the common scheme
     # add_info.insert(loc=add_info.columns.get_loc("Sample Pressure / kPa") + 1, column="Sample Pressure / mbar",
@@ -195,18 +239,31 @@ def import_data(filename, data_choice=""):
 
 def import_data_dict(used_device, filename, data_choice=""):
     # filename = get_filename()
-    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename, data_choice=data_choice)
-    data_dict = {"X": X, "dX": dX, "dlogX": dlogX, "Cn": Cn, "Cn_dlogX": Cn_dlogX, "filename": filename,
-                 "used_device": used_device, "add_info": add_info}
+    X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(
+        filename, data_choice=data_choice
+    )
+    data_dict = {
+        "X": X,
+        "dX": dX,
+        "dlogX": dlogX,
+        "Cn": Cn,
+        "Cn_dlogX": Cn_dlogX,
+        "filename": filename,
+        "used_device": used_device,
+        "add_info": add_info,
+    }
     return data_dict
 
 
 if __name__ == "__main__":
-
     filename = get_filename()
     # X, dX, dlogX, Cn, Cn_dlogX, add_info = import_data(filename)
     # print(f"imported {filename}")
 
-    data_dict = \
-        import_data_dict(device_list.query("Import_Script=='TSI_APS3321_fileread'")["Device_Identifier"].values[0], filename)
+    data_dict = import_data_dict(
+        device_list.query("Import_Script=='TSI_APS3321_fileread'")[
+            "Device_Identifier"
+        ].values[0],
+        filename,
+    )
     print(f"imported {data_dict['filename']} as dictionary")

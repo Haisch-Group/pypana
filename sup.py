@@ -1,28 +1,28 @@
-# -*- coding: utf-8 -*-
 """
-Sup.py
+sup.py
 
-Functions for running Particle_analysis.py
+Functions for running particle_analysis.py
 
 Created 2024-03-20 from get_filenames.py and other small scripts
 @written by Kevin Maier (kevin.r.maier@tum.de)
 
 """
 
-
+import math
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, askopenfilenames, asksaveasfilename
-import numpy as np
-import math
-import matplotlib.pyplot as plt
 
-import Sup
-import Def
+import matplotlib.pyplot as plt
+import numpy as np
+
+import defs
+import sup
+
 
 def get_filename():
     """get one filename via UI"""
     popup = Tk()
-    popup.attributes('-topmost', 1)
+    popup.attributes("-topmost", 1)
     popup.withdraw()
     filename = askopenfilename()
     print(filename)
@@ -32,7 +32,7 @@ def get_filename():
 def get_filenames():
     """get multiple filenames via UI"""
     popup = Tk()
-    popup.attributes('-topmost', 1)
+    popup.attributes("-topmost", 1)
     popup.withdraw()
     filenames = askopenfilenames()
     print(filenames)
@@ -42,10 +42,16 @@ def get_filenames():
 def set_filename():
     """set filename via UI"""
     popup = Tk()
-    popup.attributes('-topmost', 1)
+    popup.attributes("-topmost", 1)
     popup.withdraw()
-    filename = asksaveasfilename(filetypes=(("All Files", "*"), ("png file", ".png"), ("csv file", "*.csv"),
-                                            ("dill file", ".dill")))
+    filename = asksaveasfilename(
+        filetypes=(
+            ("All Files", "*"),
+            ("png file", ".png"),
+            ("csv file", "*.csv"),
+            ("dill file", ".dill"),
+        )
+    )
     print(filename)
     return filename
 
@@ -57,15 +63,23 @@ def get_variable_name(some_variable):
 
 
 def check_device(used_device):
-    if int(used_device) in Def.device_list["Device_Identifier"]:
+    if int(used_device) in defs.device_list["Device_Identifier"]:
         used_device = int(used_device)
     else:
-        while int(used_device) not in Def.device_list["Device_Identifier"]:
+        while int(used_device) not in defs.device_list["Device_Identifier"]:
             print(f"Device {used_device} is not a viable option")
-            print(Def.device_list[["Device_Identifier", "Device", "Manufacturer"]].to_string(justify="left", index=False))
-            used_device = input("Which instrument do you want to import data from? Enter as int.\n"
-                                    "Enter 'break' to stop the input loop.")
-            if used_device == "break":  # this is not perfect yet -> drops error, resolve
+            print(
+                defs.device_list[
+                    ["Device_Identifier", "Device", "Manufacturer"]
+                ].to_string(justify="left", index=False)
+            )
+            used_device = input(
+                "Which instrument do you want to import data from? Enter as int.\n"
+                "Enter 'break' to stop the input loop."
+            )
+            if (
+                used_device == "break"
+            ):  # this is not perfect yet -> drops error, resolve
                 break
             else:
                 used_device = int(used_device)
@@ -86,7 +100,9 @@ def normal_logic_converter(py_nr_list):
     return scan_nr_list
 
 
-def convert_standard_to_volumetric_flow(standard_flow, T_flow, p_flow, T_standard, p_standard, T_unit):
+def convert_standard_to_volumetric_flow(
+    standard_flow, T_flow, p_flow, T_standard, p_standard, T_unit
+):
     """converts standard flow rate given by mass flow controllers to volumetric flow rate as required for calculation
     of aerosol concentrations based on ideal gas law
     units must match, so T should be given in K, or °C, p should be given in matching units, Pa, kPa, mbar, or bar
@@ -115,56 +131,58 @@ def convert_K_to_C(T_in_K):
 
 def convert_mbar_to_kPa(p_in_mbar):
     """convert Pressure from mbar to kPa"""
-    p_in_kPa = p_in_mbar/10
+    p_in_kPa = p_in_mbar / 10
     return p_in_kPa
 
 
 def convert_kPa_to_mbar(p_in_kPa):
     """convert Pressure from kPa to mbar"""
-    p_in_mbar = p_in_kPa/10
+    p_in_mbar = p_in_kPa / 10
     return p_in_mbar
 
 
-def lognormal_test(x_lower=5, x_upper=1000, x_steps=99, conc=1E5, dg=80, sigma_g=1.15):
+def lognormal_test(x_lower=5, x_upper=1000, x_steps=99, conc=1e5, dg=80, sigma_g=1.15):
     """log-normal function with A being a scale factor, m being the median and sigma being the geometric
-        standard deviation"""
+    standard deviation"""
     X = np.logspace(x_lower, x_upper, x_steps, endpoint=True, base=10.0)
-    C = (np.exp(-((np.log(X/dg))**2)/(2*np.log(sigma_g)**2))/(np.log(sigma_g)*X*np.sqrt(2*math.pi)))
+    C = np.exp(-((np.log(X / dg)) ** 2) / (2 * np.log(sigma_g) ** 2)) / (
+        np.log(sigma_g) * X * np.sqrt(2 * math.pi)
+    )
     return X, C
 
 
 def decide_C_unit(used_C):
     if used_C == "Cs":
-        C_unit = u" \u00B5m\u00B2" + u"/cm\u00B3"
+        C_unit = " \u00b5m\u00b2" + "/cm\u00b3"
     elif used_C == "Cv":
-        C_unit = u" \u00B5m\u00B3" + u"/cm\u00B3"
+        C_unit = " \u00b5m\u00b3" + "/cm\u00b3"
     elif used_C == "Cm":
-        C_unit = " mg" + u"/cm\u00B3"
+        C_unit = " mg" + "/cm\u00b3"
     elif used_C == "Cn_dlogX":
-        C_unit = " 1" + u"/cm\u00B3"
+        C_unit = " 1" + "/cm\u00b3"
     else:
-        C_unit = " 1" + u"/cm\u00B3"
+        C_unit = " 1" + "/cm\u00b3"
     return C_unit
 
 
 def decide_y_label(used_C):
-    C_unit = Sup.decide_C_unit(used_C)
+    C_unit = sup.decide_C_unit(used_C)
     if "dlogX" in used_C:
-        y_label = 'dN/dlogD$_{p}$ / ' + C_unit
+        y_label = "dN/dlogD$_{p}$ / " + C_unit
     elif "cum" in used_C:
-        y_label = 'Fraction of Total Particle Concentration %'
+        y_label = "Fraction of Total Particle Concentration %"
     elif "Cv" in used_C:
-        y_label = 'Volume Concentration / ' + C_unit
+        y_label = "Volume Concentration / " + C_unit
     elif "Cm" in used_C:
-        y_label = 'Mass Concentration / ' + C_unit
+        y_label = "Mass Concentration / " + C_unit
     else:
-        y_label = 'Number Concentration / ' + C_unit
+        y_label = "Number Concentration / " + C_unit
     return y_label
 
 
 def decide_size_unit(used_device):
-    if used_device in list(Def.device_list["Device_Identifier"].values):
-        size_unit = Def.device_list["Size_Unit"][used_device]
+    if used_device in list(defs.device_list["Device_Identifier"].values):
+        size_unit = defs.device_list["Size_Unit"][used_device]
     else:
         size_unit = input("Please enter the size_unit as string.")
     return size_unit
@@ -172,29 +190,37 @@ def decide_size_unit(used_device):
 
 def decide_size_range(used_device, size_range="standard"):
     if size_range in ["standard", ""]:
-        if used_device in list(Def.device_list["Device_Identifier"].values):
-            size_range = Def.device_list["Standard_Size_Range (xticks, xticklabels)"][used_device]
+        if used_device in list(defs.device_list["Device_Identifier"].values):
+            size_range = defs.device_list["Standard_Size_Range (xticks, xticklabels)"][
+                used_device
+            ]
         else:
-            size_range = input("Please enter the size range as tuple of two lists: ([xticks], [xticklabels]).")
+            size_range = input(
+                "Please enter the size range as tuple of two lists: ([xticks], [xticklabels])."
+            )
     elif type(size_range) is tuple:
         pass
     else:
-        size_range = input("Please enter the size range as tuple of two lists: ([xticks], [xticklabels]).")
+        size_range = input(
+            "Please enter the size range as tuple of two lists: ([xticks], [xticklabels])."
+        )
     return size_range
 
 
 def decide_filename_function(used_device):
     if used_device == 5:
-        filename = Sup.get_filenames()
+        filename = sup.get_filenames()
     else:
-        filename = Sup.get_filename()
+        filename = sup.get_filename()
     return filename
 
 
 def add_path(path):
     if path == "manual":
-        path = input("Please enter a Path this data should be associated with. - "
-                                        "Used for naming figures")
+        path = input(
+            "Please enter a Path this data should be associated with. - "
+            "Used for naming figures"
+        )
     else:
         path = path
     return path
@@ -220,30 +246,30 @@ def build_legend(legend_entries, scan_nrs, ct, legend="automatic"):
     elif isinstance(legend, list):
         legend_entries.append(legend[ct])
     else:
-        legend_entries.append(input(f"Please enter the legend entry for scan {scan_nrs[ct]}"))
-    return
+        legend_entries.append(
+            input(f"Please enter the legend entry for scan {scan_nrs[ct]}")
+        )
 
 
 def save_plot(data, save_plot="off"):
-    if save_plot=="off":
+    if save_plot == "off":
         pass
     else:
-        if save_plot=="on" or save_plot=="":
+        if save_plot == "on" or save_plot == "":
             fileaddition = input("Please enter a fileaddition.")
         else:
             fileaddition = save_plot
         path = data["filename"][:-4] + "_" + fileaddition + ".png"
         # path = data["filename"][:-4] + "_" + data_identifier + "_" + fileaddition + ".png"
-        plt.savefig(path, dpi=600, transparent=True, bbox_inches='tight')
+        plt.savefig(path, dpi=600, transparent=True, bbox_inches="tight")
         print(f"file saved to {path}")
-    return
 
 
 def norm_C(C, calc_conc):
     norm_C = np.zeros_like(C)
     for k in range(len(C)):
         if calc_conc[k] > 0:
-            norm_C[k] = C[k]/calc_conc[k]
+            norm_C[k] = C[k] / calc_conc[k]
         else:
             norm_C[k] = C[k]
     return norm_C
