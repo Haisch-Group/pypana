@@ -1,0 +1,37 @@
+"""Exception related to reading of instrument data from a file.
+
+This module provides a specific error type for when a file is unreadable, corrupted,
+the reader encounters data that does not match its expected internal scheme,
+or when no reader can be determined automatically.
+"""
+
+from pathlib import Path
+
+from pypana.pana_error import ParticleAnalysisError
+
+
+class ReadError(ParticleAnalysisError):
+    """Raised when the reader cannot read the file. E.g. because of corrupted files or incorrect reader."""
+
+    def __init__(
+        self,
+        message: str = "An unspecified error occurred during particle analysis.",
+        *,
+        path: Path | None = None,
+    ) -> None:
+        """Initializes the error.
+
+        Args:
+            message (str, optional): A descriptive error message.
+            path (Path, optional): The path to the file.
+        """
+        super().__init__(message)
+        self.path = path
+
+    def __str__(self) -> str:
+        msg = super().__str__()
+
+        if self.path:
+            msg = f"{msg} [File: {self.path}]."
+
+        return msg
