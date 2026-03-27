@@ -1,0 +1,32 @@
+exclude: '^_v1'
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.8
+    hooks:
+      - id: ruff-check
+        types_or: [ python, pyi, pyproject ]
+        args: [ --fix ]
+
+      - id: ruff-format
+        types_or: [ python, pyi ]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [
+          "pandas-stubs",
+          "numpy",
+          "pytest"
+        ]
+
+  - repo: local
+    hooks:
+      - id: pytest-coverage
+        name: pytest-coverage
+        entry: uv run pytest tests --cov=src/pypana
+        language: system
+        pass_filenames: false
+        types: [ python ]
+        verbose: true
