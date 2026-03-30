@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pypana.readers.base import BaseInstrumentReader
+from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.tsi.tsi_las3340a import TSILAS3340AInstrumentReader
 
 EXAMPLE_FILES_DIR = Path(__file__).resolve().parents[2] / "ExampleFiles"

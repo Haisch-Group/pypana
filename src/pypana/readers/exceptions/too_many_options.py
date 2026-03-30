@@ -7,7 +7,7 @@ because the given file's contents are not uniquely parseable by only one impleme
 from pathlib import Path
 
 from pypana.pana_error import ParticleAnalysisError
-from pypana.readers.base import InstrumentReaderList
+from pypana.readers.base_instrument_reader import InstrumentReaderList
 
 
 class TooManyOptionsError(ParticleAnalysisError):

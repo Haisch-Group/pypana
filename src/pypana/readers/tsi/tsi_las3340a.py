@@ -9,14 +9,17 @@ References:
 import re
 from pathlib import Path
 
-from pypana.readers.base import BaseInstrumentReader
+from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.exceptions.read_error import ReadError
 
 
 class TSILAS3340AInstrumentReader(BaseInstrumentReader):
     """Instrument reader for TSI LAS 3340A."""
 
-    def can_read(self, path: Path | None) -> bool:
+    _device_name = "TSI LAS 3340A"
+
+    @classmethod
+    def can_read(cls, path: Path) -> bool:
         """Checks whether a given path may include TSI LAS 3340A output files that can be read.
 
         Current checks include:
@@ -37,7 +40,6 @@ class TSILAS3340AInstrumentReader(BaseInstrumentReader):
                 Note: the absence of ReadError in this method does not guarantee the input is parseable.
         """
         anchors = ["Date", "Time", "Accum.", "Scatter", "Current", "Temp.", "Flow"]
-        path = path or self.path
 
         if not path.is_dir():
             return False

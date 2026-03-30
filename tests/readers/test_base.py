@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from pypana.readers.base import BaseInstrumentReader
+from pypana.readers.base_instrument_reader import BaseInstrumentReader
 
 
 class TestBaseInstrumentReader:
@@ -16,7 +16,10 @@ class TestBaseInstrumentReader:
         """
 
         class DummyReader(BaseInstrumentReader):
-            def can_read(self, path: Path | None) -> bool:
+            _device_name = "DummyDevice"
+
+            @classmethod
+            def can_read(cls, path: Path | None) -> bool:
                 return True
 
         yield DummyReader

@@ -8,31 +8,34 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Unpack
+
+from pypana.readers.base_reader import BaseReader, ReaderKwargs
 
 type InstrumentReaderList = list[type[BaseInstrumentReader]]
 
 
-class BaseInstrumentReader(ABC):
+class BaseInstrumentReader(BaseReader, ABC):
     """Base instrument reader for all devices.
 
     Attributes:
         _subclass_registry (InstrumentReaderList): Internal registry of all available instrument reader classes.
     """
 
-    _is_router = False
     _subclass_registry: InstrumentReaderList = []
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, **kwargs: Unpack[ReaderKwargs]) -> None:
         """Default constructor for all readers.
 
         Args:
             path: The path to the input file.
         """
+        super().__init__(**kwargs)
         self.path = path
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__()
-        if not cls._is_router and cls not in BaseInstrumentReader._subclass_registry:
+        if cls not in BaseInstrumentReader._subclass_registry:
             BaseInstrumentReader._subclass_registry.append(cls)
 
     @classmethod
@@ -50,8 +53,9 @@ class BaseInstrumentReader(ABC):
         """
         return cls._subclass_registry.copy()
 
+    @classmethod
     @abstractmethod
-    def can_read(self, path: Path | None) -> bool:
+    def can_read(cls, path: Path) -> bool:
         """Check if this reader can read a given file. It indicates that this class is the correct reader.
 
         Args:
