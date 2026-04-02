@@ -78,5 +78,5 @@ class _Settings(BaseSettings):
     )
 
 
-constants = _Constants()
-settings = _Settings()
+Constants = _Constants()
+Settings = _Settings()
