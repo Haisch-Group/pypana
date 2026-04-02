@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
+from pypana.readers.base_reader import InputType
 from pypana.readers.defs import IGNORED_FILES
 from pypana.readers.exceptions.read_error import ReadError
 
@@ -18,6 +19,7 @@ class TSILAS3340AInstrumentReader(BaseInstrumentReader):
     """Instrument reader for TSI LAS 3340A."""
 
     _device_name = "TSI LAS 3340A"
+    _input_type = InputType.DIRECTORY
 
     @classmethod
     def can_read(cls, path: Path) -> bool:

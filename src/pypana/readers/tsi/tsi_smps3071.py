@@ -9,6 +9,7 @@ References:
 from pathlib import Path
 
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
+from pypana.readers.base_reader import InputType
 from pypana.readers.exceptions.read_error import ReadError
 
 
@@ -16,6 +17,7 @@ class TSISMPS3071InstrumentReader(BaseInstrumentReader):
     """Instrument reader for TSI SMPS 3071."""
 
     _device_name = "TSI SMPS 3071"
+    _input_type = InputType.FILE
 
     @classmethod
     def can_read(cls, path: Path) -> bool:

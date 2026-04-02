@@ -17,8 +17,6 @@ class _SmartReader(BaseReader, metaclass=ReaderRedirector):
     It will create an instance (or child) of BaseInstrumentReader, depending on what is the correct reader.
     """
 
-    _device_name = "-/-"
-
 
 # This is the only way to make the `BaseInstrumentReader.__init__` docstring show on hover
 # for both VS Code and PyCharm. The else block is the actual definition, but it shows the correct docstring.

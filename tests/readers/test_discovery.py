@@ -48,8 +48,8 @@ class TestSmartReader:
         class_names = ["DummyReader1", "DummyReader2"]
         path = NON_INSTRUMENT_FILE
 
-        dummy_reader_1 = base_instrument_reader_factory(class_names[0], True)  # noqa: F841
-        dummy_reader_2 = base_instrument_reader_factory(class_names[1], True)  # noqa: F841
+        base_instrument_reader_factory(class_names[0], True)
+        base_instrument_reader_factory(class_names[1], True)
 
         with pytest.raises(TooManyOptionsError) as exec_info:
             SmartReader(path)

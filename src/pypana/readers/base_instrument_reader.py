@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Unpack
+from typing import ClassVar, Unpack
 
 from pypana.readers.base_reader import BaseReader, ReaderKwargs
+from pypana.readers.select_path import pick_path
 
 type InstrumentReaderSet = set[type[BaseInstrumentReader]]
 
@@ -22,16 +23,26 @@ class BaseInstrumentReader(BaseReader, ABC):
         _subclass_registry (InstrumentReaderList): Internal registry of all available instrument reader classes.
     """
 
+    _device_name: ClassVar[str]
     _subclass_registry: InstrumentReaderSet = set()
 
-    def __init__(self, path: Path, **kwargs: Unpack[ReaderKwargs]) -> None:
+    def __init__(
+        self,
+        path: Path | str | None = None,
+        **kwargs: Unpack[ReaderKwargs],
+    ) -> None:
         """Default constructor for all readers.
 
         Args:
-            path: The path to the input file.
+            path: The path to the input file. Defaults to None, in which case a selection dialogue is opened.
         """
         super().__init__(**kwargs)
-        self.path = path
+
+        path = path or pick_path(self._input_type)  # pragma: no branch
+        if type(path) is not Path:
+            path = Path(path)
+
+        self._path = path
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__()
