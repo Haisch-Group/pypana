@@ -25,13 +25,9 @@ class ReadError(ParticleAnalysisError):
             message (str, optional): A descriptive error message.
             path (Path, optional): The path to the file.
         """
-        super().__init__(message)
         self.path = path
 
-    def __str__(self) -> str:
-        msg = super().__str__()
+        if self.path:
+            message = f"{message} [File: {self.path}]."
 
-        if self.path:  # pragma: no cover
-            msg = f"{msg} [File: {self.path}]."
-
-        return msg
+        super().__init__(message)

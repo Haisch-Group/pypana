@@ -5,6 +5,7 @@ description = "Scripts for import and evaluation of aerosol measurements"
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
+    "cycler>=0.12.1",
     "dill==0.4.0",
     "ipykernel>=7.2.0",
     "matplotlib>=3.10.8",
@@ -12,7 +13,9 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pandas>=3.0.0",
     "pandas-stubs~=3.0.0",
+    "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
+    "rich>=14.3.4",
     "scikit-learn>=1.8.0",
     "scipy>=1.17.0",
     "scipy-stubs~=1.17.0",

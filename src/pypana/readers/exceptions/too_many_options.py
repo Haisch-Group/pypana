@@ -28,23 +28,19 @@ class TooManyOptionsError(ParticleAnalysisError):
             possible_readers (InstrumentReaderList, optional):
                 Which conflicting BaseInstrumentReaders can parse this file.
         """
-        super().__init__(message)
         self.path = path
         self.possible_readers = possible_readers
 
-    def __str__(self) -> str:
-        msg = super().__str__()
-
         if self.path:  # pragma: no cover
-            msg = f"{msg} [File: {self.path}]."
+            message = f"{message} [File: {self.path}]."
 
         if self.possible_readers:  # pragma: no cover
             reader_names = [
                 f"{cls._device_name} / {cls.__name__}" for cls in self.possible_readers
             ]
-            msg = (
-                f"{msg}\nPossible InstrumentReaders can parse the given file: "
+            message = (
+                f"{message}\nPossible InstrumentReaders can parse the given file: "
                 f"{',\n'.join(reader_names)}."
             )
 
-        return msg
+        super().__init__(message)
