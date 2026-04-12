@@ -12,10 +12,10 @@ class Tol7Theme(BaseTheme, name="tol7"):
     color_cycle = {
         "light blue": "#77aadd",
         "light cyan": "#99ddff",
-        "mint": "#44b99",
-        "pear": "##bbcc33",
+        "mint": "#44bb99",
+        "pear": "#bbcc33",
         "olive": "#aaaa00",
-        "light yellow": "#edd88",
+        "light yellow": "#eedd88",
         "orange": "#ee8866",
         "pink": "#ffaabb",
     }
