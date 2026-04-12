@@ -1,19 +1,55 @@
-from pypana.console import console
-from pypana.pana_error import ParticleAnalysisError
-from pypana.plots.themes.base import PlotTheme, ThemeSet, _FIELDS
+from pypana.plots.themes import (
+    base as base,
+)
+from pypana.plots.themes import (
+    colorful as colorful,
+)
+from pypana.plots.themes import (
+    fraunhofer as fraunhofer,
+)
+from pypana.plots.themes import (
+    ibm as ibm,
+)
+from pypana.plots.themes import (
+    tab10 as tab10,
+)
+from pypana.plots.themes import (
+    tol3 as tol3,
+)
+from pypana.plots.themes import (
+    tol4 as tol4,
+)
+from pypana.plots.themes import (
+    tol7 as tol7,
+)
+from pypana.plots.themes import (
+    tum as tum,
+)
+from pypana.plots.themes import (
+    wong as wong,
+)
+from pypana.plots.themes.base import BaseTheme
+from pypana.plots.themes.base import ThemeSet as ThemeSet
+from pypana.plots.themes.utils import available_themes as available_themes
+from pypana.plots.themes.utils import print_themes as print_themes
 
 
-from rich.text import Text
+def apply_theme(theme: type[BaseTheme] | str) -> None:
+    """Applies the given theme globally. Only imported themes can be referenced by their string name.
 
-def available_themes() -> ThemeSet:
-    return PlotTheme.registered_themes()
-
-def apply_theme(theme: type[PlotTheme] | str | None = None) -> None:
-    if theme is None:
-        raise ParticleAnalysisError()  # TODO: to be specified with better exception
-
+    Custom themes should therefore be mainly referenced as type.
+    Apart from this method, you can still always fall back to ``plt.style.use('<theme-path>.mplstyle')``
+    of the matplotlib package.
+    """
     if isinstance(theme, str):
-        match = next((cls for cls in PlotTheme.registered_themes() if cls.name == theme), None)
+        match = next(
+            (
+                cls
+                for cls in BaseTheme.registered_themes()
+                if cls.name and cls.name.lower() == theme.lower()
+            ),
+            None,
+        )
 
         if match is None:
             raise KeyError(f"Unknown theme: {theme!r}")
@@ -22,37 +58,3 @@ def apply_theme(theme: type[PlotTheme] | str | None = None) -> None:
 
     assert isinstance(theme, type)
     theme.apply()
-
-def _luminance(hex_color: str) -> float:
-    h = hex_color.lstrip('#')
-    r, g, b = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b
-
-def print_themes() -> None:
-    for theme in  PlotTheme.registered_themes():
-        console.print()
-        console.print(Text(f"{theme.name}    ({theme.__name__})", style="bold"))
-        console.print("─" * 52)
-
-        if theme.color_cycle:
-            for i, hex_color in enumerate(theme.color_cycle, 1):
-                foreground = "black" if _luminance(hex_color) > 0.35 else "white"
-                line = Text(f"  {i:2}.  ")
-                line.append(f"  {hex_color}  ", style=f"{foreground} on {hex_color}")
-                console.print(line)
-
-        console.print()
-
-        for attr, field in _FIELDS.items():
-            if attr == "color_cycle":
-                continue
-
-            value = getattr(theme, attr, None)
-
-            if value is None:
-                continue
-
-            keys = [field.keys] if isinstance(field.keys, str) else field.keys
-
-            for key in keys:
-                console.print(Text(f"  {key:<30}  {value}", style=""))

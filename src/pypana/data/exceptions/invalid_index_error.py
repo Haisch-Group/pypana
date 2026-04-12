@@ -1,3 +1,9 @@
+"""Exception related to selecting measurements.
+
+This module provides a specific error type for when a subset of measurements is selected,
+but the selection input is invalid.
+"""
+
 from pypana.pana_error import ParticleAnalysisError
 
 
@@ -5,11 +11,8 @@ class InvalidIndexError(ParticleAnalysisError, ValueError):
     """Raised when a particular measurement index is invalid."""
 
     def __init__(
-        self,
-        message: str = "Invalid indices selected",
-        *,
-        invalid_indices: list[int]
-    ):
+        self, message: str = "Invalid indices selected", *, invalid_indices: list[int]
+    ) -> None:
         """Initializes the error.
 
         Args:

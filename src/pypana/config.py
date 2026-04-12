@@ -11,6 +11,8 @@ import numpy.typing as npt
 from pydantic import Field, SkipValidation
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from pypana.plots.themes import BaseTheme
+
 
 class _Constants(BaseSettings):
     """General constants for the pypana package.
@@ -69,6 +71,11 @@ class _Settings(BaseSettings):
     )
 
     # ----- VISUALIZATION ----- #
+    THEME: BaseTheme = Field(
+        default=BaseTheme,
+        title="Visualization theme",
+        description="The theme to use for matplotlib visualizations. Can be overriden per visualization call as kwarg.",
+    )
 
     # ----- EXPORT ----- #
     EXPORT_DPI: int = Field(
