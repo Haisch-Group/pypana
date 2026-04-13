@@ -3,8 +3,7 @@
 This module provides a class to store the data and perform calculations on it
 """
 
-from collections import defaultdict
-from collections.abc import Hashable
+from collections.abc import Hashable, Sequence
 from pathlib import Path
 from textwrap import dedent
 from typing import Annotated, Any
@@ -21,7 +20,7 @@ class InstrumentData(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
-    measurements: list[Measurement] = Field(
+    measurements: dict[int, Measurement] = Field(
         min_length=1,
         description="List of measurement data to include in the analysis",
     )
@@ -44,7 +43,7 @@ class InstrumentData(BaseModel):
     def select_measurements(
         self,
         indices: Annotated[int, Field(ge=0)]
-        | Annotated[list[int], Field(min_length=1)],
+        | Annotated[Sequence[int], Field(min_length=1)],
         *,
         inplace: bool = True,
         verbose: bool = True,
@@ -62,36 +61,41 @@ class InstrumentData(BaseModel):
         Note:
             inplace=False will not deepcopy the measurement data itself. Its modifications will be reflected in the
             newly returned object.
+            Ranges can include empty measurement indices or go beyond the actual measurement
+            scan numbers, as long as they are lower bounded by 0 and no duplicates exist.
         """
-        selected_indices: list[int] = [indices] if isinstance(indices, int) else indices
+        selected_indices: Sequence[int] = (
+            [indices] if isinstance(indices, int) else indices
+        )
 
-        max_index = max(selected_indices)
         has_duplicates = len(selected_indices) != len(set(selected_indices))
 
-        if has_duplicates or max_index > len(self.measurements):
-            invalid_indices: list[int] = list()
-            counts: defaultdict[int, int] = defaultdict(int)
-
-            for i in selected_indices:
-                counts[i] += 1
-
-            invalid_indices.extend(
-                [i for i in selected_indices if i >= len(self.measurements)]
-            )
-            invalid_indices.extend([i for i, count in counts.items() if count > 1])
-
+        if has_duplicates or min(selected_indices) < 0:
             raise InvalidIndexError(
-                message="Invalid indices given when selecting measurements",
-                invalid_indices=invalid_indices,
+                message="Duplicate scan numbers given when selecting measurements",
+                invalid_indices=[
+                    x for x in set(selected_indices) if selected_indices.count(x) > 1
+                ],
             )
 
-        selected_measurements: list[Measurement] = [
-            self.measurements[i] for i in selected_indices
-        ]
+        if isinstance(indices, list) and indices not in self.measurements:
+            raise InvalidIndexError(
+                message="Some scan numbers don't exist in the measurements. To avoid this behaviour, use `range()` "
+                "instead.",
+                invalid_indices=list(set(indices) - set(self.measurements.keys())),
+            )
+
+        selected_measurements: dict[int, Measurement] = {
+            i: self.measurements[i]
+            for i in selected_indices
+            if self.measurements.get(i, None) is not None
+        }
 
         if verbose:
-            first = selected_measurements[0]
-            last = selected_measurements[-1]
+            selected_ordered = sorted(selected_measurements.keys())
+
+            first = selected_measurements[selected_ordered[0]]
+            last = selected_measurements[selected_ordered[-1]]
 
             console.print(
                 dedent(f"""\

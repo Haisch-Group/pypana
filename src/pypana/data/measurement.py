@@ -13,7 +13,7 @@ import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-FloatArray = npt.NDArray[np.floating[Any]]
+FloatArray = npt.NDArray[np.floating]
 
 
 class Measurement(BaseModel):
@@ -46,27 +46,27 @@ class Measurement(BaseModel):
         alias="delta_n_dlog_dp",
         description="Normalized number size distribution dN/dlog(d_p) [1/cm³]",
     )
-    raw_median: np.floating[Any] | None = Field(
+    raw_median: float | None = Field(
         default=None,
         alias="median",
         description="Median size [m]",
     )
-    raw_mean: np.floating[Any] | None = Field(
+    raw_mean: float | None = Field(
         default=None,
         alias="mean",
         description="Mean size [m]",
     )
-    raw_geo_mean: np.floating[Any] | None = Field(
+    raw_geo_mean: float | None = Field(
         default=None,
         alias="geo_mean",
         description="Geometric Mean size [m]",
     )
-    raw_mode: np.floating[Any] | None = Field(
+    raw_mode: float | None = Field(
         default=None,
         alias="mode",
         description="Mode [m]",
     )
-    raw_geo_std_dev: np.floating[Any] | None = Field(
+    raw_geo_std_dev: float | None = Field(
         default=None,
         alias="geo_std_dev",
         description="Geometric Standard Deviation [m]",
@@ -86,7 +86,7 @@ class Measurement(BaseModel):
         return self
 
     @cached_property
-    def n_total(self) -> np.floating[Any]:
+    def n_total(self) -> np.floating:
         """Total number concentration, integrated over all bins [1/cm³]."""
         assert self.raw_delta_n is not None  # mypy doesnt track it correctly
         return np.floating(self.raw_delta_n.sum())

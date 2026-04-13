@@ -24,8 +24,10 @@ class TestSmartReader:
         self, file_path: Path, expected_reader_class: type[BaseInstrumentReader]
     ) -> None:
         smart_reader = SmartReader(file_path)
+        smart_reader_from_str = SmartReader(str(file_path))
 
         assert type(smart_reader) is expected_reader_class
+        assert type(smart_reader_from_str) is expected_reader_class
 
     def test_error_for_non_existing_file(self) -> None:
         path = Path(NON_EXISTING_FILE)

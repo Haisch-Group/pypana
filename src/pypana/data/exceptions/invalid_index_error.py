@@ -11,7 +11,10 @@ class InvalidIndexError(ParticleAnalysisError, ValueError):
     """Raised when a particular measurement index is invalid."""
 
     def __init__(
-        self, message: str = "Invalid indices selected", *, invalid_indices: list[int]
+        self,
+        message: str = "Invalid indices selected",
+        *,
+        invalid_indices: list[int] | None = None,
     ) -> None:
         """Initializes the error.
 

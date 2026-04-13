@@ -78,11 +78,11 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
         with Path.open(self._path, "r", encoding=self._encoding) as f:
             for i, line in enumerate(f):
                 if line.startswith("Sample Time"):
-                    sample_time = int(line[12:])
+                    sample_time = int(line[12:].strip())
                 elif line.startswith("Density"):
-                    density = int(line[8:])
+                    density = int(line[8:].strip())
                 elif line.startswith("Stokes Correction"):
-                    stokes_corrected = line[18:] == "on"
+                    stokes_corrected = line[18:].strip() == "on"
                 elif line.startswith(header_start_characters):
                     header_pos = i
                     break
@@ -108,13 +108,17 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
             d_p, delta_d_p, delta_log_d_p = self._read_bin_metadata(
                 d_p_start_column, data
             )
+
+            bin_columns = data.columns[
+                d_p_start_column : d_p_start_column + self._D_P_COLUMNS_COUNT
+            ]
         except (FileNotFoundError, ValueError) as e:
             raise ReadError(f"{e}") from e
 
         float_cols = data.select_dtypes(include=["float"]).columns
         data[float_cols] = data[float_cols].astype(float)
 
-        measurements: list[Measurement] = list()
+        measurements: dict[int, Measurement] = dict()
 
         for row in data.to_dict("records"):
             try:
@@ -128,7 +132,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
                     f"{row['Date']} {row['Start Time']}", "%m/%d/%y %H:%M:%S"
                 )
                 delta_n_dlog_dp: FloatArray = np.array(
-                    row[d_p_start_column : d_p_start_column + self._D_P_COLUMNS_COUNT],
+                    [row[col] for col in bin_columns],
                     dtype=float,
                 )
                 median = row["Median(µm)"]
@@ -158,7 +162,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
                     geo_std_dev=geo_std_dev,
                     other=other_info,
                 )
-                measurements.append(measurement)
+                measurements[scan_nr] = measurement
             except (ValueError, AttributeError, KeyError) as e:
                 raise ReadError(f"{e}") from e
             except ReadError as e:
@@ -180,11 +184,21 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
     def _read_bin_metadata(
         self, d_p_start_column: int, data: DataFrame
     ) -> tuple[FloatArray, FloatArray, FloatArray]:
+        """Reads the metadata arrays that are constant for all measurements.
+
+        Args:
+            d_p_start_column (int): Column index of the start position of the bins.
+            data (DataFrame): The original dataframe with all metadata.
+
+        Returns:
+            tuple[FloatArray, FloatArray, FloatArray]: A tuple containing:
+                - d_p, delta_d_p, delta_log_d_p
+        """
         d_p = (
             np.array(
                 data.columns[
                     d_p_start_column : d_p_start_column + self._D_P_COLUMNS_COUNT
-                ],
+                ].str.replace("<", ""),
                 dtype=float,
             )
             * self._SIZE_SCALING_FACTOR
