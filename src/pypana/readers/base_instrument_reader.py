@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import ClassVar, Unpack
 
+from pypana.data.instrument_data import InstrumentData
 from pypana.readers.base_reader import BaseReader, ReaderKwargs
 from pypana.readers.select_path import pick_path
 
@@ -38,11 +39,16 @@ class BaseInstrumentReader(BaseReader, ABC):
         """
         super().__init__(**kwargs)
 
-        path = path or pick_path(self._input_type)  # pragma: no branch
-        if type(path) is not Path:
-            path = Path(path)
+        _path: Path
 
-        self._path = path
+        if not path:
+            _path = pick_path(self._input_type)  # pragma: no branch
+        elif isinstance(path, str):
+            _path = Path(path)
+        else:
+            _path = path
+
+        self._path = _path
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__()
@@ -72,4 +78,15 @@ class BaseInstrumentReader(BaseReader, ABC):
 
         Returns:
             Whether the read test succeeded.
+        """
+
+    @abstractmethod
+    def read(self) -> InstrumentData:
+        """Read the given file and convert its data into the pypana format.
+
+        Returns:
+            InstrumentData: The pypana instrument on which further analysis can be conducted.
+
+        Raises:
+            ReadError: If an error occurs while reading the file.
         """

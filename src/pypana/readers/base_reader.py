@@ -30,5 +30,6 @@ class ReaderKwargs(TypedDict, total=False):
 class BaseReader:
     """Base reader class for all purposes."""
 
+    _encoding: ClassVar[str] = "utf-8"
     _input_type: ClassVar[InputType] = InputType.UNDEFINED
     _path: Path

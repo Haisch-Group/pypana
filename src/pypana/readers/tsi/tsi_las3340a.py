@@ -9,10 +9,11 @@ References:
 import re
 from pathlib import Path
 
+from pypana.data.instrument_data import InstrumentData
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.base_reader import InputType
 from pypana.readers.defs import IGNORED_FILES
-from pypana.readers.exceptions.read_error import ReadError
+from pypana.readers.exceptions.read_error import ReaderNotImplementedError, ReadError
 
 
 class TSILAS3340AInstrumentReader(BaseInstrumentReader):
@@ -68,3 +69,14 @@ class TSILAS3340AInstrumentReader(BaseInstrumentReader):
                     )
 
         return True
+
+    def read(self) -> InstrumentData:
+        """Read the given file and convert its data into the pypana format.
+
+        Returns:
+            InstrumentData: The pypana instrument on which further analysis can be conducted.
+
+        Raises:
+            ReadError: If an error occurs while reading the file.
+        """
+        raise ReaderNotImplementedError()

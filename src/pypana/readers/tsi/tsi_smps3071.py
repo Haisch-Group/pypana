@@ -8,14 +8,17 @@ References:
 
 from pathlib import Path
 
+from pypana.data.instrument_data import InstrumentData
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.base_reader import InputType
-from pypana.readers.exceptions.read_error import ReadError
+from pypana.readers.exceptions.read_error import ReaderNotImplementedError
+from pypana.readers.tsi.utils import is_basic_tsi_format_file
 
 
 class TSISMPS3071InstrumentReader(BaseInstrumentReader):
     """Instrument reader for TSI SMPS 3071."""
 
+    _encoding = "iso-8859-1"
     _device_name = "TSI SMPS 3071"
     _input_type = InputType.FILE
 
@@ -40,44 +43,21 @@ class TSISMPS3071InstrumentReader(BaseInstrumentReader):
                 does not yet fully implement this device's formats.
                 Note: the absence of ReadError in this method does not guarantee the input is parseable.
         """
-        anchors = {"Classifier Model\t3071", "Units", "Weight", "Sample #"}
-        found_anchors = set()
-        data_started = False
-        last_index = 0
+        anchors = ["Classifier Model\t3071", "Units", "Weight", "Sample #"]
 
-        if not path.is_file():
-            return False
+        return is_basic_tsi_format_file(
+            path,
+            anchors,
+            encoding=cls._encoding,
+        )
 
-        with Path.open(path, "r", encoding="iso-8859-1") as f:
-            for _, line in enumerate(f, start=1):
-                cleaned_line = line.strip()
+    def read(self) -> InstrumentData:
+        """Read the given file and convert its data into the pypana format.
 
-                if not cleaned_line:
-                    continue
+        Returns:
+            InstrumentData: The pypana instrument on which further analysis can be conducted.
 
-                for anchor in anchors:
-                    if cleaned_line.startswith(anchor):
-                        found_anchors.add(anchor)
-
-                if cleaned_line.startswith("Sample #") and not data_started:
-                    data_started = True
-                    continue
-
-                if not data_started:
-                    continue
-
-                first_column = cleaned_line.split("\t")[0]
-
-                if first_column.isdigit():
-                    current_index = int(first_column)
-
-                    if current_index == last_index + 1:
-                        last_index += 1
-                        continue
-
-                raise ReadError(
-                    message=f"Scan {last_index + 1} appears to be missing",
-                    path=path,
-                )
-
-        return anchors.issubset(found_anchors)
+        Raises:
+            ReadError: If an error occurs while reading the file.
+        """
+        raise ReaderNotImplementedError()

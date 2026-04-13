@@ -15,7 +15,7 @@ class ReadError(ParticleAnalysisError):
 
     def __init__(
         self,
-        message: str = "An unspecified error occurred during particle analysis.",
+        message: str = "An unspecified error occurred while reading the file.",
         *,
         path: Path | None = None,
     ) -> None:
@@ -30,4 +30,18 @@ class ReadError(ParticleAnalysisError):
         if self.path:
             message = f"{message} [File: {self.path}]."
 
+        super().__init__(message)
+
+
+class ReaderNotImplementedError(ReadError):
+    """Raised when class is not yet implemented."""
+
+    def __init__(
+        self, message: str = "This specific reader is not yet implemented."
+    ) -> None:
+        """Initializes the error.
+
+        Args:
+            message (str, optional): A descriptive error message.
+        """
         super().__init__(message)

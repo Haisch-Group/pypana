@@ -4,9 +4,10 @@ This module provides a class to store the data and perform calculations on it
 """
 
 from collections import defaultdict
+from collections.abc import Hashable
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
@@ -25,15 +26,19 @@ class InstrumentData(BaseModel):
         description="List of measurement data to include in the analysis",
     )
 
-    _device_name: str = Field(
-        alias="device_name",
+    device_name: str = Field(
         default="",
         description="Name of the device the data was measured on",
     )
-    _file_path: Path | None = Field(
-        alias="file_path",
+
+    file_path: Path | None = Field(
         default=None,
         description="Path to the imported measurement file",
+    )
+
+    other_info: dict[Hashable, Any] = Field(
+        default_factory=dict,
+        description="Other info about the measurements that might be required.",
     )
 
     def select_measurements(
@@ -102,6 +107,6 @@ class InstrumentData(BaseModel):
 
         return InstrumentData(
             measurements=selected_measurements,
-            device_name=self._device_name,
-            file_path=self._file_path,
+            device_name=self.device_name,
+            file_path=self.file_path,
         )

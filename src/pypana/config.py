@@ -4,11 +4,9 @@ This module provides all global constants and settings to be used. Most can be c
 behavior.
 """
 
-from typing import Annotated
+from enum import Enum
 
-import numpy as np
-import numpy.typing as npt
-from pydantic import Field, SkipValidation
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from pypana.plots.themes import BaseTheme
@@ -24,22 +22,19 @@ class _Constants(BaseSettings):
     ELEMENTARY_CHARGE: float = Field(
         default=1.602176634e-19,
         title="Elementary Charge",
-        description="The elementary charge (e) in coulomb (C), as per https://physics.nist.gov/cgi-bin/cuu/Value?e. "
-        "Weakly typed to respect settings.DTYPE",
+        description="The elementary charge (e) in coulomb (C), as per https://physics.nist.gov/cgi-bin/cuu/Value?e. ",
     )
 
     STP: tuple[float, float] = Field(
         default=(273.15, 100.0),
         title="Standard Temperature and Pressure",
-        description="The Standard Temperature (in K) and Pressure (in kPa). "
-        "Weakly typed to respect settings.DTYPE",
+        description="The Standard Temperature (in K) and Pressure (in kPa). ",
     )
 
     NTP: tuple[float, float] = Field(
         default=(293.15, 101.325),
         title="Normal Temperature and Pressure",
-        description="The Normal Temperature (in K) and Pressure (in kPa). "
-        "Weakly typed to respect settings.DTYPE",
+        description="The Normal Temperature (in K) and Pressure (in kPa). ",
     )
 
     TSI_NTP: tuple[float, float] = Field(
@@ -47,8 +42,7 @@ class _Constants(BaseSettings):
         title="TSI Normal Temperature and Pressure",
         description="The TSI specific Normal Temperature (in K) and Pressure (in kPa) as per "
         "https://tsi.com/getmedia/a28dbc6d-ac11-4305-8501-3ce3f0163bbf/GenPurp"
-        "-Standard_vs_Volumetric_FLOW-004_US."
-        "Weakly typed to respect settings.DTYPE",
+        "-Standard_vs_Volumetric_FLOW-004_US.",
     )
 
 
@@ -63,15 +57,8 @@ class _Settings(BaseSettings):
         arbitrary_types_allowed=True,
     )
 
-    # ----- DATA ----- #
-    DTYPE: Annotated[npt.DTypeLike, SkipValidation()] = Field(
-        default=np.float32,
-        title="NumPy data type for imported data",
-        description="The default NumPy data type (dtype) used throughout the data pipeline. Should not be changed ",
-    )
-
     # ----- VISUALIZATION ----- #
-    THEME: BaseTheme = Field(
+    THEME: type[BaseTheme] = Field(
         default=BaseTheme,
         title="Visualization theme",
         description="The theme to use for matplotlib visualizations. Can be overriden per visualization call as kwarg.",
@@ -85,5 +72,13 @@ class _Settings(BaseSettings):
     )
 
 
-Constants = _Constants()
-Settings = _Settings()
+class UnitScale(Enum):
+    """Scaling factor for sizes."""
+
+    MILLI = 1e-3
+    MICRO = 1e-6
+    NANO = 1e-9
+
+
+constants = _Constants()
+settings = _Settings()

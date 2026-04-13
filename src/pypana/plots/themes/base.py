@@ -140,8 +140,14 @@ class BaseTheme:
     def print_theme(cls) -> None:
         """Print theme in a human-readable format."""
         output = Text()
-        output.append(Text(f"{cls.name}    ({cls.__name__})", style="bold"))
-        output.append("─" * 52)
+        output.append(
+            Text(
+                f"{(str(cls.name) if cls.name else '') + '    (' + cls.__name__ + ')':─<52.52}",
+                style="bold",
+            )
+        )
+        output.append("\n")
+        output.append(cls.__doc__)
         output.append("\n")
 
         if cls.color_cycle:
