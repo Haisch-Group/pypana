@@ -9,6 +9,10 @@ from enum import Enum
 from pathlib import Path
 from typing import ClassVar, TypedDict
 
+from rich import inspect
+
+from pypana.utils.debug import Debuggable
+
 type ReaderList = list[type[BaseReader]]
 
 
@@ -27,9 +31,20 @@ class ReaderKwargs(TypedDict, total=False):
     """The kwargs passed to the reader class."""
 
 
-class BaseReader:
+class BaseReader(Debuggable):
     """Base reader class for all purposes."""
 
     _encoding: ClassVar[str] = "utf-8"
     _input_type: ClassVar[InputType] = InputType.UNDEFINED
     _path: Path
+
+    def info(self, *, verbose: bool = False) -> None:
+        """Print the state of the reader.
+
+        Args:
+            verbose (bool): verbose output mode.
+        """
+        if verbose:
+            inspect(self, value=True, private=True, methods=True)
+        else:
+            inspect(self)

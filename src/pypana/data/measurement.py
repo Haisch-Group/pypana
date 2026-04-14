@@ -12,11 +12,14 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from rich import inspect
+
+from pypana.utils.debug import Debuggable
 
 FloatArray = npt.NDArray[np.floating]
 
 
-class Measurement(BaseModel):
+class Measurement(BaseModel, Debuggable):
     """A single measurement or scan of an instrument with all its data."""
 
     model_config = ConfigDict(
@@ -36,6 +39,7 @@ class Measurement(BaseModel):
     delta_log_d_p: FloatArray = Field(
         description="Logarithmic bin width Δlog(d_p) = log10(d_upper / d_lower)"
     )
+    bin_boundaries: FloatArray = Field(description="The n+1 bin boundaries")
     raw_delta_n: FloatArray | None = Field(
         default=None,
         alias="delta_n",
@@ -76,6 +80,14 @@ class Measurement(BaseModel):
         default_factory=dict,
         description="Other measurement data that is currently not directly supported in other fields.",
     )
+
+    def info(self, *, verbose: bool = False) -> None:
+        """Print the state of the measurement.
+
+        Args:
+            verbose (bool): currently has no effect.
+        """
+        inspect(self)
 
     @model_validator(mode="after")
     def check_concentration_provided(self) -> "Measurement":

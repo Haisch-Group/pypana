@@ -21,6 +21,7 @@ from pypana.readers.base_reader import InputType
 from pypana.readers.exceptions.read_error import ReaderNotImplementedError, ReadError
 from pypana.readers.tsi.utils import is_basic_tsi_format_file
 from pypana.readers.utils import other_columns_to_dict
+from pypana.utils.measurement_data_type import MeasurementDataType
 
 
 class TSIAPS3321InstrumentReader(BaseInstrumentReader):
@@ -105,7 +106,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
             assert isinstance(d_p_start_loc, int)
             d_p_start_column = int(d_p_start_loc) + 1
 
-            d_p, delta_d_p, delta_log_d_p = self._read_bin_metadata(
+            d_p, delta_d_p, delta_log_d_p, bin_boundaries = self._read_bin_metadata(
                 d_p_start_column, data
             )
 
@@ -122,7 +123,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
 
         for row in data.to_dict("records"):
             try:
-                if row["Aerodynamic Diameter"] != "dN/dlogDp":
+                if row["Aerodynamic Diameter"] != MeasurementDataType.dndlogdp.value:
                     raise ReaderNotImplementedError(
                         "Other types than dN/dlogDp are not yet implemented for TSI APS 3321."
                     )
@@ -155,6 +156,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
                     delta_d_p=delta_d_p.copy(),
                     delta_log_d_p=delta_log_d_p.copy(),
                     delta_n_dlog_dp=delta_n_dlog_dp,
+                    bin_boundaries=bin_boundaries.copy(),
                     median=median,
                     mean=mean,
                     geo_mean=geo_mean,
@@ -183,7 +185,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
 
     def _read_bin_metadata(
         self, d_p_start_column: int, data: DataFrame
-    ) -> tuple[FloatArray, FloatArray, FloatArray]:
+    ) -> tuple[FloatArray, FloatArray, FloatArray, FloatArray]:
         """Reads the metadata arrays that are constant for all measurements.
 
         Args:
@@ -207,7 +209,13 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
         delta_log_d_p = np.full(self._D_P_COLUMNS_COUNT, delta_log_d_p_constant)
 
         logarithmic_bin_step = 10 ** (delta_log_d_p_constant / 2)
+
+        # re-center lowest bin (machine cut off) to look like normal bin, but may be later cut off
+        d_p[0] = d_p[1] / (logarithmic_bin_step**2)
+
         d_p_lower = d_p / logarithmic_bin_step
         d_p_upper = d_p * logarithmic_bin_step
         delta_d_p = d_p_upper - d_p_lower
-        return d_p, delta_d_p, delta_log_d_p
+        bin_boundaries = np.append(d_p_lower, d_p_upper[-1])
+
+        return d_p, delta_d_p, delta_log_d_p, bin_boundaries

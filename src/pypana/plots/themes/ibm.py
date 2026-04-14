@@ -13,9 +13,9 @@ class IBMTheme(BaseTheme, name="ibm"):
 
     color_cycle = {
         "1st": "#648fff",
-        "2nd": "#ffb000",
+        "2nd": "#785ef0",
         "3rd": "#dc267f",
         "4th": "#fe6100",
-        "5th": "#785ef0",
+        "5th": "#ffb000",
         "black": "#000000",
     }

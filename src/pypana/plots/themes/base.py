@@ -7,10 +7,13 @@ from dataclasses import dataclass
 from typing import Any, ClassVar
 
 import matplotlib
+import plotly.graph_objects as go
 from cycler import cycler
+from rich import inspect
 from rich.text import Text
 
 from pypana.console import console
+from pypana.utils.debug import Debuggable
 
 LUMINANCE_THRESHOLD = 0.35
 
@@ -44,10 +47,25 @@ _FIELDS: dict[str, _Field] = {
     "dpi": _Field("savefig.dpi"),
 }
 
+_PLOTLY_FIELDS: dict[str, _Field] = {
+    "color_cycle": _Field("colorway", transform=lambda v: list(v.values())),
+    "colormap": _Field("colorscale.sequential"),
+    "grid_color": _Field(["xaxis.gridcolor", "yaxis.gridcolor"]),
+    "font_family": _Field("font.family"),
+    "font_size": _Field("font.size"),
+    "title_size": _Field("title.font.size"),
+    "label_size": _Field(["xaxis.title.font.size", "yaxis.title.font.size"]),
+    "tick_size": _Field(["xaxis.tickfont.size", "yaxis.tickfont.size"]),
+    "legend_size": _Field("legend.font.size"),
+    "grid_visible": _Field(["xaxis.showgrid", "yaxis.showgrid"]),
+    "spine_width": _Field(["xaxis.linewidth", "yaxis.linewidth"]),
+    "figure_size": _Field(["width", "height"]),
+}
+
 type ThemeSet = set[type[BaseTheme]]
 
 
-class BaseTheme:
+class BaseTheme(Debuggable):
     """Base class for all plotting themes.
 
     Subclass and override only the attributes you need.
@@ -132,6 +150,27 @@ class BaseTheme:
         return params
 
     @classmethod
+    def to_plotly_template(cls) -> go.layout.Template:
+        """Transform the theme to be loadable with plotly."""
+        layout: dict[str, Any] = {}
+        for attr, field in _PLOTLY_FIELDS.items():
+            value = getattr(cls, attr, None)
+            if value is None:
+                continue
+            value = field.transform(value) if field.transform else value
+            keys = [field.keys] if isinstance(field.keys, str) else field.keys
+
+            if attr == "figure_size":
+                assert isinstance(value, list)
+                for path, v in zip(keys, value, strict=True):
+                    _set_nested(layout, path, v)
+            else:
+                for path in keys:
+                    _set_nested(layout, path, value)
+
+        return go.layout.Template(layout=layout)
+
+    @classmethod
     def apply(cls) -> None:
         """Load theme into matplotlib."""
         matplotlib.rcParams.update(cls.to_rcparams())
@@ -177,9 +216,22 @@ class BaseTheme:
 
         console.print(output)
 
+    @classmethod
+    def info(cls, *, verbose: bool = False) -> None:
+        """Outputs info about the theme."""
+        cls.print_theme()
+        inspect(cls)
+
 
 def _luminance(hex_color: str) -> float:
     """The luminance of the color."""
     h = hex_color.lstrip("#")
     r, g, b = tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _set_nested(d: dict, path: str, value: object) -> None:
+    keys = path.split(".")
+    for k in keys[:-1]:
+        d = d.setdefault(k, {})
+    d[keys[-1]] = value

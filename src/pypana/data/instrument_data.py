@@ -6,16 +6,25 @@ This module provides a class to store the data and perform calculations on it
 from collections.abc import Hashable, Sequence
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
+import plotly.graph_objects as go
 from pydantic import BaseModel, Field
+from rich import inspect
 
 from pypana.console import console
 from pypana.data.exceptions.invalid_index_error import InvalidIndexError
 from pypana.data.measurement import Measurement
+from pypana.plots.histograms.hist_single import (
+    plot_hist_single_matplotlib,
+    plot_hist_single_plotly,
+)
+from pypana.plots.themes import BaseTheme
+from pypana.utils.debug import Debuggable
+from pypana.utils.measurement_data_type import MeasurementDataType
 
 
-class InstrumentData(BaseModel):
+class InstrumentData(BaseModel, Debuggable):
     """Data class for instrument data."""
 
     model_config = {"arbitrary_types_allowed": True}
@@ -39,6 +48,28 @@ class InstrumentData(BaseModel):
         default_factory=dict,
         description="Other info about the measurements that might be required.",
     )
+
+    def info(self, *, verbose: bool = False) -> None:
+        """Prints the state of the instrument data."""
+        scan_numbers = list(self.measurements.keys())
+
+        first_scan = scan_numbers[0]
+        last_scan = scan_numbers[-1]
+        first_scan_time = self.measurements[first_scan].time
+        last_scan_time = self.measurements[last_scan].time
+
+        console.print(
+            f"[bold]Analyzable Measurements:[/bold]\n"
+            f"[cyan]{len(scan_numbers)}[/cyan] measurements ([cyan]{first_scan}[/cyan] → [cyan]{last_scan}[/cyan])\n"
+            f"between [magenta]{first_scan_time:%Y-%m-%d %H:%M:%S}[/magenta] and "
+            f"[magenta]{last_scan_time:%Y-%m-%d %H:%M:%S}[/magenta] "
+            f"(Duration: [magenta]{last_scan_time - first_scan_time}[/magenta])"
+        )
+
+        console.print(self.other_info)
+
+        if verbose:
+            inspect(self)
 
     def select_measurements(
         self,
@@ -114,3 +145,78 @@ class InstrumentData(BaseModel):
             device_name=self.device_name,
             file_path=self.file_path,
         )
+
+    def plot_histogram_single(
+        self,
+        measurement: int,
+        *,
+        data_type: MeasurementDataType,
+        theme: type[BaseTheme] | None = None,
+        xscale: Literal["log"] = "log",
+        yscale: Literal["linear", "log"] = "linear",
+        xlim: tuple[float, float] | None = None,
+        grid: bool = False,
+        pmf: bool = False,
+        save_as: Path | None = None,
+        additional: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
+        backend: Literal["matplotlib", "plotly"] = "plotly",
+        **kwargs: object,
+    ) -> None | go.Figure:
+        """Plots the histogram of a single measurement selected.
+
+        Args:
+        measurement: The single measurement to display.
+        data_type: The data type to display. ``dN/dlogdp`` or ``dN``.
+        theme: The theme for the plot. Defaults to ``settings.THEME``.
+        xscale: The scaling og the x-axis.
+        yscale: The scaling og the y-axis. Defaults to ``linear``.
+        xlim: The range on the x-axis to display.
+        grid: Whether to show grid lines.
+        pmf: Whether to show the probability mass function instead of original values.
+        save_as: Path where to store the output image. Defaults to no output.
+        additional: Additional function to display. ``cdf``, ``fit_cdf``, or ``fit_pdf``. Defaults to None.
+        backend: The backend to use to plot the histogram. Defaults to ``matplotlib``.
+        kwargs: Additional Keyword Arguments for the backend.
+        """
+        additional_kwargs = {
+            "data_type": data_type,
+            "theme": theme,
+            "xscale": xscale,
+            "yscale": yscale,
+            "xlim": xlim,
+            "grid": grid,
+            "pmf": pmf,
+            "save_as": save_as,
+            "additional": additional,
+        }
+        kwargs.update(additional_kwargs)
+
+        if backend == "matplotlib":
+            plot_hist_single_matplotlib(
+                self.measurements[measurement],
+                data_type=data_type,
+                theme=theme,
+                xscale=xscale,
+                yscale=yscale,
+                xlim=xlim,
+                grid=grid,
+                pmf=pmf,
+                save_as=save_as,
+                additional=additional,
+                **kwargs,
+            )
+            return None
+        else:
+            return plot_hist_single_plotly(
+                self.measurements[measurement],
+                data_type=data_type,
+                theme=theme,
+                xscale=xscale,
+                yscale=yscale,
+                xlim=xlim,
+                grid=grid,
+                pmf=pmf,
+                save_as=save_as,
+                additional=additional,
+                **kwargs,
+            )
