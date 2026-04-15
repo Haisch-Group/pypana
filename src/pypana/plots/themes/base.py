@@ -26,7 +26,7 @@ class _Field:
 
 _FIELDS: dict[str, _Field] = {
     "color_cycle": _Field(
-        "axes.prop_cycle", transform=lambda v: cycler(color=[c for c in v.values()])
+        "axes.prop_cycle", transform=lambda v: cycler(color=list(v.values()))
     ),
     "colormap": _Field("image.cmap"),
     "grid_color": _Field("grid.color"),

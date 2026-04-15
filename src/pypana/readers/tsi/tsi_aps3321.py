@@ -119,7 +119,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
         float_cols = data.select_dtypes(include=["float"]).columns
         data[float_cols] = data[float_cols].astype(float)
 
-        measurements: dict[int, Measurement] = dict()
+        measurements: dict[int, Measurement] = {}
 
         for row in data.to_dict("records"):
             try:

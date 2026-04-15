@@ -52,8 +52,8 @@ def plot_hist_single_matplotlib(
     kwargs.pop("legend_label", None)
     kwargs.pop("color", None)
 
-    handles: list = list()
-    labels: list = list()
+    handles: list = []
+    labels: list = []
 
     if pmf:
         _data = _data / sum(_data)

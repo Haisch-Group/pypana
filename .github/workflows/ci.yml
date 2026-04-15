@@ -7,31 +7,8 @@ permissions:
   contents: read
 
 jobs:
-  lint-and-typecheck:
-    name: ruff check, format, and mypy
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: setup python and uv
-        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 #v8.0.0
-        with:
-          enable-cache: true
-
-      - name: ruff check
-        run: uvx ruff check .
-
-      - name: ruff format
-        run: uvx ruff format --check .
-
-      - name: mypy
-        run: uvx --with pandas-stubs --with numpy --with pytest mypy .
-
-  test:
-    name: pytest coverage
+  lint-typecheck-test:
+    name: ruff check, format, mypy, and coverage
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -45,7 +22,10 @@ jobs:
           enable-cache: true
 
       - name: install dependencies
-        run: uv sync --all-extras --dev
+        run: |
+          uv sync --all-extras --dev
+          sudo apt-get update
+          sudo apt-get install -y python3-tk
 
-      - name: run tests
-        run: uv run pytest tests --cov=src/pypana
+      - name: run pre-commit
+        run: uv run pre-commit run --all-files
