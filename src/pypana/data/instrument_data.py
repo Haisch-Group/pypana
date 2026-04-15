@@ -178,19 +178,6 @@ class InstrumentData(BaseModel, Debuggable):
         backend: The backend to use to plot the histogram. Defaults to ``matplotlib``.
         kwargs: Additional Keyword Arguments for the backend.
         """
-        additional_kwargs = {
-            "data_type": data_type,
-            "theme": theme,
-            "xscale": xscale,
-            "yscale": yscale,
-            "xlim": xlim,
-            "grid": grid,
-            "pmf": pmf,
-            "save_as": save_as,
-            "additional": additional,
-        }
-        kwargs.update(additional_kwargs)
-
         if backend == "matplotlib":
             plot_hist_single_matplotlib(
                 self.measurements[measurement],

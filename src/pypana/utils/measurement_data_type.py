@@ -6,7 +6,7 @@ from enum import Enum
 class MeasurementDataType(Enum):
     """The two basic types of measurements. Best when making distinctions."""
 
-    dndlogdp = "dN/dlogdp"
+    dndlogdp = "dN/dlogDp"
     dn = "dN"
 
     @classmethod

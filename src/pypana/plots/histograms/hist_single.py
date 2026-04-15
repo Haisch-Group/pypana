@@ -87,8 +87,8 @@ def plot_hist_single_matplotlib(
             ax.set_xlim(xlim)
 
         if additional == "cdf":
-            pmf = _data / _data.sum()
-            cdf = np.cumsum(pmf)
+            total = _data.sum()
+            cdf = np.cumsum(_data / total) if total > 0 else np.zeros_like(_data)
 
             ax2 = ax.twinx()
             (cdf_line,) = ax2.plot(measurement.d_p, cdf, color="grey", label="CDF")
@@ -164,7 +164,9 @@ def plot_hist_single_plotly(
     )
 
     if additional == "cdf":
-        cdf = np.cumsum(_data / _data.sum())
+        total = _data.sum()
+        cdf = np.cumsum(_data / total) if total > 0 else np.zeros_like(_data)
+
         fig.add_trace(
             go.Scatter(
                 x=measurement.d_p,
