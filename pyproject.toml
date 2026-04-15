@@ -115,3 +115,11 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
 ]
+docs = [
+    "autodoc-pydantic>=2.2.0",
+    "furo>=2025.12.19",
+    "pydata-sphinx-theme>=0.17.0",
+    "sphinx<9",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-rtd-theme>=3.1.0",
+]
