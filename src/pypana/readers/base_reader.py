@@ -38,7 +38,7 @@ class BaseReader(Debuggable):
     _input_type: ClassVar[InputType] = InputType.UNDEFINED
     _path: Path
 
-    def info(self, *, verbose: bool = False) -> None:
+    def info(self, *, verbose: bool = False) -> None:  # pragma: no cover
         """Print the state of the reader.
 
         Args:

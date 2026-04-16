@@ -12,7 +12,6 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from rich import inspect
 
 from pypana.utils.debug import Debuggable
 
@@ -80,14 +79,6 @@ class Measurement(BaseModel, Debuggable):
         default_factory=dict,
         description="Other measurement data that is currently not directly supported in other fields.",
     )
-
-    def info(self, *, verbose: bool = False) -> None:
-        """Print the state of the measurement.
-
-        Args:
-            verbose (bool): currently has no effect.
-        """
-        inspect(self)
 
     @model_validator(mode="after")
     def check_concentration_provided(self) -> "Measurement":

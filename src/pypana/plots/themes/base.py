@@ -217,7 +217,7 @@ class BaseTheme(Debuggable):
         console.print(output)
 
     @classmethod
-    def info(cls, *, verbose: bool = False) -> None:
+    def info(cls, *, verbose: bool = False) -> None:  # pragma: no cover
         """Outputs info about the theme."""
         cls.print_theme()
         inspect(cls)

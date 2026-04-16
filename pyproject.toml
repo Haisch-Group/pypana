@@ -114,6 +114,7 @@ show_contexts = true
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.152.1",
     "jupyterlab>=4.5.6",
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",

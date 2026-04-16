@@ -1,11 +1,15 @@
 """A debug interface."""
 
-from abc import ABC, abstractmethod
+from rich import inspect
 
 
-class Debuggable(ABC):
+class Debuggable:
     """Class for debugging."""
 
-    @abstractmethod
-    def info(self, *, verbose: bool = False) -> None:
-        """Print the state of the object."""
+    def info(self, *, verbose: bool = False) -> None:  # pragma: no cover
+        """Print the state of the object.
+
+        Args:
+            verbose: Verbose output.
+        """
+        inspect(self)

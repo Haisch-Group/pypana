@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from pypana.data.instrument_data import InstrumentData
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
 
 
@@ -22,6 +23,9 @@ def base_instrument_reader_factory() -> Generator[
             @classmethod
             def can_read(cls, path: Path | None) -> bool:
                 return can_read_val
+
+            def read(self) -> InstrumentData:
+                raise NotImplementedError()
 
         DynamicReader.__name__ = name
         DynamicReader.__qualname__ = name

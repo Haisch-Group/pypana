@@ -3,7 +3,8 @@
 This module provides a class to store the data and perform calculations on it
 """
 
-from collections.abc import Hashable, Sequence
+import copy
+from collections.abc import Hashable
 from pathlib import Path
 from textwrap import dedent
 from typing import Annotated, Any, Literal
@@ -30,7 +31,7 @@ class InstrumentData(BaseModel, Debuggable):
     model_config = {"arbitrary_types_allowed": True}
 
     measurements: dict[int, Measurement] = Field(
-        min_length=1,
+        default_factory=dict,
         description="List of measurement data to include in the analysis",
     )
 
@@ -49,41 +50,46 @@ class InstrumentData(BaseModel, Debuggable):
         description="Other info about the measurements that might be required.",
     )
 
-    def info(self, *, verbose: bool = False) -> None:
+    def info(self, *, verbose: bool = False) -> None:  # pragma: no cover
         """Prints the state of the instrument data."""
         scan_numbers = list(self.measurements.keys())
 
-        first_scan = scan_numbers[0]
-        last_scan = scan_numbers[-1]
-        first_scan_time = self.measurements[first_scan].time
-        last_scan_time = self.measurements[last_scan].time
+        if not scan_numbers:
+            console.print("[bold]No Analyzable Measurements![/bold]\n")
+        else:
+            first_scan = scan_numbers[0]
+            last_scan = scan_numbers[-1]
+            first_scan_time = self.measurements[first_scan].time
+            last_scan_time = self.measurements[last_scan].time
 
-        console.print(
-            f"[bold]Analyzable Measurements:[/bold]\n"
-            f"[cyan]{len(scan_numbers)}[/cyan] measurements ([cyan]{first_scan}[/cyan] → [cyan]{last_scan}[/cyan])\n"
-            f"between [magenta]{first_scan_time:%Y-%m-%d %H:%M:%S}[/magenta] and "
-            f"[magenta]{last_scan_time:%Y-%m-%d %H:%M:%S}[/magenta] "
-            f"(Duration: [magenta]{last_scan_time - first_scan_time}[/magenta])"
-        )
+            console.print(
+                f"[bold]Analyzable Measurements:[/bold]\n"
+                f"[cyan]{len(scan_numbers)}[/cyan] measurements ([cyan]{first_scan}[/cyan] → [cyan]{last_scan}[/cyan])\n"
+                f"between [magenta]{first_scan_time:%Y-%m-%d %H:%M:%S}[/magenta] and "
+                f"[magenta]{last_scan_time:%Y-%m-%d %H:%M:%S}[/magenta] "
+                f"(Duration: [magenta]{last_scan_time - first_scan_time}[/magenta])"
+            )
 
         console.print(self.other_info)
 
         if verbose:
             inspect(self)
 
-    def select_measurements(
+    def select_measurements(  # noqa: PLR0912
         self,
-        indices: Annotated[int, Field(ge=0)]
-        | Annotated[Sequence[int], Field(min_length=1)],
+        scan_nrs: Annotated[int | list[int] | range, Field(min_length=1)],
         *,
         inplace: bool = True,
+        deepcopy: bool = False,
         verbose: bool = True,
     ) -> "InstrumentData":
         """Select a subset of measurements bases on indices.
 
         Args:
-            indices (int | list[int]): Indices to select. All have to be valid and not duplicates.
-            inplace (bool, optional): Whether to modify the data in this instance. Defaults to True.
+            scan_nrs (int | list[int] | range): Indices to select. All have to be valid and not duplicates.
+            inplace (bool, optional): Whether to modify the data in this instance. Defaults to `True``
+            deepcopy (bool, optional): Whether to deepcopy the data in this instance. Defaults to ``False``.
+                If ``True``, it has precedence over inplace.
             verbose (bool, optional): Whether to output textual hints. Defaults to True.
 
         Raises:
@@ -95,32 +101,53 @@ class InstrumentData(BaseModel, Debuggable):
             Ranges can include empty measurement indices or go beyond the actual measurement
             scan numbers, as long as they are lower bounded by 0 and no duplicates exist.
         """
-        selected_indices: Sequence[int] = (
-            [indices] if isinstance(indices, int) else indices
-        )
+        valid_scan_nrs: list[int] | range
 
-        has_duplicates = len(selected_indices) != len(set(selected_indices))
+        if isinstance(scan_nrs, int):
+            if scan_nrs < 0:
+                raise InvalidIndexError(
+                    message="Negative scan number given.", invalid_indices=[scan_nrs]
+                )
+            if scan_nrs not in self.measurements:
+                raise InvalidIndexError(
+                    message="Scan number doesn't exist.", invalid_indices=[scan_nrs]
+                )
 
-        if has_duplicates or min(selected_indices) < 0:
-            raise InvalidIndexError(
-                message="Duplicate scan numbers given when selecting measurements",
-                invalid_indices=[
-                    x for x in set(selected_indices) if selected_indices.count(x) > 1
-                ],
-            )
+            valid_scan_nrs = [scan_nrs]
+        else:
+            if min(scan_nrs) < 0:
+                raise InvalidIndexError(
+                    message="Negative scan numbers given.",
+                    invalid_indices=[x for x in scan_nrs if x < 0],
+                )
 
-        if isinstance(indices, list) and indices not in self.measurements:
-            raise InvalidIndexError(
-                message="Some scan numbers don't exist in the measurements. To avoid this behaviour, use `range()` "
-                "instead.",
-                invalid_indices=list(set(indices) - set(self.measurements.keys())),
-            )
+            if isinstance(scan_nrs, list):
+                if len(scan_nrs) != len(set(scan_nrs)):
+                    raise InvalidIndexError(
+                        message="Duplicate scan numbers given.",
+                        invalid_indices=[
+                            x for x in set(scan_nrs) if scan_nrs.count(x) > 1
+                        ],
+                    )
+
+                missing_scan_nrs = set(scan_nrs) - set(self.measurements.keys())
+                if missing_scan_nrs:
+                    raise InvalidIndexError(
+                        message="Some scan numbers don't exist. Use `range()` instead.",
+                        invalid_indices=list(missing_scan_nrs),
+                    )
+
+            valid_scan_nrs = scan_nrs
 
         selected_measurements: dict[int, Measurement] = {
-            i: self.measurements[i]
-            for i in selected_indices
-            if self.measurements.get(i, None) is not None
+            i: self.measurements[i] for i in valid_scan_nrs if i in self.measurements
         }
+
+        if not selected_measurements:
+            raise InvalidIndexError(
+                "No valid measurements found for the given scan numbers.",
+                invalid_indices=[],
+            )
 
         if verbose:
             selected_ordered = sorted(selected_measurements.keys())
@@ -134,6 +161,13 @@ class InstrumentData(BaseModel, Debuggable):
                  [Scan [cyan]{first.scan_nr}[/cyan] at time [magenta]{first.time:%Y-%m-%d %H:%M:%S}[/magenta]] \\
                  → [Scan [cyan]{last.scan_nr}[/cyan] at time [magenta]{last.time:%Y-%m-%d %H:%M:%S}[/magenta]]
             """)
+            )
+
+        if deepcopy:
+            return InstrumentData(
+                measurements=copy.deepcopy(selected_measurements),
+                device_name=copy.deepcopy(self.device_name),
+                file_path=copy.deepcopy(self.file_path),
             )
 
         if inplace:
@@ -178,6 +212,11 @@ class InstrumentData(BaseModel, Debuggable):
         backend: The backend to use to plot the histogram. Defaults to ``matplotlib``.
         kwargs: Additional Keyword Arguments for the backend.
         """
+        if measurement not in self.measurements:
+            raise InvalidIndexError(
+                message="Invalid scan number.", invalid_indices=[measurement]
+            )
+
         if backend == "matplotlib":
             plot_hist_single_matplotlib(
                 self.measurements[measurement],
