@@ -10,6 +10,7 @@ from textwrap import dedent
 from typing import Annotated, Any, Literal
 
 import plotly.graph_objects as go
+from matplotlib.ticker import Formatter
 from pydantic import BaseModel, Field
 from rich import inspect
 
@@ -246,3 +247,119 @@ class InstrumentData(BaseModel, Debuggable):
                 additional=additional,
                 **kwargs,
             )
+
+    def histogram(
+        self,
+        measurement: int,
+        data_type: MeasurementDataType,
+        *,
+        theme: BaseTheme | None = None,
+        hist_type: Literal["bar", "stairs", "both"] = "bar",
+        secondary: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
+        save_as: str | Path | None = None,
+        legend: bool = True,
+        pmf: bool = False,
+        spines_invisible: list[Literal["left", "right", "top", "bottom"]] | None = None,
+        title: str | None = None,
+        xlabel: str | None = None,
+        xlim: tuple[float, float] | None = None,
+        xmajor_formatter: Formatter | str | None = None,
+        xspace_sides: float = 0.0,
+        ylabel: str | None = None,
+        ylim: tuple[float, float] | None = None,
+        ymajor_formatter: Formatter | str | None = None,
+        yscale: Literal["linear", "log"] = "linear",
+        **kwargs,
+    ) -> None:
+        """Plots the histogram of the specified measurement.
+
+        Note:
+            Not all possible matplotlib kwargs are specified in the Keyword Args section.
+            Additional kwargs can be passed to matplotlib with their respective name prepended
+            by the following prefixes that indicates the target:
+
+            - ``bar_`` for the main histogram,
+            - ``grid_`` for the background grid (only visible, if grid_visible=True in theme),
+            - ``legend_`` for the legend,
+            - ``secondary_`` for the secondary line plot,
+            - ``stairs_`` for the stairs plot.
+
+            For matplotlib kwargs, please consult the matplotlib documentation: https://matplotlib.org/stable/ .
+
+        Args:
+            measurement (int): The measurement to plot the histogram for.
+            data_type (MeasurementDataType): The data type to plot. ``dN/dlogdp`` or ``dN``.
+            theme (BaseTheme): The theme for the plot. Defaults to ``settings.THEME``.
+            hist_type (str): What histogram type to display. "bar" plots a standard bar histogram,
+                "stairs" plots the outlines of the histogram, and "both" plots both together.
+                Defaults to ``"bar"``.
+            secondary (str): The additional function to plot.
+                "fit_cdf" and "fit_pdf" require the measurement to already be fitted previously. Both currently raise
+                NotImplementedError. Defaults to ``None``.
+            save_as (str | Path | None): The path where to save the figure. Defaults to ``None`` which does not save.
+            legend (bool): Whether to show the legend. Defaults to ``True``.
+            pmf (bool): Whether to plot the measurement as probability mass function. Defaults to ``False``.
+            spines_invisible (list): The spines not to show. Defaults to ``None``, in which case all are plotted.
+            title (str | None): The title of the plot. Defaults to ``None`` and uses an adaptive title.
+            xlabel (str | None): The x-axis label of the plot. Defaults to ``None`` and uses an adaptive title.
+            xlim (tuple): The x-axis lower and upper bound. Can be used to manually set blank space on the sides
+                or specify x-axis ranges. Defaults to ``None`` which is equivalent to `xpace_sides=0`.
+            xmajor_formatter (Formatter | str): The matplotlib ticker.Formatter for the x-axis.
+            xspace_sides (float): The total percentage of the plot that should be empty space on both sides.
+                Each side gets half the specified space. If not the default, it is mutually exclusive with xlim.
+                Defaults to ``0.0`` which plots exactly the range from the lowest to the highest bin boundary.
+            ylabel (str | None): The y-axis label of the plot. Defaults to ``None`` and uses an adaptive title.
+            ylim (tuple): The y-axis lower and upper bound. Can be used to give specific y-ranges on the axis.
+            ymajor_formatter (Formatter | str): The matplotlib ticker.Formatter for the y-axis.
+            yscale (str): The type of scaling the y-axis uses. Defaults to ``"linear"``.
+            kwargs: The additional kwargs for matplotlib. See the Keyword Args section for more information.
+
+        Keyword Args:
+            bar_edgecolor (str): The edgecolor of the bar. Can only be specified when hist_type="bar" or "both".
+                Can be either a hex code, e.g. "#000000" or from the color cycle, e.g. "C0".
+                Defaults to the matplotlib default.
+            bar_facecolor (str): The facecolor of the bar. Can only be specified when hist_type="bar" or "both".
+                Can be either a hex code, e.g. "#000000"" or from the color cycle, e.g. "C0".
+                Defaults to the matplotlib default.
+            bar_hatch (str): The bar hatches. Can only be specified when hist_type="bar" or "both". If not specified,
+                the bars are filled with the facecolor.
+            bar_label (str): The legend label for the bar. Defaults to an adaptive label.
+            bar_linewidth (str): the edge linewidth of the bars. Can only be specified when hist_type="bar" or "both".
+                Defaults to the matplotlib default.
+
+            grid_color (str): The color of the grid lines. Can be either a hex code, e.g. "#000000"
+                or from the color cycle, e.g. "C0". Defaults to the matplotlib default.
+            grid_linewidth (float): The linewidth of the grid lines. Defaults to the matplotlib default.
+            grid_which (str): What type of grid to show. Either "major", "minor", or "both".
+
+            legend_labelcolor (str): The color of the legend labels. Can be either a hex code, e.g. "#000000"
+                or from the color cycle, e.g. "C0". Can only be specified when legend=True.
+                Defaults to the matplotlib default.
+            legend_loc (str): The location of the matplotlib legend. Can only be specified when legend=True.
+                Defaults to the matplotlib default.
+
+            secondary_color (str): The color of the line plot that shows the secondary function.
+                Can be either a hex code, e.g. "#000000" or from the color cycle, e.g. "C0". Can only be specified
+                when secondary is not None.
+            secondary_fmt (str): The format of the line plot that shows the secondary function. Can only be specified
+                when secondary is not None.
+            secondary_label (str): The label of the secondary function for the legend. Can only be specified
+                when secondary is not None. Defaults to an adaptive label.
+            secondary_linestyle (str): The linestyle of the line plot that shows the secondary function.
+                Can only be specified when secondary is not None. Defaults to the matplotlib default.
+            secondary_linewidth (float): The linewidth of the line of the secondary function. Can only be specified
+                when secondary is not None. Defaults to the matplotlib default.
+
+            stairs_color: The color of the stairs plot. Can be either a hex code, e.g. "#000000"
+                or from the color cycle, e.g. "C0". Can only be specified when hist_type="stairs" or "both".
+                Defaults to the matplotlib default.
+            stairs_linestyle (str): The linestyle of the stairs plot. Can only be specified when
+                hist_type="stairs" or "both". Defaults to the matplotlib default.
+            stairs_linewidth (str): The linewidth of the stairs plot. Can only be specified when
+                hist_type="stairs" or "both". Defaults to the matplotlib default.
+
+        Raises:
+            NotImplementedError: If the functionality is currently not supported and is only a placeholder.
+            ParticleAnalysisError: If an internal error occurs during plotting.
+        """
+        return None

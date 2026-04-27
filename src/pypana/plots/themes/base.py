@@ -70,9 +70,14 @@ class BaseTheme(Debuggable):
 
     Subclass and override only the attributes you need.
     All attributes default to None, meaning that rcParam is left unchanged.
+
+    Note:
+        The precedence of certain attributes depends on their place of definition:
+        method > theme > settings
     """
 
     extra_rc: ClassVar[dict[str, Any]] = {}
+    """A place to define all other rc params that are not directly implemented as attributes here."""
 
     # ----- COLORS ----- #
     color_cycle: ClassVar[dict[str, str] | None] = None
@@ -102,9 +107,7 @@ class BaseTheme(Debuggable):
 
     # ----- FIGURE ----- #
     figure_size: ClassVar[tuple[float, float] | None] = None
-    dpi: ClassVar[int | None] = (
-        None  # precedence: method dpi > theme dpi > settings dpi
-    )
+    dpi: ClassVar[int | None] = None
 
     # ----- PRIVATE ----- #
     _subclass_registry: ThemeSet = set()
@@ -145,6 +148,11 @@ class BaseTheme(Debuggable):
 
             for key in [field.keys] if isinstance(field.keys, str) else field.keys:
                 params[key] = value
+
+        # TODO: resolve circular import when setting it like this
+        # # lowest precedence for dpi, but use a reasonable default instead of almost pixelated matplotlib default
+        # if cls.dpi is None:
+        #     params["savefig.dpi"] = settings.EXPORT_DPI
 
         params.update(cls.extra_rc)
         return params
