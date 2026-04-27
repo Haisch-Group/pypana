@@ -9,6 +9,7 @@ from enum import Enum
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from pypana.pana_error import ParticleAnalysisError
 from pypana.plots.themes import BaseTheme
 
 
@@ -72,12 +73,43 @@ class _Settings(BaseSettings):
     )
 
 
-class UnitScale(Enum):
+class UnitScale(float, Enum):
     """Scaling factor for sizes."""
 
+    IDENTITY = 1
     MILLI = 1e-3
     MICRO = 1e-6
     NANO = 1e-9
+
+    @classmethod
+    def get_from_str(cls, text: str) -> float:
+        """Get the appropriate scaling factor for a string of text.
+
+        Args:
+            text (str): The string that contains a scaling factor symbol.
+
+        Returns:
+            the appropriate scaling factor.
+
+        Raises:
+            ParticleAnalysisError
+        """
+        found_symbols: list[UnitScale] = []
+
+        if "mm" in text:
+            found_symbols.append(cls.MILLI)
+        if "µm" in text:
+            found_symbols.append(cls.MICRO)
+        if "nm" in text:
+            found_symbols.append(cls.NANO)
+
+        if len(found_symbols) > 1:
+            raise ParticleAnalysisError()  # TODO: create significant exception for this case
+
+        if len(found_symbols) == 1:
+            return found_symbols.pop()
+
+        return cls.IDENTITY
 
 
 constants = _Constants()
