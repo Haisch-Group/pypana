@@ -38,7 +38,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
 
     @classmethod
     def can_read(cls, path: Path) -> bool:
-        """Checks whether a given path may include TSI APS 3321 output files that can be read.
+        """Checks whether a given path may include a TSI APS 3321 output file that can be read.
 
         Args:
             path: The path to the input file.

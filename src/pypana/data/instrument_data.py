@@ -199,18 +199,18 @@ class InstrumentData(BaseModel, Debuggable):
         """Plots the histogram of a single measurement selected.
 
         Args:
-        measurement: The single measurement to display.
-        data_type: The data type to display. ``dN/dlogdp`` or ``dN``.
-        theme: The theme for the plot. Defaults to ``settings.THEME``.
-        xscale: The scaling og the x-axis.
-        yscale: The scaling og the y-axis. Defaults to ``linear``.
-        xlim: The range on the x-axis to display.
-        grid: Whether to show grid lines.
-        pmf: Whether to show the probability mass function instead of original values.
-        save_as: Path where to store the output image. Defaults to no output.
-        additional: Additional function to display. ``cdf``, ``fit_cdf``, or ``fit_pdf``. Defaults to None.
-        backend: The backend to use to plot the histogram. Defaults to ``matplotlib``.
-        kwargs: Additional Keyword Arguments for the backend.
+            measurement: The single measurement to display.
+            data_type: The data type to display. ``dN/dlogdp`` or ``dN``.
+            theme: The theme for the plot. Defaults to ``settings.THEME``.
+            xscale: The scaling of the x-axis.
+            yscale: The scaling of the y-axis. Defaults to ``linear``.
+            xlim: The range on the x-axis to display.
+            grid: Whether to show grid lines.
+            pmf: Whether to show the probability mass function instead of original values.
+            save_as: Path where to store the output image. Defaults to no output.
+            additional: Additional function to display. ``cdf``, ``fit_cdf``, or ``fit_pdf``. Defaults to None.
+            backend: The backend to use to plot the histogram. Defaults to ``matplotlib``.
+            kwargs: Additional Keyword Arguments for the backend.
         """
         if measurement not in self.measurements:
             raise InvalidIndexError(

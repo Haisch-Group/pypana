@@ -27,7 +27,7 @@ def plot_hist_single_interactive_matplotlib(  # noqa: PLR0915
     ylim: tuple[float, float] | None = None,
     autoscale: Literal["x", "y", "both", "none"] = "both",
     grid: bool = True,
-    pmf: bool = True,
+    pmf: bool = False,
     additional: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
     **kwargs: object,
 ) -> None:
@@ -51,6 +51,9 @@ def plot_hist_single_interactive_matplotlib(  # noqa: PLR0915
        x_label: Override for the x-axis label.
        y_label: Override for the y-axis label.
        kwargs: Additional keyword arguments forwarded to matplotlib.
+
+    Keyword Args:
+          arg1: something something
     """
     _theme = theme or settings.THEME
 
