@@ -6,17 +6,20 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import ticker
+from matplotlib.axes import Axes
+from matplotlib.container import BarContainer
+from matplotlib.patches import StepPatch
 from matplotlib.ticker import Formatter
 
 from pypana.config import settings
-from pypana.data.measurement import Measurement
+from pypana.data.measurement import FloatArray, Measurement
 from pypana.data.utils import linear_sci_formatter
 from pypana.plots.themes import BaseTheme
 from pypana.plots.utils import split_kwargs
 from pypana.utils.measurement_data_type import MeasurementDataType
 
 
-def plot_hist_matrix(
+def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
     m: list[list[Measurement]],
     data_type: MeasurementDataType,
     *,
@@ -24,7 +27,22 @@ def plot_hist_matrix(
     hist_type: Literal["bar", "stairs", "both"] = "bar",
     secondary: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
     save_as: str | None = None,
-    legend: bool = True,
+    legend: Literal[
+        "best",
+        "upper right",
+        "upper left",
+        "lower left",
+        "lower right",
+        "right",
+        "center left",
+        "center right",
+        "lower center",
+        "upper center",
+        "center",
+        "row",
+        "column",
+    ]
+    | None = "best",
     pmf: bool = False,
     spines_invisible: list[Literal["left", "right", "top", "bottom"]] | None = None,
     title: str | None = None,
@@ -77,8 +95,8 @@ def plot_hist_matrix(
         yscale (str): The type of scaling the y-axis uses. Defaults to ``"linear"``.
         kwargs: The additional kwargs for matplotlib. See the Keyword Args section for more information.
     """
-    _rows = len(m[0])
-    _cols = len(m)
+    _rows = len(m)
+    _cols = len(m[0])
     _theme = theme or settings.THEME
 
     _bar_kwargs, _grid_kwargs, _legend_kwargs, _secondary_kwargs, _stairs_kwargs = (
@@ -95,9 +113,11 @@ def plot_hist_matrix(
     _labels: list = []
 
     with matplotlib.rc_context(_theme.to_rcparams()):
-        fig, axs = plt.subplots(_rows, _cols, sharex=True, sharey=True, squeeze=False)
+        fig, axs = plt.subplots(
+            _rows, _cols, sharex=True, sharey=True, squeeze=False, layout="constrained"
+        )
 
-        _title = title or get_adaptive_title()
+        _title = title or get_default_title()
         fig.suptitle(_title)
 
         for (r, c), ax in np.ndenumerate(axs):
@@ -109,45 +129,39 @@ def plot_hist_matrix(
                 if data_type == MeasurementDataType.dndlogdp
                 else _m.delta_n.copy()
             )
+            _bar_kwargs["label"] = kwargs.get("bar_label", f"Measurement {_m.scan_nr}")
+            _stairs_kwargs["label"] = (
+                _stairs_kwargs.get("stairs_label", f"Measurement {_m.scan_nr}")
+                if hist_type != "both"
+                else None
+            )
+            _secondary_kwargs["label"] = _secondary_kwargs.get(
+                "secondary_label",
+                (
+                    "CDF"
+                    if secondary == "cdf"
+                    else ("fitted CDF" if secondary == "fit_cdf" else "fitted pdf")
+                ),
+            )
 
             if pmf:
                 _data /= sum(_data)
 
             if hist_type in ["bar", "both"]:
-                _color_kwarg = (
-                    {}
-                    if "facecolor" in _bar_kwargs
-                    else {"color": _colors[(r * _cols + c) % len(_colors)]}
-                )
-
-                bar = ax.bar(
-                    _m.d_p,
-                    _data,
-                    width=_m.delta_d_p,
-                    align="center",
-                    **_color_kwarg,
-                    **_bar_kwargs,
-                )
+                bar = _bar_plot(_bar_kwargs, _colors, _cols, _data, _m, ax, c, r)
 
                 _handles.append(bar)
                 _labels.append(_bar_kwargs.get("label", ""))
 
             if hist_type in ["stairs", "both"]:
-                _color_kwarg = (
-                    {}
-                    if "facecolor" in _stairs_kwargs
-                    else {"color": _colors[(r * _cols + c) % len(_colors)]}
+                stairs = _stairs_plot(
+                    _colors, _cols, _data, _m, _stairs_kwargs, ax, c, r
                 )
 
-                stairs = ax.stairs(
-                    values=_data,
-                    edges=_m.bin_boundaries,
-                    **_color_kwarg,
-                    **_stairs_kwargs,
-                )
-
-                _handles.append(stairs)
-                _labels.append(_stairs_kwargs.get("label", ""))
+                _handles.append(stairs) if hist_type != "both" else None
+                _labels.append(
+                    _stairs_kwargs.get("label", "")
+                ) if hist_type != "both" else None
 
             if secondary:
                 if secondary in ["fit_cdf", "fit_pdf"]:
@@ -168,27 +182,46 @@ def plot_hist_matrix(
                     **_secondary_kwargs,
                 )
 
+                if c != _cols - 1:
+                    ax2.yaxis.set_visible(False)
+
                 _handles.append(line)
-                _labels.append("CDF")
+                _labels.append(_secondary_kwargs.get("label", ""))
 
-            ax.set_xscale("log")
-            ax.set_yscale(yscale)
-
-            _xformatter = xmajor_formatter or ticker.EngFormatter(unit="m")
-            _yformatter = ymajor_formatter or (
-                linear_sci_formatter()
-                if yscale == "linear"
-                else ticker.LogFormatterSciNotation()
+            _format_ax(
+                ax,
+                data_type,
+                xlabel,
+                xlim,
+                xmajor_formatter,
+                ylabel,
+                ylim,
+                ymajor_formatter,
+                yscale,
             )
-            ax.xaxis.set_major_formatter(_xformatter)
-            ax.yaxis.set_major_formatter(_yformatter)
-            ax.tick_params(axis="both", direction="in", which="both")
 
-            ax.set_xlim(*xlim) if xlim != (-np.inf, np.inf) else None
-            ax.set_ylim(*ylim) if ylim else None
+            h1, l1 = ax.get_legend_handles_labels()
+            h2, l2 = ax2.get_legend_handles_labels() if secondary else ([], [])
+            ax.legend(
+                h1 + h2, l1 + l2, loc=legend, **_legend_kwargs
+            ) if legend and legend not in ["row", "column"] else None
 
             for spine in spines_invisible or []:
                 ax.spines[spine].set_visible(False)
+
+        _handles, _labels = deduplicate_handles_labels(_handles, _labels)
+
+        if legend and legend == "row":
+            fig.legend(
+                _handles,
+                _labels,
+                loc="outside lower center",
+                ncol=len(_labels),
+                **_legend_kwargs,
+            )
+
+        if legend and legend == "column":
+            fig.legend(_handles, _labels, loc="outside right upper", **_legend_kwargs)
 
         if save_as is not None:
             fig.savefig(save_as, bbox_inches="tight", transparent=True)
@@ -196,6 +229,135 @@ def plot_hist_matrix(
         plt.show()
 
 
-def get_adaptive_title() -> str:
-    """Gets the default adaptive title."""
-    return "Test Test 123"
+def _format_ax(  # pragma: no cover
+    ax: Axes,
+    data_type: MeasurementDataType,
+    xlabel: str | None,
+    xlim: tuple[float, float],
+    xmajor_formatter: Formatter | str | None,
+    ylabel: str | None,
+    ylim: tuple[float, float] | None,
+    ymajor_formatter: Formatter | str | None,
+    yscale: Literal["linear", "log"],
+) -> None:
+    """Sets the parameters for ax."""
+    ax.set_xscale("log")
+    ax.set_yscale(yscale)
+
+    _xformatter = xmajor_formatter or ticker.EngFormatter(unit="m")
+    _yformatter = ymajor_formatter or (
+        linear_sci_formatter()
+        if yscale == "linear"
+        else ticker.LogFormatterSciNotation()
+    )
+    ax.xaxis.set_major_formatter(_xformatter)
+    ax.yaxis.set_major_formatter(_yformatter)
+    ax.tick_params(axis="both", direction="in", which="both")
+
+    ax.set_xlim(*xlim) if xlim != (-np.inf, np.inf) else None
+    ax.set_ylim(*ylim) if ylim else None
+
+    _xlabel = xlabel or get_default_xlabel()
+    _ylabel = ylabel or get_default_ylabel(data_type)
+
+    ax.set_xlabel(_xlabel)
+    ax.set_ylabel(_ylabel)
+    ax.label_outer()
+
+
+def _stairs_plot(  # pragma: no cover
+    _colors: list[str],
+    _cols: int,
+    _data: FloatArray,
+    _m: Measurement,
+    _stairs_kwargs: dict[str, object],
+    ax: Axes,
+    c: int,
+    r: int,
+) -> StepPatch:
+    """Plots the stairs plot part."""
+    _color_kwarg = (
+        {}
+        if "facecolor" in _stairs_kwargs
+        else {"color": _colors[(r * _cols + c) % len(_colors)]}
+    )
+
+    stairs = ax.stairs(
+        values=_data,
+        edges=_m.bin_boundaries,
+        **_color_kwarg,
+        **_stairs_kwargs,
+    )
+    return stairs
+
+
+def _bar_plot(  # pragma: no cover
+    _bar_kwargs: dict[str, object],
+    _colors: list[str],
+    _cols: int,
+    _data: FloatArray,
+    _m: Measurement,
+    ax: Axes,
+    c: int,
+    r: int,
+) -> BarContainer:
+    """Plots the bar plot part."""
+    _color_kwarg = (
+        {}
+        if "facecolor" in _bar_kwargs
+        else {"color": _colors[(r * _cols + c) % len(_colors)]}
+    )
+
+    bar = ax.bar(
+        _m.d_p,
+        _data,
+        width=_m.delta_d_p,
+        align="center",
+        **_color_kwarg,
+        **_bar_kwargs,
+    )
+    return bar
+
+
+def get_default_title() -> str:  # pragma: no cover
+    """Gets the default title."""
+    return "Histogram"
+
+
+def get_default_xlabel() -> str:  # pragma: no cover
+    """Gets the default xlabel."""
+    return "Particle Diameter"
+
+
+def get_default_ylabel(data_type: MeasurementDataType) -> str:  # pragma: no cover
+    """Gets the default ylabel."""
+    if data_type == MeasurementDataType.dn:
+        return "Number Concentration\nin 1/cm³"
+
+    if data_type == MeasurementDataType.dndlogdp:
+        return "Normalized Concentration\n(ΔN/ΔlogDₚ)"
+
+    return ""
+
+
+def deduplicate_handles_labels(handles: list, labels: list) -> tuple[list, list]:
+    """Deduplicated handles and labels.
+
+    Args:
+        handles (list): handles.
+        labels (list): labels.
+
+    Returns:
+        The secondary functions deduplicated legend input.
+    """
+    seen = set()
+    deduped_handles = []
+    deduped_labels = []
+
+    for handle, label in zip(reversed(handles), reversed(labels), strict=True):
+        if label not in seen:
+            seen.add(label)
+            deduped_handles.append(handle)
+            deduped_labels.append(label)
+
+    return list(reversed(deduped_handles)), list(reversed(deduped_labels))

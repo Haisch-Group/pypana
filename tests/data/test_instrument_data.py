@@ -49,12 +49,8 @@ def measurement_dict(min_size: int = 1, max_size: int = 100) -> SearchStrategy:
 def test_select_measurements_inplace(measurements: dict[int, Measurement]) -> None:
     """Test that the select_measurements works correctly"""
     data = InstrumentData(measurements=measurements)
-    data_old = data.select_measurements(
-        range(MIN_SCAN_NR, MAX_SCAN_NR + 1), inplace=True
-    )
-    data_new = data.select_measurements(
-        list(data.measurements.keys())[0], inplace=False
-    )
+    data_old = data.keep_measurements(range(MIN_SCAN_NR, MAX_SCAN_NR + 1), inplace=True)
+    data_new = data.keep_measurements(list(data.measurements.keys())[0], inplace=False)
 
     assert data == data_old
     assert id(data) == id(data_old)
@@ -70,18 +66,18 @@ def test_select_measurements_int(measurements: dict[int, Measurement]) -> None:
 
     # negative index
     with pytest.raises(InvalidIndexError):
-        data.select_measurements(-1)
+        data.keep_measurements(-1)
 
     # valid index of existing scan
     second_scan_nr = list(data.measurements.keys())[1]
-    data_int = data.select_measurements(second_scan_nr, inplace=False)
+    data_int = data.keep_measurements(second_scan_nr, inplace=False)
     assert len(data_int.measurements) == 1
     assert data_int.measurements[second_scan_nr].scan_nr == second_scan_nr
 
     # non-existing scan
     invalid_scan_nr = list(data.measurements.keys())[-1] + 1
     with pytest.raises(InvalidIndexError):
-        data.select_measurements(invalid_scan_nr, inplace=False)
+        data.keep_measurements(invalid_scan_nr, inplace=False)
 
 
 @settings(max_examples=5)
@@ -92,25 +88,25 @@ def test_select_measurements_range(measurements: dict[int, Measurement]) -> None
 
     # negative indices invalid
     with pytest.raises(InvalidIndexError):
-        data.select_measurements(range(-MAX_SCAN_NR, MAX_SCAN_NR), inplace=False)
+        data.keep_measurements(range(-MAX_SCAN_NR, MAX_SCAN_NR), inplace=False)
 
     # upper bound unbounded ok
-    data_old = data.select_measurements(range(0, 2 * MAX_SCAN_NR + 1))
+    data_old = data.keep_measurements(range(0, 2 * MAX_SCAN_NR + 1))
     assert data_old == data
 
     # valid range but no measurements
     with pytest.raises(InvalidIndexError):
-        data.select_measurements(range(MAX_SCAN_NR + 2, MAX_SCAN_NR + 100))
+        data.keep_measurements(range(MAX_SCAN_NR + 2, MAX_SCAN_NR + 100))
 
     # select all
-    data_old = data.select_measurements(range(MIN_SCAN_NR, MAX_SCAN_NR))
+    data_old = data.keep_measurements(range(MIN_SCAN_NR, MAX_SCAN_NR))
     assert data_old == data
     assert id(data_old) == id(data)
 
     # select everything except first and last
     first_scan_nr = list(data.measurements.keys())[0]
     last_scan_nr = list(data.measurements.keys())[-1]
-    data_new = data.select_measurements(
+    data_new = data.keep_measurements(
         range(first_scan_nr + 1, last_scan_nr), inplace=False, verbose=False
     )
     assert id(data_new) != id(data)
@@ -127,18 +123,18 @@ def test_select_measurements_list(measurements: dict[int, Measurement]) -> None:
 
     # negative indices invalid
     with pytest.raises(InvalidIndexError):
-        data.select_measurements([50, 40, -3])
+        data.keep_measurements([50, 40, -3])
 
     # not present indices invalid
     with pytest.raises(InvalidIndexError):
-        data.select_measurements([last_scan_nr + 1, last_scan_nr + 2])
+        data.keep_measurements([last_scan_nr + 1, last_scan_nr + 2])
 
     # duplicate indices invalid
     with pytest.raises(InvalidIndexError):
-        data.select_measurements([last_scan_nr, last_scan_nr + 1, last_scan_nr + 1])
+        data.keep_measurements([last_scan_nr, last_scan_nr + 1, last_scan_nr + 1])
 
     selection = [first_scan_nr, last_scan_nr]
-    data_new = data.select_measurements(selection, inplace=False)
+    data_new = data.keep_measurements(selection, inplace=False)
 
     assert id(data_new) != id(data)
     assert len(data_new.measurements) == len(selection)
@@ -152,7 +148,7 @@ def test_select_measurements_deepcopy(measurements: dict[int, Measurement]) -> N
     data = InstrumentData(measurements=measurements)
     first_scan_nr = list(data.measurements.keys())[0]
 
-    data_new = data.select_measurements(
+    data_new = data.keep_measurements(
         range(MIN_SCAN_NR, MAX_SCAN_NR + 1), deepcopy=True, verbose=False
     )
 

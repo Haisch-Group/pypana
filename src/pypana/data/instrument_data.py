@@ -80,7 +80,7 @@ class InstrumentData(BaseModel, Debuggable):
         if verbose:
             inspect(self)
 
-    def select_measurements(  # noqa: PLR0912
+    def keep_measurements(  # noqa: PLR0912
         self,
         scan_nrs: Annotated[int | list[int] | range, Field(min_length=1)],
         *,
@@ -261,7 +261,22 @@ class InstrumentData(BaseModel, Debuggable):
         hist_type: Literal["bar", "stairs", "both"] = "bar",
         secondary: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
         save_as: str | None = None,
-        legend: bool = True,
+        legend: Literal[
+            "best",
+            "upper right",
+            "upper left",
+            "lower left",
+            "lower right",
+            "right",
+            "center left",
+            "center right",
+            "lower center",
+            "upper center",
+            "center",
+            "row",
+            "column",
+        ]
+        | None = "best",
         pmf: bool = False,
         spines_invisible: list[Literal["left", "right", "top", "bottom"]] | None = None,
         title: str | None = None,
