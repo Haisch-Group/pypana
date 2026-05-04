@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 
 import matplotlib
 import plotly.graph_objects as go
@@ -44,6 +44,13 @@ _FIELDS: dict[str, _Field] = {
     "tick_direction": _Field(["xtick.direction", "ytick.direction"]),
     "spine_width": _Field("axes.linewidth"),
     "figure_size": _Field("figure.figsize", transform=list),
+    "figure_facecolor": _Field("figure.facecolor"),
+    "axes_facecolor": _Field("axes.facecolor"),
+    "text_color": _Field("text.color"),
+    "axes_labelcolor": _Field("axes.labelcolor"),
+    "axes_edgecolor": _Field("axes.edgecolor"),
+    "xtick_color": _Field("xtick.color"),
+    "ytick_color": _Field("ytick.color"),
     "dpi": _Field("savefig.dpi"),
 }
 
@@ -107,6 +114,13 @@ class BaseTheme(Debuggable):
 
     # ----- FIGURE ----- #
     figure_size: ClassVar[tuple[float, float] | None] = None
+    figure_facecolor: ClassVar[str | None] = None
+    axes_facecolor: ClassVar[str | None] = None
+    text_color: ClassVar[str | None] = None
+    axes_labelcolor: ClassVar[str | None] = None
+    axes_edgecolor: ClassVar[str | None] = None
+    xtick_color: ClassVar[str | None] = None
+    ytick_color: ClassVar[str | None] = None
     dpi: ClassVar[int | None] = None
 
     # ----- PRIVATE ----- #
@@ -229,6 +243,31 @@ class BaseTheme(Debuggable):
         """Outputs info about the theme."""
         cls.print_theme()
         inspect(cls)
+
+    @classmethod
+    def set_mode(cls, mode: Literal["light", "dark"]) -> None:
+        """Sets the mode of the theme.
+
+        Args:
+            mode (str): The mode of the theme, light or dark.
+        """
+        if mode == "light":
+            cls.figure_facecolor = "white"
+            cls.axes_facecolor = "white"
+            cls.text_color = "black"
+            cls.axes_labelcolor = "black"
+            cls.axes_edgecolor = "black"
+            cls.xtick_color = "black"
+            cls.ytick_color = "black"
+
+        if mode == "dark":
+            cls.figure_facecolor = "black"
+            cls.axes_facecolor = "black"
+            cls.text_color = "white"
+            cls.axes_labelcolor = "white"
+            cls.axes_edgecolor = "white"
+            cls.xtick_color = "white"
+            cls.ytick_color = "white"
 
 
 def _luminance(hex_color: str) -> float:

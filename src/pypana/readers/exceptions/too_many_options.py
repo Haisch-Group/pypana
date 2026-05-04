@@ -4,9 +4,11 @@ This module provides a specific error type for when a reader cannot be selected 
 because the given file's contents are not uniquely parseable by only one implemented reader.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
-from pypana.pana_error import ParticleAnalysisError
+from pypana._pana_error import ParticleAnalysisError
 from pypana.readers.base_instrument_reader import InstrumentReaderSet
 
 

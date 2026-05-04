@@ -9,7 +9,6 @@ from enum import Enum
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from pypana.pana_error import ParticleAnalysisError
 from pypana.plots.themes import BaseTheme
 
 
@@ -92,7 +91,7 @@ class UnitScale(float, Enum):
             the appropriate scaling factor.
 
         Raises:
-            ParticleAnalysisError
+            ValueError
         """
         found_symbols: list[UnitScale] = []
 
@@ -104,7 +103,7 @@ class UnitScale(float, Enum):
             found_symbols.append(cls.NANO)
 
         if len(found_symbols) > 1:
-            raise ParticleAnalysisError()  # TODO: create significant exception for this case
+            raise ValueError()  # TODO: create significant exception for this case
 
         if len(found_symbols) == 1:
             return found_symbols.pop()

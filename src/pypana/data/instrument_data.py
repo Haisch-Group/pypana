@@ -9,6 +9,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Annotated, Any, Literal
 
+import numpy as np
 import plotly.graph_objects as go
 from matplotlib.ticker import Formatter
 from pydantic import BaseModel, Field
@@ -17,6 +18,9 @@ from rich import inspect
 from pypana.console import console
 from pypana.data.exceptions.invalid_index_error import InvalidIndexError
 from pypana.data.measurement import Measurement
+from pypana.data.utils import get_xlims, is_full_rectangular_matrix
+from pypana.exceptions.incompatible_argument_error import IncompatibleArgumentError
+from pypana.plots.histograms.hist_matrix import plot_hist_matrix
 from pypana.plots.histograms.hist_single import (
     plot_hist_single_matplotlib,
     plot_hist_single_plotly,
@@ -250,13 +254,13 @@ class InstrumentData(BaseModel, Debuggable):
 
     def histogram(
         self,
-        measurement: int,
+        m: int | list[list[int]],
         data_type: MeasurementDataType,
         *,
         theme: BaseTheme | None = None,
         hist_type: Literal["bar", "stairs", "both"] = "bar",
         secondary: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
-        save_as: str | Path | None = None,
+        save_as: str | None = None,
         legend: bool = True,
         pmf: bool = False,
         spines_invisible: list[Literal["left", "right", "top", "bottom"]] | None = None,
@@ -287,7 +291,8 @@ class InstrumentData(BaseModel, Debuggable):
             For matplotlib kwargs, please consult the matplotlib documentation: https://matplotlib.org/stable/ .
 
         Args:
-            measurement (int): The measurement to plot the histogram for.
+            m (int | list[list[int]]): The measurement(s) to plot the histogram for. For a grid, the
+                measurements are given row-major like numpy. Has to be a full rectangular matrix.
             data_type (MeasurementDataType): The data type to plot. ``dN/dlogdp`` or ``dN``.
             theme (BaseTheme): The theme for the plot. Defaults to ``settings.THEME``.
             hist_type (str): What histogram type to display. "bar" plots a standard bar histogram,
@@ -296,7 +301,7 @@ class InstrumentData(BaseModel, Debuggable):
             secondary (str): The additional function to plot.
                 "fit_cdf" and "fit_pdf" require the measurement to already be fitted previously. Both currently raise
                 NotImplementedError. Defaults to ``None``.
-            save_as (str | Path | None): The path where to save the figure. Defaults to ``None`` which does not save.
+            save_as (str | None): The path where to save the figure. Defaults to ``None`` which does not save.
             legend (bool): Whether to show the legend. Defaults to ``True``.
             pmf (bool): Whether to plot the measurement as probability mass function. Defaults to ``False``.
             spines_invisible (list): The spines not to show. Defaults to ``None``, in which case all are plotted.
@@ -362,4 +367,67 @@ class InstrumentData(BaseModel, Debuggable):
             NotImplementedError: If the functionality is currently not supported and is only a placeholder.
             ParticleAnalysisError: If an internal error occurs during plotting.
         """
-        return None
+        _measurements: list[list[int]] = []
+        _lowest_bound: float
+        _highest_bound: float
+
+        if isinstance(m, int):
+            if m not in self.measurements:
+                raise InvalidIndexError(
+                    message="Invalid measurement scan number!", invalid_indices=[m]
+                )
+
+            _measurements = [[m]]
+
+        if isinstance(m, list):
+            _measurements = m
+
+        if not is_full_rectangular_matrix(_measurements):
+            raise InvalidIndexError(
+                message="The measurement matrix is not full!",
+                invalid_indices=sum(_measurements, []),
+            )
+
+        _xlim: tuple[float, float] = (-np.inf, np.inf)
+        if xspace_sides != 0.0:
+            if xlim is not None:
+                raise IncompatibleArgumentError(
+                    message="Argument 'xspace_sides' is incompatible.",
+                    incompatible_with=[("xlim", xlim)],
+                )
+
+            _xlim = get_xlims(
+                [
+                    _m
+                    for _m in self.measurements.values()
+                    if _m.scan_nr in sum(_measurements, [])
+                ],
+                xspace_sides,
+            )
+
+        if xlim is not None:
+            if xlim[0] >= xlim[1]:
+                raise ValueError
+
+            _xlim = xlim
+
+        plot_hist_matrix(
+            [[self.measurements[m] for m in subm] for subm in _measurements],
+            data_type,
+            theme=theme,
+            hist_type=hist_type,
+            secondary=secondary,
+            save_as=save_as,
+            legend=legend,
+            pmf=pmf,
+            spines_invisible=spines_invisible,
+            title=title,
+            xlabel=xlabel,
+            xlim=_xlim,
+            xmajor_formatter=xmajor_formatter,
+            ylabel=ylabel,
+            ylim=ylim,
+            ymajor_formatter=ymajor_formatter,
+            yscale=yscale,
+            **kwargs,
+        )

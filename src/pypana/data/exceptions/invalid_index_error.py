@@ -4,7 +4,7 @@ This module provides a specific error type for when a subset of measurements is 
 but the selection input is invalid.
 """
 
-from pypana.pana_error import ParticleAnalysisError
+from pypana._pana_error import ParticleAnalysisError
 
 
 class InvalidIndexError(ParticleAnalysisError, ValueError):
