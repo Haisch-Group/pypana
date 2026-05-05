@@ -1,5 +1,6 @@
 """Methods for plotting histograms of measurements in a matrix format."""
 
+from collections.abc import Callable
 from typing import Any, Literal
 
 import matplotlib
@@ -24,6 +25,7 @@ STANDARD_HIST_SINGLE_KWARGS: dict[str, Any] = {
     "secondary": "cdf",
     "yscale": "linear",
     "bar_edgecolor": "black",
+    "bar_label": lambda m: f"Measurement {m.scan_nr}",
     "bar_linewidth": 0.25,
     "secondary_alpha": 0.7,
     "secondary_color": "black",
@@ -38,6 +40,7 @@ STANDARD_HIST_MATRIX_KWARGS: dict[str, Any] = {
     "legend": "column",
     "secondary": "cdf",
     "yscale": "linear",
+    "bar_label": lambda m: f"Measurement {m.scan_nr}",
     "bar_linewidth": 0,
     "secondary_alpha": 0.7,
     "secondary_color": "black",
@@ -158,19 +161,22 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
                 if data_type == MeasurementDataType.dndlogdp
                 else _m.delta_n.copy()
             )
-            _bar_kwargs["label"] = kwargs.get("bar_label", f"Measurement {_m.scan_nr}")
+            _bar_kwargs["label"] = _resolve_label(
+                kwargs.get("bar_label"), _m, f"Measurement {_m.scan_nr}"
+            )
             _stairs_kwargs["label"] = (
-                _stairs_kwargs.get("stairs_label", f"Measurement {_m.scan_nr}")
+                _resolve_label(
+                    kwargs.get("stairs_label"), _m, f"Measurement {_m.scan_nr}"
+                )
                 if hist_type != "both"
                 else None
             )
-            _secondary_kwargs["label"] = _secondary_kwargs.get(
-                "secondary_label",
-                (
-                    "CDF"
-                    if secondary == "cdf"
-                    else ("fitted CDF" if secondary == "fit_cdf" else "fitted pdf")
-                ),
+            _secondary_kwargs["label"] = _resolve_label(
+                kwargs.get("secondary_label"),
+                _m,
+                "CDF"
+                if secondary == "cdf"
+                else ("fitted CDF" if secondary == "fit_cdf" else "fitted pdf"),
             )
 
             if pmf:
@@ -392,3 +398,15 @@ def _deduplicate_handles_labels(handles: list, labels: list) -> tuple[list, list
             deduped_labels.append(label)
 
     return list(reversed(deduped_handles)), list(reversed(deduped_labels))
+
+
+def _resolve_label(
+    label: str | Callable[[Measurement], str] | None,
+    m: Measurement,
+    default: str,
+) -> str:
+    """Resolves the label."""
+    if label is None:
+        return default
+
+    return label(m) if callable(label) else label

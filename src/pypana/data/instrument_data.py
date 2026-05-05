@@ -343,7 +343,8 @@ class InstrumentData(BaseModel, Debuggable):
                 Defaults to the matplotlib default.
             bar_hatch (str): The bar hatches. Can only be specified when hist_type="bar" or "both". If not specified,
                 the bars are filled with the facecolor.
-            bar_label (str): The legend label for the bar. Defaults to an adaptive label.
+            bar_label (str | Callable[[Measurement], str] | None): The legend label for the bar.
+                Defaults to an adaptive label. Also supports a lambda function that takes a measurement object as input.
             bar_linewidth (str): the edge linewidth of the bars. Can only be specified when hist_type="bar" or "both".
                 Defaults to the matplotlib default.
 
@@ -363,8 +364,9 @@ class InstrumentData(BaseModel, Debuggable):
                 when secondary is not None.
             secondary_fmt (str): The format of the line plot that shows the secondary function. Can only be specified
                 when secondary is not None.
-            secondary_label (str): The label of the secondary function for the legend. Can only be specified
-                when secondary is not None. Defaults to an adaptive label.
+            secondary_label (str | Callable[[Measurement], str] | None):
+                The label of the secondary function for the legend. Can only be specified when secondary is not None.
+                Defaults to an adaptive label. Also supports a lambda function that takes a measurement object as input.
             secondary_linestyle (str): The linestyle of the line plot that shows the secondary function.
                 Can only be specified when secondary is not None. Defaults to the matplotlib default.
             secondary_linewidth (float): The linewidth of the line of the secondary function. Can only be specified
@@ -373,6 +375,8 @@ class InstrumentData(BaseModel, Debuggable):
             stairs_color: The color of the stairs plot. Can be either a hex code, e.g. "#000000"
                 or from the color cycle, e.g. "C0". Can only be specified when hist_type="stairs" or "both".
                 Defaults to the matplotlib default.
+            stairs_label (str | Callable[[Measurement], str] | None): The legend label for the stairs.
+                Defaults to an adaptive label. Also supports a lambda function that takes a measurement object as input.
             stairs_linestyle (str): The linestyle of the stairs plot. Can only be specified when
                 hist_type="stairs" or "both". Defaults to the matplotlib default.
             stairs_linewidth (str): The linewidth of the stairs plot. Can only be specified when
