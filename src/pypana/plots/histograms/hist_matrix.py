@@ -1,6 +1,6 @@
 """Methods for plotting histograms of measurements in a matrix format."""
 
-from typing import Literal
+from typing import Any, Literal
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -17,6 +17,35 @@ from pypana.data.utils import linear_sci_formatter
 from pypana.plots.themes import BaseTheme
 from pypana.plots.utils import split_kwargs
 from pypana.utils.measurement_data_type import MeasurementDataType
+
+STANDARD_HIST_SINGLE_KWARGS: dict[str, Any] = {
+    "hist_type": "bar",
+    "legend": "lower right",
+    "secondary": "cdf",
+    "yscale": "linear",
+    "bar_edgecolor": "black",
+    "bar_linewidth": 0.25,
+    "secondary_alpha": 0.7,
+    "secondary_color": "black",
+}
+"""Standard kwargs for an out-of-the-box configuration of a single histogram.
+
+These parameters may change with newer versions of pypana.
+"""
+
+STANDARD_HIST_MATRIX_KWARGS: dict[str, Any] = {
+    "hist_type": "bar",
+    "legend": "column",
+    "secondary": "cdf",
+    "yscale": "linear",
+    "bar_linewidth": 0,
+    "secondary_alpha": 0.7,
+    "secondary_color": "black",
+}
+"""Standard kwargs for an out-of-the-box configuration of a matrix of histograms.
+
+These parameters may change with newer versions of pypana.
+"""
 
 
 def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
@@ -117,7 +146,7 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
             _rows, _cols, sharex=True, sharey=True, squeeze=False, layout="constrained"
         )
 
-        _title = title or get_default_title()
+        _title = title or _get_default_title()
         fig.suptitle(_title)
 
         for (r, c), ax in np.ndenumerate(axs):
@@ -175,7 +204,7 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
                 cdf = np.cumsum(_data / total) if total > 0 else np.zeros_like(_data)
 
                 ax2 = ax.twinx()
-                (line,) = ax2.plot(  # TODO: add alpha=0.7 to kwargs
+                (line,) = ax2.plot(
                     _m.d_p,
                     cdf,
                     **_color_kwarg,
@@ -184,6 +213,8 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
 
                 if c != _cols - 1:
                     ax2.yaxis.set_visible(False)
+                else:
+                    ax2.set_ylabel("CDF")
 
                 _handles.append(line)
                 _labels.append(_secondary_kwargs.get("label", ""))
@@ -209,7 +240,7 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
             for spine in spines_invisible or []:
                 ax.spines[spine].set_visible(False)
 
-        _handles, _labels = deduplicate_handles_labels(_handles, _labels)
+        _handles, _labels = _deduplicate_handles_labels(_handles, _labels)
 
         if legend and legend == "row":
             fig.legend(
@@ -257,8 +288,8 @@ def _format_ax(  # pragma: no cover
     ax.set_xlim(*xlim) if xlim != (-np.inf, np.inf) else None
     ax.set_ylim(*ylim) if ylim else None
 
-    _xlabel = xlabel or get_default_xlabel()
-    _ylabel = ylabel or get_default_ylabel(data_type)
+    _xlabel = xlabel or _get_default_xlabel()
+    _ylabel = ylabel or _get_default_ylabel(data_type)
 
     ax.set_xlabel(_xlabel)
     ax.set_ylabel(_ylabel)
@@ -319,17 +350,17 @@ def _bar_plot(  # pragma: no cover
     return bar
 
 
-def get_default_title() -> str:  # pragma: no cover
+def _get_default_title() -> str:  # pragma: no cover
     """Gets the default title."""
     return "Histogram"
 
 
-def get_default_xlabel() -> str:  # pragma: no cover
+def _get_default_xlabel() -> str:  # pragma: no cover
     """Gets the default xlabel."""
     return "Particle Diameter"
 
 
-def get_default_ylabel(data_type: MeasurementDataType) -> str:  # pragma: no cover
+def _get_default_ylabel(data_type: MeasurementDataType) -> str:  # pragma: no cover
     """Gets the default ylabel."""
     if data_type == MeasurementDataType.dn:
         return "Number Concentration\nin 1/cm³"
@@ -340,7 +371,7 @@ def get_default_ylabel(data_type: MeasurementDataType) -> str:  # pragma: no cov
     return ""
 
 
-def deduplicate_handles_labels(handles: list, labels: list) -> tuple[list, list]:
+def _deduplicate_handles_labels(handles: list, labels: list) -> tuple[list, list]:
     """Deduplicated handles and labels.
 
     Args:
