@@ -254,7 +254,7 @@ class InstrumentData(BaseModel, Debuggable):
 
     def histogram(
         self,
-        m: int | list[list[int]],
+        m: int | tuple[int, ...] | list[list[int | tuple[int, ...]]],
         data_type: MeasurementDataType,
         *,
         theme: BaseTheme | None = None,
@@ -386,25 +386,24 @@ class InstrumentData(BaseModel, Debuggable):
             NotImplementedError: If the functionality is currently not supported and is only a placeholder.
             ParticleAnalysisError: If an internal error occurs during plotting.
         """
-        _measurements: list[list[int]] = []
+        _measurements: list[list[tuple[int, ...]]] = []
         _lowest_bound: float
         _highest_bound: float
 
         if isinstance(m, int):
-            if m not in self.measurements:
-                raise InvalidIndexError(
-                    message="Invalid measurement scan number!", invalid_indices=[m]
-                )
+            _measurements = [[(m,)]]
 
+        elif isinstance(m, tuple):
             _measurements = [[m]]
 
-        if isinstance(m, list):
-            _measurements = m
+        elif isinstance(m, list):
+            _measurements = [
+                [(_m,) if isinstance(_m, int) else _m for _m in inner] for inner in m
+            ]
 
         if not is_full_rectangular_matrix(_measurements):
             raise InvalidIndexError(
                 message="The measurement matrix is not full!",
-                invalid_indices=sum(_measurements, []),
             )
 
         _xlim: tuple[float, float] = (-np.inf, np.inf)
@@ -431,7 +430,10 @@ class InstrumentData(BaseModel, Debuggable):
             _xlim = xlim
 
         plot_hist_matrix(
-            [[self.measurements[m] for m in subm] for subm in _measurements],
+            [
+                [tuple(self.measurements[_m] for _m in tup) for tup in inner]
+                for inner in _measurements
+            ],
             data_type,
             theme=theme,
             hist_type=hist_type,

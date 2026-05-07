@@ -1,6 +1,7 @@
 """Methods for plotting histograms of measurements in a matrix format."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from itertools import cycle
 from typing import Any, Literal
 
 import matplotlib
@@ -14,9 +15,8 @@ from matplotlib.ticker import Formatter
 
 from pypana.config import settings
 from pypana.data.measurement import FloatArray, Measurement
-from pypana.data.utils import linear_sci_formatter
 from pypana.plots.themes import BaseTheme
-from pypana.plots.utils import split_kwargs
+from pypana.plots.utils import linear_sci_formatter, split_kwargs
 from pypana.utils.measurement_data_type import MeasurementDataType
 
 STANDARD_HIST_SINGLE_KWARGS: dict[str, Any] = {
@@ -45,8 +45,8 @@ These parameters may change with newer versions of pypana.
 """
 
 
-def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
-    m: list[list[Measurement]],
+def plot_hist_matrix(  # pragma: no cover # noqa: PLR0912, PLR0915
+    m: list[list[tuple[Measurement, ...]]],
     data_type: MeasurementDataType,
     *,
     theme: BaseTheme | None = None,
@@ -104,11 +104,11 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
         hist_type (str): What histogram type to display. "bar" plots a standard bar histogram,
             "stairs" plots the outlines of the histogram, and "both" plots both together.
             Defaults to ``"bar"``.
-        secondary (str): The additional function to plot.
+        secondary (str): The additional function to plot for the first measurement per plot.
             "fit_cdf" and "fit_pdf" require the measurement to already be fitted previously. Both currently raise
             NotImplementedError. Defaults to ``None``.
         save_as (str | None): The path where to save the figure. Defaults to ``None`` which does not save.
-        legend (bool): Whether to show the legend. Defaults to ``True``.
+        legend (str | None): Whether to show the legend and where.
         pmf (bool): Whether to plot the measurement as probability mass function. Defaults to ``False``.
         spines_invisible (list): The spines not to show. Defaults to ``None``, in which case all are plotted.
         title (str | None): The title of the plot. Defaults to ``None`` and uses an adaptive title.
@@ -137,6 +137,13 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
 
     _handles: list = []
     _labels: list = []
+    _secondary_handles: list = []
+    _secondary_labels: list = []
+
+    _bf = _bar_kwargs.pop("facecolor", None)
+    _sf = _stairs_kwargs.pop("facecolor", None)
+    _bar_colors = cycle([_bf]) if isinstance(_bf, str) else cycle(_colors)
+    _stairs_colors = cycle([_sf]) if isinstance(_sf, str) else cycle(_colors)
 
     with matplotlib.rc_context(_theme.to_rcparams()):
         fig, axs = plt.subplots(
@@ -148,49 +155,48 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
 
         for (r, c), ax in np.ndenumerate(axs):
             ax.grid()
+            _m_tuple: tuple[Measurement, ...] = m[r][c]
 
-            _m: Measurement = m[r][c]
-            _data = (
-                _m.delta_n_dlog_dp.copy()
-                if data_type == MeasurementDataType.dndlogdp
-                else _m.delta_n.copy()
-            )
-            _bar_kwargs["label"] = _resolve_label(
-                kwargs.get("bar_label"), _m, f"Measurement {_m.scan_nr}"
-            )
-            _stairs_kwargs["label"] = (
-                _resolve_label(
-                    kwargs.get("stairs_label"), _m, f"Measurement {_m.scan_nr}"
+            for _m in _m_tuple:
+                _data = (
+                    _m.delta_n_dlog_dp.copy()
+                    if data_type == MeasurementDataType.dndlogdp
+                    else _m.delta_n.copy()
                 )
-                if hist_type != "both"
-                else None
-            )
-            _secondary_kwargs["label"] = _resolve_label(
-                kwargs.get("secondary_label"),
-                _m,
-                "CDF"
-                if secondary == "cdf"
-                else ("fitted CDF" if secondary == "fit_cdf" else "fitted pdf"),
-            )
-
-            if pmf:
-                _data /= sum(_data)
-
-            if hist_type in ["bar", "both"]:
-                bar = _bar_plot(_bar_kwargs, _colors, _cols, _data, _m, ax, c, r)
-
-                _handles.append(bar)
-                _labels.append(_bar_kwargs.get("label", ""))
-
-            if hist_type in ["stairs", "both"]:
-                stairs = _stairs_plot(
-                    _colors, _cols, _data, _m, _stairs_kwargs, ax, c, r
+                _bar_kwargs["label"] = _resolve_label(
+                    kwargs.get("bar_label"), _m, f"Measurement {_m.scan_nr}"
+                )
+                _stairs_kwargs["label"] = (
+                    _resolve_label(
+                        kwargs.get("stairs_label"), _m, f"Measurement {_m.scan_nr}"
+                    )
+                    if hist_type != "both"
+                    else None
+                )
+                _secondary_kwargs["label"] = _resolve_label(
+                    kwargs.get("secondary_label"),
+                    _m,
+                    "CDF"
+                    if secondary == "cdf"
+                    else ("fitted CDF" if secondary == "fit_cdf" else "fitted pdf"),
                 )
 
-                _handles.append(stairs) if hist_type != "both" else None
-                _labels.append(
-                    _stairs_kwargs.get("label", "")
-                ) if hist_type != "both" else None
+                if pmf:
+                    _data /= sum(_data)
+
+                if hist_type in ["bar", "both"]:
+                    bar = _bar_plot(_bar_kwargs, _bar_colors, _data, _m, ax)
+
+                    _handles.append(bar)
+                    _labels.append(_bar_kwargs.get("label", ""))
+
+                if hist_type in ["stairs", "both"]:
+                    stairs = _stairs_plot(_stairs_kwargs, _stairs_colors, _data, _m, ax)
+
+                    _handles.append(stairs) if hist_type != "both" else None
+                    _labels.append(
+                        _stairs_kwargs.get("label", "")
+                    ) if hist_type != "both" else None
 
             if secondary:
                 if secondary in ["fit_cdf", "fit_pdf"]:
@@ -216,12 +222,13 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
                 else:
                     ax2.set_ylabel("CDF")
 
-                _handles.append(line)
-                _labels.append(_secondary_kwargs.get("label", ""))
+                _secondary_handles.append(line)
+                _secondary_labels.append(_secondary_kwargs.get("label", ""))
 
             _format_ax(
                 ax,
                 data_type,
+                pmf,
                 xlabel,
                 xlim,
                 xmajor_formatter,
@@ -240,19 +247,26 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
             for spine in spines_invisible or []:
                 ax.spines[spine].set_visible(False)
 
-        _handles, _labels = _deduplicate_handles_labels(_handles, _labels)
+        _secondary_handles, _secondary_labels = _deduplicate_handles_labels(
+            _secondary_handles, _secondary_labels
+        )
 
         if legend and legend == "row":
             fig.legend(
-                _handles,
-                _labels,
+                _handles + _secondary_handles,
+                _labels + _secondary_labels,
                 loc="outside lower center",
                 ncol=len(_labels),
                 **_legend_kwargs,
             )
 
         if legend and legend == "column":
-            fig.legend(_handles, _labels, loc="outside right upper", **_legend_kwargs)
+            fig.legend(
+                _handles + _secondary_handles,
+                _labels + _secondary_labels,
+                loc="outside right upper",
+                **_legend_kwargs,
+            )
 
         if save_as is not None:
             fig.savefig(save_as, bbox_inches="tight", transparent=True)
@@ -263,6 +277,7 @@ def plot_hist_matrix(  # pragma: no cover # noqa: PLR0915
 def _format_ax(  # pragma: no cover
     ax: Axes,
     data_type: MeasurementDataType,
+    pmf: bool,
     xlabel: str | None,
     xlim: tuple[float, float],
     xmajor_formatter: Formatter | str | None,
@@ -289,7 +304,7 @@ def _format_ax(  # pragma: no cover
     ax.set_ylim(*ylim) if ylim else None
 
     _xlabel = xlabel or _get_default_xlabel()
-    _ylabel = ylabel or _get_default_ylabel(data_type)
+    _ylabel = ylabel or _get_default_ylabel(data_type, pmf)
 
     ax.set_xlabel(_xlabel)
     ax.set_ylabel(_ylabel)
@@ -297,21 +312,14 @@ def _format_ax(  # pragma: no cover
 
 
 def _stairs_plot(  # pragma: no cover
-    _colors: list[str],
-    _cols: int,
+    _stairs_kwargs: dict[str, object],
+    _color_generator: Iterator[str],
     _data: FloatArray,
     _m: Measurement,
-    _stairs_kwargs: dict[str, object],
     ax: Axes,
-    c: int,
-    r: int,
 ) -> StepPatch:
     """Plots the stairs plot part."""
-    _color_kwarg = (
-        {}
-        if "facecolor" in _stairs_kwargs
-        else {"color": _colors[(r * _cols + c) % len(_colors)]}
-    )
+    _color_kwarg = {"color": next(_color_generator)}
 
     stairs = ax.stairs(
         values=_data,
@@ -324,20 +332,13 @@ def _stairs_plot(  # pragma: no cover
 
 def _bar_plot(  # pragma: no cover
     _bar_kwargs: dict[str, object],
-    _colors: list[str],
-    _cols: int,
+    _color_generator: Iterator[str],
     _data: FloatArray,
     _m: Measurement,
     ax: Axes,
-    c: int,
-    r: int,
 ) -> BarContainer:
     """Plots the bar plot part."""
-    _color_kwarg = (
-        {}
-        if "facecolor" in _bar_kwargs
-        else {"color": _colors[(r * _cols + c) % len(_colors)]}
-    )
+    _color_kwarg = {"color": next(_color_generator)}
 
     bar = ax.bar(
         _m.d_p,
@@ -360,13 +361,17 @@ def _get_default_xlabel() -> str:  # pragma: no cover
     return "Particle Diameter"
 
 
-def _get_default_ylabel(data_type: MeasurementDataType) -> str:  # pragma: no cover
+def _get_default_ylabel(
+    data_type: MeasurementDataType, pmf: bool
+) -> str:  # pragma: no cover
     """Gets the default ylabel."""
+    suffix = ", PMF" if pmf else ", in cm⁻³"
+
     if data_type == MeasurementDataType.dn:
-        return "Number Concentration\nin 1/cm³"
+        return f"Number Concentration\nΔN{suffix}"
 
     if data_type == MeasurementDataType.dndlogdp:
-        return "Normalized Concentration\n(ΔN/ΔlogDₚ)"
+        return f"Normalized Concentration\nΔN/ΔlogDₚ{suffix}"
 
     return ""
 

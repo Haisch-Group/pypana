@@ -3,7 +3,6 @@
 from typing import Any
 
 import numpy as np
-from matplotlib import ticker
 
 from pypana.data.measurement import Measurement
 
@@ -52,11 +51,3 @@ def get_xlims(measurements: list[Measurement], space: float) -> tuple[float, flo
     xlim_high = float(10 ** (log_highest_bound + log_space_each_side))
 
     return xlim_low, xlim_high
-
-
-def linear_sci_formatter() -> ticker.ScalarFormatter:
-    """Returns the default pypana linear scientific formatter."""
-    fmt = ticker.ScalarFormatter(useMathText=True)
-    fmt.set_scientific(True)
-    fmt.set_powerlimits((-2, 0))
-    return fmt
