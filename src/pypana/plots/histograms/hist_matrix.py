@@ -26,6 +26,7 @@ STANDARD_HIST_SINGLE_KWARGS: dict[str, Any] = {
     "bar_linewidth": 0.25,
     "secondary_alpha": 0.7,
     "secondary_color": "black",
+    "legend_frameon": False,
 }
 """Standard kwargs for an out-of-the-box configuration of a single histogram.
 
@@ -38,6 +39,7 @@ STANDARD_HIST_MATRIX_KWARGS: dict[str, Any] = {
     "bar_linewidth": 0,
     "secondary_alpha": 0.7,
     "secondary_color": "black",
+    "legend_frameon": False,
 }
 """Standard kwargs for an out-of-the-box configuration of a matrix of histograms.
 
