@@ -1,0 +1,11 @@
+from pypana.readers import base_instrument_reader as base_instrument_reader
+from pypana.readers import base_reader as base_reader
+from pypana.readers.discovery import SmartReader as SmartReader
+from pypana.readers.palas import palas_welas as palas_welas
+from pypana.readers.tsi import tsi_aps3310 as tsi_aps3310
+from pypana.readers.tsi import tsi_aps3321 as tsi_aps3321
+from pypana.readers.tsi import tsi_cpc3775 as tsi_cpc3775
+from pypana.readers.tsi import tsi_em3068 as tsi_em3068
+from pypana.readers.tsi import tsi_las3340a as tsi_las3340a
+from pypana.readers.tsi import tsi_smps3071 as tsi_smps3071
+from pypana.readers.tsi import tsi_smps3938 as tsi_smps3938

@@ -1,16 +1,25 @@
 [project]
-name = "py-particleanalysis"
+name = "pypana"
 version = "0.1.0"
 description = "Scripts for import and evaluation of aerosol measurements"
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
+    "cycler>=0.12.1",
     "dill==0.4.0",
+    "ipykernel>=7.2.0",
+    "ipympl>=0.10.0",
+    "ipywidgets>=8.1.8",
     "matplotlib>=3.10.8",
+    "nbformat>=5.10.4",
     "numpy==2.4.2",
     "openpyxl>=3.1.5",
     "pandas>=3.0.0",
     "pandas-stubs~=3.0.0",
+    "plotly>=6.7.0",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.13.1",
+    "rich>=14.3.4",
     "scikit-learn>=1.8.0",
     "scipy>=1.17.0",
     "scipy-stubs~=1.17.0",
@@ -20,16 +29,21 @@ dependencies = [
     "unidip>=0.1.1",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.ruff]
 target-version = "py312"
+exclude = ["_v1"]
 
 [tool.ruff.lint]
 ignore = [
     "E501",
-    "ANN101",
-    "ANN102",
     "ANN003",
-    "PLR0913"
+    "PLR0913",
+    "D104",
+    "D105"
 ]
 select = [
     "E",
@@ -46,8 +60,16 @@ select = [
     "UP",
     "N",
     "PTH",
-    "PD"
+    "PD",
+    "D",
+    "C4",
+    "FA",
+    "ISC",
+    "PIE810",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"!src/**.py" = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -58,8 +80,51 @@ indent-style = "space"
 docstring-code-format = true
 docstring-code-line-length = 72
 
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_configs = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = [
+    "simdkalman.*",
+    "unidip.*",
+    "dill.*",
+    "statsmodels.*",
+    "scipy.*"
+]
+ignore_missing_imports = true
+
 [tool.coverage.run]
-dynamic_context = "test_function"
+source = ["src/pypana"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = [
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "@(abc\\.)?abstractmethod",
+]
 
 [tool.coverage.html]
 show_contexts = true
+
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.152.1",
+    "jupyterlab>=4.5.6",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
+]
+docs = [
+    "autodoc-pydantic>=2.2.0",
+    "furo>=2025.12.19",
+    "pydata-sphinx-theme>=0.17.0",
+    "sphinx<9",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-rtd-theme>=3.1.0",
+]
