@@ -7,7 +7,7 @@ import copy
 from collections.abc import Hashable
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, overload, Self, Callable
 
 import numpy as np
 import plotly.graph_objects as go
@@ -55,6 +55,89 @@ class InstrumentData(BaseModel, Debuggable):
         description="Other info about the measurements that might be required.",
     )
 
+    def __len__(self) -> int:
+        return len(self.measurements)
+
+    @overload
+    def __getitem__(self, index: int) -> Measurement:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Self:
+        ...
+
+    def __getitem__(self, index: int | slice) -> Measurement | Self:
+        if isinstance(index, int):
+            return self.measurements[index]
+
+        elif isinstance(index, slice):
+            try:
+                scan_nrs = list(self.measurements.keys())[index]
+                return self.keep_measurements(scan_nrs, inplace=False, verbose=False)
+            except InvalidIndexError:
+                raise ValueError("Unexpected indices. If the Measurements are currently not contiguous,"
+                                 "call `reindex()` first.")
+
+        else:
+            raise TypeError()
+
+    def apply(self, f: Callable[[Self], Self]) -> Self:
+        """Applies a function to this InstrumentData object.
+
+        Args:
+            f: The function or lambda to apply.
+
+        Returns:
+            The output of the supplied function.
+        """
+        return f(self)
+
+    def mapply(self, f: Callable[[Measurement], Measurement]) -> Self:
+        """Applies a function all contained Measurements.
+
+        Args:
+            f: The function or lambda to apply.
+
+        Returns:
+            Itself with modified Measurements.
+
+        Note:
+            This operation is inplace in regard to the InstrumentData object.
+        """
+        _measurements = {k: f(v) for k,v in self.measurements.items()}
+        self.measurements = _measurements
+
+        return self
+
+    def permute(self, p: list[int]) -> Self:
+        """Permutes the order of Measurements.
+
+        Args:
+            p: The permutation list where the position of a listed index is its new index.
+
+        Returns:
+            Itself with permuted Measurements.
+        """
+        if not set(p).issubset(set(self.measurements.keys())):
+            raise ValueError("Unexpected indices.")
+
+        _measurements: dict[int, Measurement] = {}
+        for new, old in enumerate(p, start=0):
+            _measurements[new] = self.measurements[old]
+
+        self.measurements = _measurements
+        return self
+
+    def reindex(self):
+        """Re-indexes the InstrumentData object.
+
+        Returns:
+            Itself, but with contiguous Measurement keys ranging from `0..(len(measurements)-1)`
+        """
+        p = list(self.measurements.keys())
+        return self.permute(p)
+
+
     def info(self, *, verbose: bool = False) -> None:  # pragma: no cover
         """Prints the state of the instrument data."""
         scan_numbers = list(self.measurements.keys())
@@ -87,7 +170,7 @@ class InstrumentData(BaseModel, Debuggable):
         inplace: bool = True,
         deepcopy: bool = False,
         verbose: bool = True,
-    ) -> "InstrumentData":
+    ) -> Self:
         """Select a subset of measurements bases on indices.
 
         Args:
@@ -169,7 +252,7 @@ class InstrumentData(BaseModel, Debuggable):
             )
 
         if deepcopy:
-            return InstrumentData(
+            return self.__class__(
                 measurements=copy.deepcopy(selected_measurements),
                 device_name=copy.deepcopy(self.device_name),
                 file_path=copy.deepcopy(self.file_path),
@@ -179,7 +262,7 @@ class InstrumentData(BaseModel, Debuggable):
             self.measurements = selected_measurements
             return self
 
-        return InstrumentData(
+        return self.__class__(
             measurements=selected_measurements,
             device_name=self.device_name,
             file_path=self.file_path,

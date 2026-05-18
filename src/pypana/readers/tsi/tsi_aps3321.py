@@ -128,7 +128,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
                         "Other types than dN/dlogDp are not yet implemented for TSI APS 3321."
                     )
 
-                scan_nr = row["Sample #"]
+                scan_nr = int(row["Sample #"])
                 time = datetime.strptime(
                     f"{row['Date']} {row['Start Time']}", "%m/%d/%y %H:%M:%S"
                 )
@@ -164,7 +164,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
                     geo_std_dev=geo_std_dev,
                     other=other_info,
                 )
-                measurements[scan_nr] = measurement
+                measurements[scan_nr - 1] = measurement  # 0-based indexing
             except (ValueError, AttributeError, KeyError) as e:
                 raise ReadError(f"{e}") from e
             except ReadError as e:

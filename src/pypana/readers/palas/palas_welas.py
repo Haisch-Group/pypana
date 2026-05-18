@@ -80,7 +80,7 @@ class PALASWelasInstrumentReader(BaseInstrumentReader):
         with Path.open(self._path, "r", encoding=self._encoding) as f:
             raw_measurements = _split_measurements(f.readlines())
 
-        for scan_nr, raw_measurement in enumerate(raw_measurements, start=1):
+        for scan_nr, raw_measurement in enumerate(raw_measurements, start=0):
             try:
                 if not len(raw_measurement) == self._LINES_PER_MEASUREMENT:
                     raise ReadError(
