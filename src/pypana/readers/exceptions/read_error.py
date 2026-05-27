@@ -7,7 +7,7 @@ or when no reader can be determined automatically.
 
 from pathlib import Path
 
-from pypana._pana_error import ParticleAnalysisError
+from pypana.pana_error import ParticleAnalysisError
 
 
 class ReadError(ParticleAnalysisError):

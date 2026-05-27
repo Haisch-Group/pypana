@@ -113,6 +113,26 @@ class Measurement(BaseModel, Debuggable):
 
         return self
 
+    def summary(self) -> dict[str, object]:
+        """Summary of this measurement's key derived quantities.
+
+        Returns:
+            A dict overview.
+        """
+        return {
+            "scan_nr": self.scan_nr,
+            "n_bins": len(self.d_p),
+            "d_p_min": float(self.d_p.min()),
+            "d_p_max": float(self.d_p.max()),
+            "n_total": self.n_total,
+            "geo_mean": self.geo_mean,
+            "geo_std_dev": self.geo_std_dev,
+            "mean": self.mean,
+            "median": self.median,
+            "mode": self.mode,
+            "other": f"[{", ".join(f"{k}: {v}" for k, v in self.other.items())}]",
+        }
+
     @cached_property
     def n_total(self) -> float:
         """Total number concentration, integrated over all bins [1/cm³]."""

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pypana._pana_error import ParticleAnalysisError
+from pypana.pana_error import ParticleAnalysisError
 from pypana.readers.base_instrument_reader import InstrumentReaderSet
 
 

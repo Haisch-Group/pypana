@@ -10,6 +10,7 @@ from textwrap import dedent
 from typing import Annotated, Any, Literal, Self, overload
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from matplotlib.ticker import Formatter
 from pydantic import BaseModel, Field
@@ -165,6 +166,17 @@ class InstrumentData(BaseModel, Debuggable):
 
         if verbose:
             inspect(self)
+
+    def summary(self) -> pd.DataFrame:
+        """A debug DataFrame with one row per measurement.
+
+        Index is the measurement key. Columns are the keys of ``Measurement.summary()``.
+
+        Returns:
+            The overview DataFrame.
+        """
+        rows = {key: m.summary()  for key, m in self.measurements.items()}
+        return pd.DataFrame.from_dict(rows, orient="index")
 
     def keep_measurements(  # noqa: PLR0912
         self,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pypana._pana_error import ParticleAnalysisError
+from pypana.pana_error import ParticleAnalysisError
 
 
 class IncompatibleArgumentError(ParticleAnalysisError):
