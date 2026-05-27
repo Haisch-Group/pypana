@@ -7,11 +7,11 @@ This data can then be used for further unified analysis.
 from collections.abc import Hashable
 from datetime import datetime
 from functools import cached_property
-from typing import Any
+from typing import Any, ClassVar, Self
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from pypana.utils.debug import Debuggable
 
@@ -25,6 +25,7 @@ class Measurement(BaseModel, Debuggable):
         arbitrary_types_allowed=True,
         ignored_types=(cached_property,),
         populate_by_name=True,
+        validate_assignment=True,
     )
 
     scan_nr: int = Field(description="Scan number as reported by the instrument")
@@ -80,6 +81,30 @@ class Measurement(BaseModel, Debuggable):
         description="Other measurement data that is currently not directly supported in other fields.",
     )
 
+    _action_log: list[str] = PrivateAttr(default_factory=list)
+
+    _PAIRS: ClassVar[dict[str, str]] = {
+        "raw_delta_n": "raw_delta_n_dlog_dp",
+        "raw_delta_n_dlog_dp": "raw_delta_n",
+    }
+
+    def __setattr__(self, name: str, value: object) -> None:
+        super().__setattr__(name, value)
+        self._action_log.append(f"set {name} to {value}")
+
+        paired = self._PAIRS.get(name, None)
+        if paired is not None and value is not None:
+            super().__setattr__(paired, None)
+
+        self._invalidate_caches()
+
+    def _invalidate_caches(self) -> None:
+        """Invalidates values for cached properties."""
+        for key in list(self.__dict__):
+            if key not in type(self).model_fields:
+                self.__dict__.pop(key)
+                self._action_log.append(f"invalidated {key}")
+
     @model_validator(mode="after")
     def check_concentration_provided(self) -> "Measurement":
         """Checks that at least one type of number size distribution was supplied in the constructor."""
@@ -89,10 +114,9 @@ class Measurement(BaseModel, Debuggable):
         return self
 
     @cached_property
-    def n_total(self) -> np.floating:
+    def n_total(self) -> float:
         """Total number concentration, integrated over all bins [1/cm³]."""
-        assert self.raw_delta_n is not None  # mypy doesnt track it correctly
-        return np.floating(self.raw_delta_n.sum())
+        return float(self.delta_n.sum())
 
     @cached_property
     def delta_n(self) -> FloatArray:
@@ -111,3 +135,78 @@ class Measurement(BaseModel, Debuggable):
 
         assert self.raw_delta_n is not None
         return (self.raw_delta_n / self.delta_log_d_p).astype(float)
+
+    @cached_property
+    def geo_mean(self) -> float:
+        """Geometric mean diameter."""
+        if self.n_total == 0:
+            return 0.0
+
+        return float(
+            10 ** (np.nansum(np.log10(self.d_p) * self.delta_n) / self.n_total)
+        )
+
+    @cached_property
+    def geo_std_dev(self) -> float:
+        """Geometric standard deviation."""
+        if self.n_total == 0:
+            return 1.0
+
+        log_dg = np.log10(self.geo_mean)
+        var = (
+            np.nansum(self.delta_n * (np.log10(self.d_p) - log_dg) ** 2) / self.n_total
+        )
+
+        return float(10 ** np.sqrt(var))
+
+    @cached_property
+    def mean(self) -> float:
+        """Mean diameter."""
+        if self.n_total == 0:
+            return 0.0
+
+        return float(np.nansum(self.d_p * self.delta_n) / self.n_total)
+
+    @cached_property
+    def median(self) -> float:
+        """Median diameter."""
+        if self.n_total == 0:
+            return 0.0
+
+        cum = np.cumsum(self.delta_n)
+        return float(np.interp(0.5 * self.n_total, cum, self.d_p))
+
+    @cached_property
+    def mode(self) -> float:
+        """The mode of the distribution."""
+        return float(self.d_p[int(np.argmax(self.delta_n_dlog_dp))])
+
+    def cut(self, d: tuple[float, float]) -> Self:
+        """Sets bins with midpoint diameter outside the lower and higher bound to zero.
+
+        Args:
+            d (tuple[float, float]): The boundaries in (lower, higher)
+
+        Returns:
+            Itself, after applying the changes
+
+
+        Note:
+            This operation is inplace.
+        """
+        d_lo, d_hi = d
+
+        if d_lo >= d_hi:
+            raise ValueError(f"d_lo ({d_lo}) must be less than d_hi ({d_hi})")
+
+        outside = (self.d_p < d_lo) | (self.d_p > d_hi)
+        if self.raw_delta_n is not None:
+            new = self.raw_delta_n.copy()
+            new[outside] = 0.0
+            self.raw_delta_n = new
+        elif self.raw_delta_n_dlog_dp is not None:
+            new = self.raw_delta_n_dlog_dp.copy()
+            new[outside] = 0.0
+            self.raw_delta_n_dlog_dp = new
+
+        return self

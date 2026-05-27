@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 from unittest.mock import Mock, patch
 
@@ -75,7 +76,7 @@ def test_select_measurements_int(measurements: dict[int, Measurement]) -> None:
     assert data_int.measurements[second_scan_nr].scan_nr == second_scan_nr
 
     # non-existing scan
-    invalid_scan_nr = list(data.measurements.keys())[-1] + 1
+    invalid_scan_nr = max(list(data.measurements.keys())) + 1
     with pytest.raises(InvalidIndexError):
         data.keep_measurements(invalid_scan_nr, inplace=False)
 
@@ -104,8 +105,8 @@ def test_select_measurements_range(measurements: dict[int, Measurement]) -> None
     assert id(data_old) == id(data)
 
     # select everything except first and last
-    first_scan_nr = list(data.measurements.keys())[0]
-    last_scan_nr = list(data.measurements.keys())[-1]
+    first_scan_nr = min(list(data.measurements.keys()))
+    last_scan_nr = max(list(data.measurements.keys()))
     data_new = data.keep_measurements(
         range(first_scan_nr + 1, last_scan_nr), inplace=False, verbose=False
     )
@@ -118,8 +119,8 @@ def test_select_measurements_range(measurements: dict[int, Measurement]) -> None
 def test_select_measurements_list(measurements: dict[int, Measurement]) -> None:
     """Test that list inputs result in expected behavior."""
     data = InstrumentData(measurements=measurements)
-    first_scan_nr = list(data.measurements.keys())[0]
-    last_scan_nr = list(data.measurements.keys())[-1]
+    first_scan_nr = min(list(data.measurements.keys()))
+    last_scan_nr = max(list(data.measurements.keys()))
 
     # negative indices invalid
     with pytest.raises(InvalidIndexError):
@@ -146,7 +147,7 @@ def test_select_measurements_list(measurements: dict[int, Measurement]) -> None:
 def test_select_measurements_deepcopy(measurements: dict[int, Measurement]) -> None:
     """Test that when deepcopy enabled it returns an independent copy."""
     data = InstrumentData(measurements=measurements)
-    first_scan_nr = list(data.measurements.keys())[0]
+    first_scan_nr = min(list(data.measurements.keys()))
 
     data_new = data.keep_measurements(
         range(MIN_SCAN_NR, MAX_SCAN_NR + 1), deepcopy=True, verbose=False
@@ -180,7 +181,7 @@ def test_plot_histogram_single(
 ) -> None:
     """Test the plot_histogram_single function wraps correctly."""
     data = InstrumentData(measurements=measurements)
-    first_scan_nr = list(data.measurements.keys())[0]
+    first_scan_nr = min(list(data.measurements.keys()))
 
     with pytest.raises(InvalidIndexError):
         data.plot_histogram_single(-1, data_type=MeasurementDataType.dndlogdp)
@@ -198,3 +199,390 @@ def test_plot_histogram_single(
 
     assert matplotlib_mock.call_count == 1
     assert plotly_mock.call_count == 1
+
+
+def test_len_empty_returns_zero() -> None:
+    """Empty InstrumentData has length 0."""
+    data = InstrumentData()
+
+    assert len(data) == 0
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=5, max_size=20))
+def test_len_matches_measurement_count(measurements: dict[int, Measurement]) -> None:
+    """__len__ returns the number of measurements in hte dict."""
+    data = InstrumentData(measurements=measurements)
+
+    assert len(data) == len(measurements)
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=3, max_size=20))
+def test_len_updates_after_keep_measurements(
+    measurements: dict[int, Measurement],
+) -> None:
+    """__len__ reflects shrunk size after in-place keep_measurements."""
+    data = InstrumentData(measurements=measurements)
+    first = list(data.measurements.keys())[0]
+    data.keep_measurements(first, inplace=True, verbose=False)
+
+    assert len(data) == 1
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=20))
+def test_getitem_int_returns_measurement_instance(
+    measurements: dict[int, Measurement],
+) -> None:
+    """Indexing with an existing scan_nr returns a Measurement."""
+    data = InstrumentData(measurements=measurements)
+    scan_nr = random.choice(list(measurements.keys()))
+
+    assert isinstance(data.measurements[scan_nr], Measurement)
+    assert data.measurements[scan_nr].scan_nr == scan_nr
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=20))
+def test_getitem_int_returns_correct_measurement_by_scan_nr(
+    measurements: dict[int, Measurement],
+) -> None:
+    """Returned Measurement carries the requested scan_nr."""
+    data = InstrumentData(measurements=measurements)
+    for scan_nr in measurements:
+        assert data[scan_nr].scan_nr == scan_nr
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=20))
+def test_getitem_int_missing_key_raises_keyerror(
+    measurements: dict[int, Measurement],
+) -> None:
+    """A scan_nr not present raises KeyError (dict lookup)."""
+    data = InstrumentData(measurements=measurements)
+    missing = max(measurements) + 1
+    with pytest.raises(KeyError):
+        _ = data[missing]
+
+
+def test_getitem_int_on_empty_raises_keyerror() -> None:
+    """Any int on an empty InstrumentData raises KeyError."""
+    data = InstrumentData()
+    with pytest.raises(KeyError):
+        _ = data[0]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=20))
+def test_getitem_slice_returns_new_instrumentdata(
+    measurements: dict[int, Measurement],
+) -> None:
+    """A slice returns an InstrumentData, not a Measurement."""
+    data = InstrumentData(measurements=measurements)
+    sliced = data[0:1]
+
+    assert isinstance(sliced, InstrumentData)
+    assert id(sliced) != id(data)
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=3, max_size=20))
+def test_getitem_slice_does_not_mutate_original(
+    measurements: dict[int, Measurement],
+) -> None:
+    """Slicing is non-inplace; source keeps all measurements."""
+    data = InstrumentData(measurements=measurements)
+    original_keys = list(data.measurements.keys())
+    _ = data[0:1]
+
+    assert list(data.measurements.keys()) == original_keys
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=20))
+def test_getitem_slice_full_range_returns_equivalent_keys(
+    measurements: dict[int, Measurement],
+) -> None:
+    """data[:] yields an InstrumentData with the same measurement keys."""
+    data = InstrumentData(measurements=measurements)
+    sliced = data[:]
+
+    assert list(sliced.measurements.keys()) == list(data.measurements.keys())
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=4, max_size=20))
+def test_getitem_slice_subset_returns_expected_keys(
+    measurements: dict[int, Measurement],
+) -> None:
+    """data[1:3] returns measurements at positions 1 and 2 of keys()."""
+    data = InstrumentData(measurements=measurements)
+    keys = list(data.measurements.keys())
+    sliced = data[1:3]
+
+    assert list(sliced.measurements.keys()) == keys[1:3]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=4, max_size=20))
+def test_getitem_slice_with_step_returns_expected_keys(
+    measurements: dict[int, Measurement],
+) -> None:
+    """data[::2] returns every other measurement in insertion order."""
+    data = InstrumentData(measurements=measurements)
+    keys = list(data.measurements.keys())
+    sliced = data[::2]
+
+    assert list(sliced.measurements.keys()) == keys[::2]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=20))
+def test_getitem_slice_empty_result_raises(
+    measurements: dict[int, Measurement],
+) -> None:
+    """A slice selecting nothing surfaces as an error from keep_measurements."""
+    data = InstrumentData(measurements=measurements)
+    with pytest.raises((InvalidIndexError, ValueError)):
+        _ = data[5:5]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=20))
+def test_getitem_slice_preserves_device_name_and_file_path(
+    measurements: dict[int, Measurement],
+) -> None:
+    """The sliced InstrumentData carries over device_name and file_path."""
+    data = InstrumentData(measurements=measurements, device_name="test_device")
+    sliced = data[:]
+
+    assert sliced.device_name == "test_device"
+    assert sliced.file_path == data.file_path
+
+
+@pytest.mark.parametrize("bad_index", ["foo", 1.5, (1, 2), None])
+@settings(max_examples=1)
+@given(measurements=measurement_dict(min_size=1, max_size=5))
+def test_getitem_invalid_type_raises_typeerror(
+    measurements: dict[int, Measurement], bad_index: object
+) -> None:
+    """Passing a non int/slice to __getitem__ raises TypeError."""
+    data = InstrumentData(measurements=measurements)
+    with pytest.raises(TypeError):
+        _ = data[bad_index]  # type: ignore[call-overload]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=20))
+def test_getitem_slice_empty_result_raises_valueerror(
+    measurements: dict[int, Measurement],
+) -> None:
+    """An empty slice raises ValueError."""
+    data = InstrumentData(measurements=measurements)
+    with pytest.raises(ValueError):
+        _ = data[5:5]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=20))
+def test_getitem_slice_out_of_range_returns_empty_raises(
+    measurements: dict[int, Measurement],
+) -> None:
+    """A slice fully past the end produces an empty selection and raises."""
+    data = InstrumentData(measurements=measurements)
+    with pytest.raises(ValueError):
+        _ = data[len(data) + 10 : len(data) + 20]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_apply_returns_function_result(
+    measurements: dict[int, Measurement],
+) -> None:
+    """apply forwards self into f and returns its result."""
+    data = InstrumentData(measurements=measurements)
+    result = data.apply(lambda d: d)
+
+    assert result is data
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_apply_passes_self_to_function(
+    measurements: dict[int, Measurement],
+) -> None:
+    """The function receives the InstrumentData itself as its argument."""
+    data = InstrumentData(measurements=measurements)
+    seen: list[InstrumentData] = []
+
+    def capture(d: InstrumentData) -> InstrumentData:
+        seen.append(d)
+        return d
+
+    data.apply(capture)
+
+    assert seen == [data]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=10))
+def test_apply_chainable_with_keep_measurements(
+    measurements: dict[int, Measurement],
+) -> None:
+    """apply can be used to chain operations like keep_measurements."""
+    data = InstrumentData(measurements=measurements)
+    first = next(iter(data.measurements))
+    result = data.apply(
+        lambda d: d.keep_measurements(first, inplace=False, verbose=False)
+    )
+
+    assert list(result.measurements.keys()) == [first]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_mapply_returns_self(
+    measurements: dict[int, Measurement],
+) -> None:
+    """mapply returns the same InstrumentData instance (inplace)."""
+    data = InstrumentData(measurements=measurements)
+    result = data.mapply(lambda m: m)
+
+    assert result is data
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_mapply_applies_to_every_measurement(
+    measurements: dict[int, Measurement],
+) -> None:
+    """The function is invoked once per measurement."""
+    data = InstrumentData(measurements=measurements)
+    calls: list[int] = []
+
+    def f(m: Measurement) -> Measurement:
+        calls.append(m.scan_nr)
+        return m
+
+    data.mapply(f)
+    assert sorted(calls) == sorted(measurements.keys())
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_mapply_replaces_measurements_with_function_output(
+    measurements: dict[int, Measurement],
+) -> None:
+    """The dict values are replaced by what the function returns, keys preserved."""
+    data = InstrumentData(measurements=measurements)
+    original_keys = list(data.measurements.keys())
+
+    def bump_d_p(m: Measurement) -> Measurement:
+        m.d_p = np.append(m.d_p, 1.0)
+        return m
+
+    data.mapply(bump_d_p)
+    assert list(data.measurements.keys()) == original_keys
+    for m in data.measurements.values():
+        assert m.d_p.tolist() == [1.0]
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=3, max_size=10))
+def test_permute_reorders_keys(
+    measurements: dict[int, Measurement],
+) -> None:
+    """permute reindexes measurements in the order given by p."""
+    data = InstrumentData(measurements=measurements)
+    p = list(data.measurements.keys())[::-1]
+    expected_first_measurement_scan_nr = data.measurements[p[0]].scan_nr
+
+    data.permute(p)
+
+    assert list(data.measurements.keys()) == list(range(len(p)))
+    assert data.measurements[0].scan_nr == expected_first_measurement_scan_nr
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_permute_returns_self(
+    measurements: dict[int, Measurement],
+) -> None:
+    """permute returns the same instance."""
+    data = InstrumentData(measurements=measurements)
+    p = list(data.measurements.keys())
+
+    assert data.permute(p) is data
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=10))
+def test_permute_with_unknown_index_raises_valueerror(
+    measurements: dict[int, Measurement],
+) -> None:
+    """A permutation containing an unknown key raises ValueError."""
+    data = InstrumentData(measurements=measurements)
+    keys: list[int] = list(data.measurements.keys())
+    bad_p = [*keys[:-1], max(keys) + 999]
+    with pytest.raises(ValueError):
+        data.permute(bad_p)
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=10))
+def test_permute_partial_drops_remaining_keys(
+    measurements: dict[int, Measurement],
+) -> None:
+    """Permuting a strict subset reduces the measurement count accordingly."""
+    data = InstrumentData(measurements=measurements)
+    subset = list(data.measurements.keys())[:1]
+    data.permute(subset)
+
+    assert len(data) == 1
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_reindex_produces_contiguous_keys(
+    measurements: dict[int, Measurement],
+) -> None:
+    """After reindex(), keys are 0..n-1."""
+    data = InstrumentData(measurements=measurements)
+    data.reindex()
+
+    assert list(data.measurements.keys()) == list(range(len(measurements)))
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=1, max_size=10))
+def test_reindex_preserves_measurement_order(
+    measurements: dict[int, Measurement],
+) -> None:
+    """reindex keeps the insertion order, only the keys change."""
+    data = InstrumentData(measurements=measurements)
+    original_scan_nrs = [m.scan_nr for m in data.measurements.values()]
+    data.reindex()
+
+    assert [m.scan_nr for m in data.measurements.values()] == original_scan_nrs
+
+
+@settings(max_examples=5)
+@given(measurements=measurement_dict(min_size=2, max_size=10))
+def test_reindex_enables_slicing_when_keys_were_noncontiguous(
+    measurements: dict[int, Measurement],
+) -> None:
+    """Slicing works the same after reindex; result has new contiguous keys."""
+    data = InstrumentData(measurements=measurements)
+    data.reindex()
+    sliced = data[0:2]
+
+    assert list(sliced.measurements.keys()) == [0, 1]
+
+
+def test_reindex_on_empty_is_noop() -> None:
+    """reindex on an empty InstrumentData leaves it empty."""
+    data = InstrumentData()
+    data.reindex()
+
+    assert len(data) == 0

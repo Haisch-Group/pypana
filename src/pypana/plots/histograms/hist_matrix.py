@@ -16,7 +16,7 @@ from matplotlib.ticker import Formatter
 from pypana.config import settings
 from pypana.data.measurement import FloatArray, Measurement
 from pypana.plots.themes import BaseTheme
-from pypana.plots.utils import linear_sci_formatter, split_kwargs
+from pypana.plots.utils import coerce_formatter, linear_sci_formatter, split_kwargs
 from pypana.utils.measurement_data_type import MeasurementDataType
 
 STANDARD_HIST_SINGLE_KWARGS: dict[str, Any] = {
@@ -292,8 +292,8 @@ def _format_ax(  # pragma: no cover
     ax.set_xscale("log")
     ax.set_yscale(yscale)
 
-    _xformatter = xmajor_formatter or ticker.EngFormatter(unit="m")
-    _yformatter = ymajor_formatter or (
+    _xformatter = coerce_formatter(xmajor_formatter) or ticker.EngFormatter(unit="m")
+    _yformatter = coerce_formatter(ymajor_formatter) or (
         linear_sci_formatter()
         if yscale == "linear"
         else ticker.LogFormatterSciNotation()

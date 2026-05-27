@@ -3,6 +3,7 @@
 from collections import defaultdict
 
 from matplotlib import ticker
+from matplotlib.ticker import Formatter
 
 
 def split_kwargs(*args: str, **kwargs: object) -> tuple[defaultdict[str, object], ...]:
@@ -103,4 +104,15 @@ def linear_sci_formatter() -> ticker.ScalarFormatter:
     fmt = ticker.ScalarFormatter(useMathText=True)
     fmt.set_scientific(True)
     fmt.set_powerlimits((-2, 0))
+    return fmt
+
+
+def coerce_formatter(
+    fmt: Formatter | str | None,
+) -> Formatter | None:
+    """Wraps a format string in ``StrMethodFormatter``; passes Formatters through."""
+    if fmt is None:
+        return None
+    if isinstance(fmt, str):
+        return ticker.StrMethodFormatter(fmt)
     return fmt
