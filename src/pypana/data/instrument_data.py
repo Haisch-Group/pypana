@@ -396,6 +396,7 @@ class InstrumentData(BaseModel, Debuggable):
         xlabel: str | None = None,
         xlim: tuple[float, float] | None = None,
         xmajor_formatter: Formatter | str | None = None,
+        xmajor_locations: tuple[float] | None = None,
         xspace_sides: float = 0.0,
         ylabel: str | None = None,
         ylim: tuple[float, float] | None = None,
@@ -438,6 +439,7 @@ class InstrumentData(BaseModel, Debuggable):
             xlim (tuple): The x-axis lower and upper bound. Can be used to manually set blank space on the sides
                 or specify x-axis ranges. Defaults to ``None`` which is equivalent to `xpace_sides=0`.
             xmajor_formatter (Formatter | str): The matplotlib ticker.Formatter for the x-axis.
+            xmajor_locations (tuple): The float values between 1.0 and 10.0 where major ticks are plotted.
             xspace_sides (float): The total percentage of the plot that should be empty space on both sides.
                 Each side gets half the specified space. If not the default, it is mutually exclusive with xlim.
                 Defaults to ``0.0`` which plots exactly the range from the lowest to the highest bin boundary.
@@ -559,6 +561,7 @@ class InstrumentData(BaseModel, Debuggable):
             xlabel=xlabel,
             xlim=_xlim,
             xmajor_formatter=xmajor_formatter,
+            xmajor_locations=xmajor_locations,
             ylabel=ylabel,
             ylim=ylim,
             ymajor_formatter=ymajor_formatter,
