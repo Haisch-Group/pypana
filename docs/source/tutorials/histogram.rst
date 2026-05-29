@@ -47,7 +47,7 @@ The data of your measurements is now successfully loaded into the data object.
 The :class:`~pypana.data.instrument_data.InstrumentData` object stores a :class:`~pypana.data.measurement.Measurement`
 object per loaded measurement and acts as a wrapper. To perform data manipulation, you can either modify each
 :class:`~pypana.data.measurement.Measurement` object individually, or apply transformations to all simultaneously by using the
-:class:`~pypana.data.instrument_data.InstrumentData` object as proxy.
+:class:`~pypana.data.instrument_data.InstrumentData` object as a proxy.
 
 .. hint::
     Depending on how much low-level checks you want to perform on the loaded data, instead of printing the length,
@@ -281,4 +281,12 @@ The showcased plots only cover few additional arguments and features of the :met
 method. Please refer to its documentation for further details.
 
 After the first visual impressions of the data, you might want to modify it.
+You can always create your own plots based on pypana data and access the :class:`~pypana.data.instrument_data.InstrumentData`
+or a :class:`~pypana.data.measurement.Measurement` directly to extract the necessary information.
 The :doc:`/tutorials/data_manipulation` tutorial will help you with that.
+
+For further quick reference, here are all arguments:
+
+.. automethod:: pypana.data.instrument_data.InstrumentData.histogram
+   :noindex:
+
