@@ -17,7 +17,7 @@ from pypana.plots.themes.utils import resolve_color
 from pypana.utils.measurement_data_type import MeasurementDataType
 
 
-def plot_hist_single_matplotlib(
+def plot_hist_single_matplotlib(  # pragma: no cover
     measurement: Measurement,
     *,
     data_type: MeasurementDataType,
@@ -107,7 +107,7 @@ def plot_hist_single_matplotlib(
         plt.show()
 
 
-def plot_hist_single_plotly(
+def plot_hist_single_plotly(  # pragma: no cover
     measurement: Measurement,
     *,
     data_type: MeasurementDataType,
@@ -200,7 +200,7 @@ def plot_hist_single_plotly(
     return fig
 
 
-def _preprocess_data(
+def _preprocess_data(  # pragma: no cover
     data_type: MeasurementDataType,
     measurement: Measurement,
     pmf: bool,

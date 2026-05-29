@@ -1,46 +1,28 @@
 import random
-from datetime import datetime
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
 from hypothesis import given, settings
-from hypothesis import strategies as st
-from hypothesis.strategies import SearchStrategy
 
+from data.strategies import (
+    MAX_SCAN_NR,
+    MIN_SCAN_NR,
+    instrument_data,
+    measurement_dict,
+    populated_measurement,
+)
+from pypana.data.collection_efficiency import CollectionEfficiency
 from pypana.data.exceptions.invalid_index_error import InvalidIndexError
 from pypana.data.instrument_data import InstrumentData
 from pypana.data.measurement import Measurement
+from pypana.exceptions.incompatible_argument_error import IncompatibleArgumentError
 from pypana.utils.measurement_data_type import MeasurementDataType
 
-MIN_SCAN_NR = 1
-MAX_SCAN_NR = 1000
-
-
-def measurement_factory(scan_nr: int) -> SearchStrategy:
-    """Create empty measurements with certain scan_nr"""
-    return st.builds(
-        Measurement,
-        scan_nr=st.just(scan_nr),
-        time=st.just(datetime(scan_nr + 2000, 4, 1, 0, 0, 0)),
-        d_p=st.just(np.array([], dtype=float)),
-        delta_d_p=st.just(np.array([], dtype=float)),
-        delta_log_d_p=st.just(np.array([], dtype=float)),
-        delta_n=st.just(np.array([], dtype=float)),
-        bin_boundaries=st.just(np.array([], dtype=float)),
-    )
-
-
-def measurement_dict(min_size: int = 1, max_size: int = 100) -> SearchStrategy:
-    """Create dictionaries of measurements"""
-    return st.lists(
-        st.integers(min_value=MIN_SCAN_NR, max_value=MAX_SCAN_NR).flatmap(
-            lambda scan_nr: st.tuples(st.just(scan_nr), measurement_factory(scan_nr))
-        ),
-        min_size=min_size,
-        max_size=max_size,
-        unique_by=lambda x: x[0],
-    ).map(dict)
+# four measurements paired consecutively yield two (up, down) pairs for collection efficiency
+EXPECTED_PAIRS = 2
+# int, tuple, list-of-int and list-of-tuple are the four accepted histogram inputs
+HISTOGRAM_INPUT_FORMS = 4
 
 
 @settings(max_examples=5, deadline=None)
@@ -586,3 +568,226 @@ def test_reindex_on_empty_is_noop() -> None:
     data.reindex()
 
     assert len(data) == 0
+
+
+@settings(max_examples=5)
+@given(data=instrument_data(min_n=1, max_n=4))
+def test_summary_returns_one_row_per_measurement(data: InstrumentData) -> None:
+    """summary() yields a DataFrame indexed by measurement key, one row each."""
+    df = data.summary()
+
+    assert len(df) == len(data.measurements)
+    assert list(df.index) == list(data.measurements.keys())
+
+
+@settings(max_examples=5)
+@given(data=instrument_data(min_n=1, max_n=4))
+def test_cut_returns_self_and_delegates_to_measurements(data: InstrumentData) -> None:
+    """cut() maps over measurements in place and returns self."""
+    assert data.cut((1e-12, 1.0)) is data
+
+
+@settings(max_examples=5)
+@given(data=instrument_data(min_n=2, max_n=4))
+def test_getitem_slice_invalid_index_becomes_valueerror(data: InstrumentData) -> None:
+    """A slice whose selection raises InvalidIndexError is surfaced as ValueError."""
+    with (
+        patch.object(
+            InstrumentData,
+            "keep_measurements",
+            side_effect=InvalidIndexError(message="boom", invalid_indices=[]),
+        ),
+        pytest.raises(ValueError),
+    ):
+        _ = data[0:2]
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=2))
+@patch("pypana.data.instrument_data.plot_hist_matrix")
+def test_histogram_accepts_int_tuple_and_list_inputs(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """int, tuple, list-of-int and list-of-tuple inputs all reach the plotter."""
+    dt = MeasurementDataType.dndlogdp
+
+    data.histogram(0, dt)
+    data.histogram((0, 1), dt)
+    data.histogram([[0, 1]], dt)
+    data.histogram([[(0, 1)]], dt)
+
+    assert plot_mock.call_count == HISTOGRAM_INPUT_FORMS
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=3))
+@patch("pypana.data.instrument_data.plot_hist_matrix")
+def test_histogram_non_rectangular_raises(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """A ragged measurement matrix is rejected."""
+    with pytest.raises(InvalidIndexError):
+        data.histogram([[0], [1, 2]], MeasurementDataType.dn)
+    assert plot_mock.call_count == 0
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=2))
+@patch("pypana.data.instrument_data.plot_hist_matrix")
+def test_histogram_xspace_sides_with_xlim_is_incompatible(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """xspace_sides and xlim cannot be combined."""
+    with pytest.raises(IncompatibleArgumentError):
+        data.histogram(0, MeasurementDataType.dn, xspace_sides=0.1, xlim=(1e-9, 1e-6))
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=2))
+@patch("pypana.data.instrument_data.plot_hist_matrix")
+def test_histogram_xspace_sides_computes_limits(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """xspace_sides alone drives the xlim computation path."""
+    with np.errstate(all="ignore"):
+        data.histogram(0, MeasurementDataType.dn, xspace_sides=0.1)
+    assert plot_mock.call_count == 1
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=2))
+@patch("pypana.data.instrument_data.plot_hist_matrix")
+def test_histogram_explicit_xlim(plot_mock: Mock, data: InstrumentData) -> None:
+    """An explicit, ordered xlim is accepted."""
+    data.histogram(0, MeasurementDataType.dn, xlim=(1e-9, 1e-6))
+    assert plot_mock.call_count == 1
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=2))
+@patch("pypana.data.instrument_data.plot_hist_matrix")
+def test_histogram_inverted_xlim_raises(plot_mock: Mock, data: InstrumentData) -> None:
+    """An xlim whose lower bound is not below the upper bound is rejected."""
+    with pytest.raises(ValueError):
+        data.histogram(0, MeasurementDataType.dn, xlim=(1e-6, 1e-9))
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+@patch("pypana.data.instrument_data.plot_collection_efficiency")
+def test_collection_efficiency_none_pairs_all(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """m=None pairs all measurements consecutively into (up, down) pairs."""
+    ce = data.collection_efficiency(m=None)
+
+    assert isinstance(ce, CollectionEfficiency)
+    assert len(ce) == EXPECTED_PAIRS
+    assert plot_mock.call_count == 1
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=3, nonzero_total=True))
+def test_collection_efficiency_none_odd_count_raises(data: InstrumentData) -> None:
+    """An odd number of measurements cannot be paired."""
+    with pytest.raises(ValueError):
+        data.collection_efficiency(m=None)
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+@patch("pypana.data.instrument_data.plot_collection_efficiency")
+def test_collection_efficiency_tuple_bounds(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """A (lo, hi) tuple selects the inclusive scan-number range."""
+    ce = data.collection_efficiency(m=(0, 3))
+    assert len(ce) == EXPECTED_PAIRS
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+def test_collection_efficiency_tuple_inverted_raises(data: InstrumentData) -> None:
+    """Tuple bounds with lower > upper are rejected."""
+    with pytest.raises(ValueError):
+        data.collection_efficiency(m=(3, 0))
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+def test_collection_efficiency_tuple_no_scans_raises(data: InstrumentData) -> None:
+    """Tuple bounds matching no scans raise an index error."""
+    with pytest.raises(InvalidIndexError):
+        data.collection_efficiency(m=(100, 200))
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+def test_collection_efficiency_tuple_odd_count_raises(data: InstrumentData) -> None:
+    """A tuple selecting an odd number of scans is rejected."""
+    with pytest.raises(ValueError):
+        data.collection_efficiency(m=(0, 0))
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+@patch("pypana.data.instrument_data.plot_collection_efficiency")
+def test_collection_efficiency_range_and_slice(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """range and slice select consecutive measurements by position."""
+    assert len(data.collection_efficiency(m=range(0, 4))) == EXPECTED_PAIRS
+    assert len(data.collection_efficiency(m=slice(0, 4))) == EXPECTED_PAIRS
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+def test_collection_efficiency_range_out_of_bounds_raises(
+    data: InstrumentData,
+) -> None:
+    """A range that addresses a non-existent position raises an index error."""
+    with pytest.raises(InvalidIndexError):
+        data.collection_efficiency(m=range(0, 10))
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+def test_collection_efficiency_range_odd_count_raises(data: InstrumentData) -> None:
+    """A range selecting an odd number of measurements is rejected."""
+    with pytest.raises(ValueError):
+        data.collection_efficiency(m=range(0, 1))
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=4, nonzero_total=True))
+def test_collection_efficiency_bad_type_raises(data: InstrumentData) -> None:
+    """A selector that is not None/tuple/range/slice raises TypeError."""
+    with pytest.raises(TypeError):
+        data.collection_efficiency(m=1.5)  # type: ignore[arg-type]
+
+
+@settings(max_examples=3)
+@given(
+    up=populated_measurement(scan_nr=0, zero=True),
+    down=populated_measurement(scan_nr=1, nonzero_total=True),
+)
+@patch("pypana.data.instrument_data.plot_collection_efficiency")
+def test_collection_efficiency_zero_upstream_raises(
+    plot_mock: Mock, up: Measurement, down: Measurement
+) -> None:
+    """A zero upstream total concentration makes η undefined."""
+    data = InstrumentData(measurements={0: up, 1: down})
+    with pytest.raises(ValueError):
+        data.collection_efficiency(m=None)
+
+
+@settings(max_examples=3)
+@given(data=instrument_data(n=2))
+@patch("pypana.data.instrument_data.plot_hist_matrix")
+def test_histogram_unsupported_input_type_raises(
+    plot_mock: Mock, data: InstrumentData
+) -> None:
+    """An m that is neither int, tuple nor list yields an empty, non-full matrix."""
+    with pytest.raises(InvalidIndexError):
+        data.histogram(1.5, MeasurementDataType.dn)  # type: ignore[arg-type]
+    assert plot_mock.call_count == 0

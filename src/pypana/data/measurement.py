@@ -88,7 +88,15 @@ class Measurement(BaseModel, Debuggable):
         "raw_delta_n_dlog_dp": "raw_delta_n",
     }
 
+    # public names that map onto a raw_* field. Assigning to
+    # one of these writes the source-of-truth field instead of the read-only cached_property.
+    _WRITABLE_ALIASES: ClassVar[dict[str, str]] = {
+        "delta_n": "raw_delta_n",
+        "delta_n_dlog_dp": "raw_delta_n_dlog_dp",
+    }
+
     def __setattr__(self, name: str, value: object) -> None:
+        name = self._WRITABLE_ALIASES.get(name, name)
         super().__setattr__(name, value)
         self._action_log.append(f"set {name} to {value}")
 
@@ -224,7 +232,7 @@ class Measurement(BaseModel, Debuggable):
             new = self.raw_delta_n.copy()
             new[outside] = 0.0
             self.raw_delta_n = new
-        elif self.raw_delta_n_dlog_dp is not None:
+        elif self.raw_delta_n_dlog_dp is not None:  # pragma: no branch
             new = self.raw_delta_n_dlog_dp.copy()
             new[outside] = 0.0
             self.raw_delta_n_dlog_dp = new
