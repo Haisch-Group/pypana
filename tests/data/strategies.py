@@ -136,7 +136,9 @@ def instrument_data(
         n = draw(st.integers(min_value=min_n, max_value=max_n))
 
     measurements = {
-        i: draw(populated_measurement(scan_nr=i, seed=seed, nonzero_total=nonzero_total))
+        i: draw(
+            populated_measurement(scan_nr=i, seed=seed, nonzero_total=nonzero_total)
+        )
         for i in range(n)
     }
     return InstrumentData(measurements=measurements, device_name="test")
