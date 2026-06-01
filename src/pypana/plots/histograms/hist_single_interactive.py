@@ -16,7 +16,7 @@ from pypana.plots.themes.utils import resolve_color
 from pypana.utils.measurement_data_type import MeasurementDataType
 
 
-def plot_hist_single_interactive_matplotlib(  # noqa: PLR0915
+def plot_hist_single_interactive_matplotlib(  # pragma: no cover # noqa: PLR0915
     measurements: Sequence[Measurement],
     *,
     data_type: MeasurementDataType,
@@ -88,7 +88,7 @@ def plot_hist_single_interactive_matplotlib(  # noqa: PLR0915
     elif data_type == MeasurementDataType.dn:
         y_label = f"{'PMF ' if pmf else ''}Number concentration per bin ΔN[1/cm³]"
 
-    def _data_for(m: Measurement) -> FloatArray:
+    def _data_for(m: Measurement) -> FloatArray:  # pragma: no cover
         arr = (
             m.delta_n_dlog_dp.copy()
             if data_type == MeasurementDataType.dndlogdp
@@ -101,7 +101,7 @@ def plot_hist_single_interactive_matplotlib(  # noqa: PLR0915
 
         return arr
 
-    def _compute_lims(
+    def _compute_lims(  # pragma: no cover
         m: Measurement, data: FloatArray
     ) -> tuple[tuple[float, float], tuple[float, float]]:
         x_low = m.bin_boundaries[0]
@@ -135,7 +135,7 @@ def plot_hist_single_interactive_matplotlib(  # noqa: PLR0915
             "cdf_line": None,
         }
 
-        def _draw(pos: int) -> None:  # noqa: PLR0912
+        def _draw(pos: int) -> None:  # pragma: no cover # noqa: PLR0912
             m = list(filter(lambda ms: ms.scan_nr == pos, measurements))
 
             if m is None:
@@ -217,7 +217,7 @@ def plot_hist_single_interactive_matplotlib(  # noqa: PLR0915
             valstep=1,
         )
 
-        def _on_changed(val: float) -> None:
+        def _on_changed(val: float) -> None:  # pragma: no cover
             _draw(int(val))
 
         slider.on_changed(_on_changed)

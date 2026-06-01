@@ -1,6 +1,7 @@
 from pypana.readers import base_instrument_reader as base_instrument_reader
 from pypana.readers import base_reader as base_reader
 from pypana.readers.discovery import SmartReader as SmartReader
+from pypana.readers.palas import palas_usmps as palas_usmps
 from pypana.readers.palas import palas_welas as palas_welas
 from pypana.readers.tsi import tsi_aps3310 as tsi_aps3310
 from pypana.readers.tsi import tsi_aps3321 as tsi_aps3321

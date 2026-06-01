@@ -1,8 +1,14 @@
-"""Exception for incompatible arguments."""
+"""Base exception definition for the pypana package.
 
-from __future__ import annotations
+This module provides the root Exception class from which all package-specific errors must inherit.
+No further logic is implemented, but all pypana related errors can be caught with one type.
+"""
 
-from pypana.pana_error import ParticleAnalysisError
+
+class ParticleAnalysisError(Exception):
+    """Base Exception for this package."""
+
+    pass
 
 
 class IncompatibleArgumentError(ParticleAnalysisError):
