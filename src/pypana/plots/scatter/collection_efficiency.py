@@ -20,16 +20,27 @@ from pypana.data.defs import FloatArray
 from pypana.plots.themes import BaseTheme
 from pypana.plots.utils import coerce_formatter, split_kwargs
 
+
+def _default_fit_label(ce: CollectionEfficiency) -> str:  # pragma: no cover
+    if ce.fit_model is None:
+        return "fit"
+
+    try:
+        if ce.fit_r_squared is not None:
+            return f"{ce.fit_model} fit (d₅₀ = {ce.d_50:.2g}, R² = {ce.fit_r_squared:.3f})"
+
+    except ValueError:
+        pass
+
+    return f"{ce.fit_model} fit"
+
+
 STANDARD_COLLECTION_EFFICIENCY_KWARGS: dict[str, Any] = {
     "scatter_marker": "o",
     "scatter_label": lambda ce: f"Data (n={len(ce)})",
     "fit_linestyle": "-",
     "fit_n_points": 1000,
-    "fit_label": lambda ce: (
-        f"{ce.fit_model} fit (d₅₀ = {ce.d_50:.2g}, R² = {ce.fit_r_squared:.3f})"
-        if ce.d_50 is not None and ce.fit_r_squared is not None
-        else (f"{ce.fit_model} fit" if ce.fit_model else "fit")
-    ),
+    "fit_label": _default_fit_label,
     "legend_frameon": False,
 }
 """Standard kwargs for an out-of-the-box collection efficiency plot.
@@ -169,11 +180,7 @@ def plot_collection_efficiency(  # pragma: no cover  # noqa: PLR0912, PLR0915
         ce,
         default=f"Data (n={len(ce)})",
     )
-    _fit_label_default = (
-        f"{ce.fit_model} fit (d₅₀ = {ce.d_50:.2g}, R² = {ce.fit_r_squared:.3f})"
-        if ce.d_50 is not None and ce.fit_r_squared is not None
-        else (f"{ce.fit_model} fit" if ce.fit_model else "fit")
-    )
+    _fit_label_default = _default_fit_label(ce)
     _fit_kwargs["label"] = _resolve_label(
         kwargs.get("fit_label", STANDARD_COLLECTION_EFFICIENCY_KWARGS["fit_label"]),
         ce,

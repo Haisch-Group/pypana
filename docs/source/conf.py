@@ -29,6 +29,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinxcontrib.autodoc_pydantic",
+    "myst_parser",
 ]
 
 templates_path = ["_templates"]

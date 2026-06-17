@@ -177,6 +177,8 @@ def instrument_data(
     max_n: int = 8,
     seed: str = "delta",
     nonzero_total: bool = False,
+    min_bins: int = 1,
+    max_bins: int = 12,
 ) -> InstrumentData:
     """Build an InstrumentData with contiguously-keyed populated measurements.
 
@@ -192,7 +194,13 @@ def instrument_data(
 
     measurements = {
         i: draw(
-            populated_measurement(scan_nr=i, seed=seed, nonzero_total=nonzero_total)
+            populated_measurement(
+                scan_nr=i,
+                seed=seed,
+                nonzero_total=nonzero_total,
+                min_bins=min_bins,
+                max_bins=max_bins,
+            )
         )
         for i in range(n)
     }

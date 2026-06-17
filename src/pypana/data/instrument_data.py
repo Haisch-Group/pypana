@@ -17,7 +17,8 @@ from rich import inspect
 
 from pypana.console import console
 from pypana.data.collection_efficiency import CollectionEfficiency
-from pypana.data.defs import DataTypeLike
+from pypana.data.defs import DataType, DataTypeLike, FloatArray, Quantity
+from pypana.data.defs.data_type_str import DataTypeStr
 from pypana.data.exceptions.invalid_index_error import InvalidIndexError
 from pypana.data.measurement import Measurement
 from pypana.data.utils import get_xlims, is_full_rectangular_matrix
@@ -62,22 +63,91 @@ class InstrumentData(BaseModel, Debuggable):
     @overload
     def __getitem__(self, index: slice) -> Self: ...
 
-    def __getitem__(self, index: int | slice) -> Measurement | Self:
+    @overload
+    def __getitem__(self, index: Quantity) -> Self: ...
+
+    @overload
+    def __getitem__(self, index: DataType | DataTypeStr) -> FloatArray: ...
+
+    @overload
+    def __getitem__(self, index: str) -> FloatArray | Self: ...
+
+    def __getitem__(
+        self, index: int | slice | DataTypeLike | str
+    ) -> Measurement | Self | FloatArray:
         if isinstance(index, int):
             return self.measurements[index]
 
-        elif isinstance(index, slice):
+        if isinstance(index, slice):
             try:
                 scan_nrs = list(self.measurements.keys())[index]
+
                 return self.keep_measurements(scan_nrs, inplace=False, verbose=False)
+
             except InvalidIndexError as e:
                 raise ValueError(
                     "Unexpected indices. If the Measurements are currently not contiguous,"
                     "call `reindex()` first."
                 ) from e
 
-        else:
-            raise TypeError()
+        if isinstance(index, Quantity):
+            return self._filtered(index)
+
+        if isinstance(index, str):
+            try:
+                quantity = Quantity(index)
+            except ValueError:
+                quantity = None
+
+            if quantity is not None:
+                return self._filtered(quantity)
+
+        if isinstance(index, (DataType, str)):
+            return self.matrix(index)
+
+        raise TypeError(f"Cannot index InstrumentData with {type(index).__name__!r}.")
+
+    def _filtered(self, quantity: Quantity) -> Self:
+        """A new InstrumentData with every measurement filtered to one quantity."""
+        filtered = {k: m[quantity] for k, m in self.measurements.items()}
+
+        return self.__class__(
+            measurements=filtered,
+            device_name=self.device_name,
+            file_path=self.file_path,
+        )
+
+    def matrix(self, data_type: DataType | str) -> FloatArray:
+        """Stack one binned data type across all measurements into a 2-D array.
+
+        Args:
+            data_type: A binned data type: ``"dN"``, ``"dV/dlogdp"``, or a ``DataType``.
+                Bare quantities are not accepted here; index with a ``Quantity`` to filter.
+                An unknown string raises ``ValueError``.
+
+        Returns:
+            A ``(n_scans × n_bins)`` array; row ``i`` is the ``i``-th measurement's values,
+            in insertion order.
+
+        Raises:
+            ValueError: If there are no measurements, or they don't share a bin count.
+            KeyError: If a measurement has no size distribution (time-series only).
+            NotImplementedError: If a measurement would need to derive the quantity.
+        """
+        if not self.measurements:
+            raise ValueError("No measurements to build a matrix from.")
+
+        requested = DataType.parse(data_type)
+        rows = [m[requested] for m in self.measurements.values()]
+
+        widths = {row.size for row in rows}
+        if len(widths) != 1:
+            raise ValueError(
+                f"Measurements have differing bin counts {sorted(widths)}; "
+                "cannot stack into a matrix."
+            )
+
+        return np.array(rows, dtype=float)
 
     def apply(self, f: Callable[[Self], Self]) -> Self:
         """Applies a function to this InstrumentData object.
@@ -664,7 +734,7 @@ class InstrumentData(BaseModel, Debuggable):
             )
 
         ce = CollectionEfficiency(
-            d_p=np.array([self.measurements[s].geo_mean for s in downs], dtype=float),
+            d_p=np.array([self.measurements[s].geo_mean for s in ups], dtype=float),
             eta=1.0 - n_downs / n_ups,
             upstream_scan_nrs=ups,
             downstream_scan_nrs=downs,

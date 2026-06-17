@@ -314,16 +314,28 @@ def test_getitem_slice_preserves_device_name_and_file_path(
     assert sliced.file_path == data.file_path
 
 
-@pytest.mark.parametrize("bad_index", ["foo", 1.5, (1, 2), None])
+@pytest.mark.parametrize("bad_index", [1.5, (1, 2), None])
 @settings(max_examples=1)
 @given(measurements=measurement_dict(min_size=1, max_size=5))
 def test_getitem_invalid_type_raises_typeerror(
     measurements: dict[int, Measurement], bad_index: object
 ) -> None:
-    """Passing a non int/slice to __getitem__ raises TypeError."""
+    """Passing a non int/slice/quantity/data-type to __getitem__ raises TypeError."""
     data = InstrumentData(measurements=measurements)
     with pytest.raises(TypeError):
         _ = data[bad_index]  # type: ignore[call-overload]
+
+
+@pytest.mark.parametrize("bad_value", ["foo", "dQ", "dN/bogus"])
+@settings(max_examples=1)
+@given(measurements=measurement_dict(min_size=1, max_size=5))
+def test_getitem_unknown_data_type_raises_valueerror(
+    measurements: dict[int, Measurement], bad_value: str
+) -> None:
+    """A string that is a valid type but an unknown data type raises ValueError."""
+    data = InstrumentData(measurements=measurements)
+    with pytest.raises(ValueError):
+        _ = data[bad_value]
 
 
 @settings(max_examples=5)
@@ -762,3 +774,44 @@ def test_histogram_unsupported_input_type_raises(
     with pytest.raises(InvalidIndexError):
         data.histogram(1.5, "dN")  # type: ignore[arg-type]
     assert plot_mock.call_count == 0
+
+
+@settings(max_examples=15)
+@given(data=instrument_data(min_bins=6, max_bins=6))
+def test_matrix_shape(data: InstrumentData) -> None:
+    """`matrix` is a (n_scans × n_bins) array."""
+    assert data.matrix("dN").shape == (len(data), 6)
+
+
+@settings(max_examples=15)
+@given(data=instrument_data(min_bins=4, max_bins=4))
+def test_matrix_rows_match_measurements(data: InstrumentData) -> None:
+    """Row i is the i-th measurement's values for that data type."""
+    rows = data.matrix("dN/dlogdp")
+    for i, m in enumerate(data.measurements.values()):
+        np.testing.assert_array_equal(rows[i], m["dN/dlogdp"])
+
+
+@settings(max_examples=15)
+@given(data=instrument_data(min_bins=4, max_bins=4))
+def test_getitem_data_type_equals_matrix(data: InstrumentData) -> None:
+    """Indexing with a data type delegates to `matrix`."""
+    np.testing.assert_array_equal(data["dN"], data.matrix("dN"))
+
+
+@settings(max_examples=15)
+@given(data=instrument_data())
+def test_getitem_quantity_filters(data: InstrumentData) -> None:
+    """Indexing with a bare Quantity filters each measurement, returns InstrumentData."""
+    filtered = data[Quantity.NUMBER]
+    assert isinstance(filtered, InstrumentData)
+    assert list(filtered.measurements.keys()) == list(data.measurements.keys())
+
+    for m in filtered.measurements.values():
+        assert set(m.quantities) == {Quantity.NUMBER}
+
+
+def test_matrix_empty_raises() -> None:
+    """`matrix` on an empty InstrumentData raises ValueError."""
+    with pytest.raises(ValueError):
+        InstrumentData(measurements={}).matrix("dN")

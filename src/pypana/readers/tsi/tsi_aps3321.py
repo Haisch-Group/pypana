@@ -6,8 +6,10 @@ References:
     https://tsi.com/products/particle-sizers/supermicron-capable-particle-sizer-spectrometers/aerodynamic-particle-sizer-aps-3321
 """
 
+from collections.abc import Hashable
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -142,7 +144,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
             except ReadError as e:
                 raise e
 
-        other_info = {
+        other_info: dict[Hashable, Any] = {
             "sample_time": sample_time,
             "density": density,
             "stokes_corrected": stokes_corrected,
@@ -157,7 +159,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
 
     def _row_to_measurement(
         self,
-        row: dict[str, object],
+        row: dict[Hashable, Any],
         axis: BinAxis,
         bin_columns: pd.Index,
         other_columns: list[str],
@@ -181,7 +183,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
                 "Other types than dN/dlogDp are not yet implemented for TSI APS 3321."
             )
 
-        scan_nr = int(row["Sample #"])  # type: ignore[call-overload]
+        scan_nr = int(row["Sample #"])
         time = datetime.strptime(
             f"{row['Date']} {row['Start Time']}", "%m/%d/%y %H:%M:%S"
         )

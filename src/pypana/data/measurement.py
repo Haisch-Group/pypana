@@ -8,10 +8,11 @@ from collections.abc import Hashable
 from datetime import datetime
 from typing import Any, Self, overload
 
+import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from pypana.data.bin_axis import BinAxis, DiameterTypes
-from pypana.data.defs import DataType, DataTypeLike, FloatArray, Quantity
+from pypana.data.defs import DataType, DataTypeLike, FloatArray, Normalization, Quantity
 from pypana.data.defs.data_type_str import DataTypeStr
 from pypana.data.size_distribution import SizeDistribution
 from pypana.data.time_series import TimeSeries
