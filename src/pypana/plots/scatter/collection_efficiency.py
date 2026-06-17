@@ -16,7 +16,7 @@ from matplotlib.ticker import Formatter
 from pypana.analysis.fits import FitModel, fit_collection_efficiency
 from pypana.config import settings
 from pypana.data.collection_efficiency import CollectionEfficiency
-from pypana.data.measurement import FloatArray
+from pypana.data._measurement import FloatArray
 from pypana.plots.themes import BaseTheme
 from pypana.plots.utils import coerce_formatter, split_kwargs
 

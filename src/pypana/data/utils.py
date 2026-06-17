@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 
-from pypana.data.measurement import Measurement
+from pypana.data._measurement import Measurement
 
 
 def is_full_rectangular_matrix(matrix: list[list[Any]]) -> bool:

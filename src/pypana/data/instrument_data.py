@@ -19,7 +19,7 @@ from rich import inspect
 from pypana.console import console
 from pypana.data.collection_efficiency import CollectionEfficiency
 from pypana.data.exceptions.invalid_index_error import InvalidIndexError
-from pypana.data.measurement import Measurement
+from pypana.data._measurement import Measurement
 from pypana.data.utils import get_xlims, is_full_rectangular_matrix
 from pypana.exceptions.incompatible_argument_error import IncompatibleArgumentError
 from pypana.plots.histograms.hist_matrix import plot_hist_matrix

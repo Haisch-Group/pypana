@@ -5,7 +5,7 @@ import pytest
 from hypothesis import assume, given, settings
 
 from data.strategies import populated_measurement
-from pypana.data.measurement import Measurement
+from pypana.data._measurement import Measurement
 
 
 @settings(max_examples=10)

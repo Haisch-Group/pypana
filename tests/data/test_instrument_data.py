@@ -15,7 +15,7 @@ from data.strategies import (
 from pypana.data.collection_efficiency import CollectionEfficiency
 from pypana.data.exceptions.invalid_index_error import InvalidIndexError
 from pypana.data.instrument_data import InstrumentData
-from pypana.data.measurement import Measurement
+from pypana.data._measurement import Measurement
 from pypana.exceptions.incompatible_argument_error import IncompatibleArgumentError
 from pypana.utils.measurement_data_type import MeasurementDataType
 

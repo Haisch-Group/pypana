@@ -15,7 +15,7 @@ import numpy as np
 
 from pypana.config import UnitScale
 from pypana.data.instrument_data import InstrumentData
-from pypana.data.measurement import FloatArray, Measurement
+from pypana.data._measurement import FloatArray, Measurement
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.base_reader import InputType
 from pypana.readers.exceptions.read_error import ReadError

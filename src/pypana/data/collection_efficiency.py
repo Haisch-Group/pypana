@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from scipy.stats import t
 
 from pypana.analysis.types import FitModel
-from pypana.data.measurement import FloatArray
+from pypana.data._measurement import FloatArray
 
 _D_50_ETA = 0.5
 

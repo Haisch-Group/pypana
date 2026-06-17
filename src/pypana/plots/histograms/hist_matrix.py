@@ -14,7 +14,7 @@ from matplotlib.patches import StepPatch
 from matplotlib.ticker import Formatter
 
 from pypana.config import settings
-from pypana.data.measurement import FloatArray, Measurement
+from pypana.data._measurement import FloatArray, Measurement
 from pypana.plots.themes import BaseTheme
 from pypana.plots.utils import coerce_formatter, linear_sci_formatter, split_kwargs
 from pypana.utils.measurement_data_type import MeasurementDataType

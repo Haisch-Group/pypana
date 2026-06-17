@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 
 from pypana.analysis.types import FitModel
 from pypana.data.collection_efficiency import CollectionEfficiency
-from pypana.data.measurement import FloatArray
+from pypana.data._measurement import FloatArray
 
 _D_50_ETA = 0.5
 

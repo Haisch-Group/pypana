@@ -8,7 +8,7 @@ from hypothesis.strategies import DrawFn, SearchStrategy
 
 from pypana.data.collection_efficiency import CollectionEfficiency
 from pypana.data.instrument_data import InstrumentData
-from pypana.data.measurement import Measurement
+from pypana.data._measurement import Measurement
 
 MIN_SCAN_NR = 1
 MAX_SCAN_NR = 1000

@@ -11,7 +11,7 @@ from matplotlib import ticker
 from plotly.subplots import make_subplots
 
 from pypana.config import settings
-from pypana.data.measurement import FloatArray, Measurement
+from pypana.data._measurement import FloatArray, Measurement
 from pypana.plots.themes import BaseTheme
 from pypana.plots.themes.utils import resolve_color
 from pypana.utils.measurement_data_type import MeasurementDataType
