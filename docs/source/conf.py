@@ -12,8 +12,8 @@ sys.path.insert(0, str((Path(__file__).parent / "../../src").resolve()))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "pypana"
-copyright = "2026, Maximilian Böhmichen, Kevin Maier"
-author = "Maximilian Böhmichen, Kevin Maier"
+copyright = "2026, Maximilian Böhmichen, Kevin Maier, Nico Chrisam"
+author = "Maximilian Böhmichen, Kevin Maier, Nico Chrisam"
 release = "0.0.1"
 
 # -- General configuration ---------------------------------------------------

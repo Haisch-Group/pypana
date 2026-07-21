@@ -3,8 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-pypana documentation
-====================
+
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials
+   :glob:
+
+   tutorials/*
 
 .. autosummary::
    :toctree: _autosummary
@@ -19,15 +28,3 @@ pypana documentation
    pypana.config
    pypana.console
    pypana.exceptions
-
-
-.. include:: ../../README.md
-   :parser: myst_parser.sphinx_
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Tutorials
-   :glob:
-
-   tutorials/*
