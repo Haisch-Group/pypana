@@ -112,7 +112,7 @@ def plot_hist_single_interactive_matplotlib(  # pragma: no cover # noqa: PLR0915
         y_low = 0
         y_high = data.max() * 1.1
 
-        return (min(x_low, 0), x_high), (y_low, y_high)
+        return (min(x_low, 0.0), float(x_high)), (float(y_low), float(y_high))
 
     with matplotlib.rc_context(_theme.to_rcparams()):
         fig, ax = plt.subplots(**kwargs)

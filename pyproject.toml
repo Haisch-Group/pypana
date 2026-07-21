@@ -39,6 +39,7 @@ dependencies = [
     "scipy>=1.16.0",
     "statsmodels>=0.14",
     "tqdm>=4.66",
+    "cycler>=0.12",
 ]
 
 [tool.hatch.version]
