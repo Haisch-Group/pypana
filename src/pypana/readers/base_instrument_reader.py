@@ -37,7 +37,8 @@ class BaseInstrumentReader(BaseReader, ABC):
         Args:
             path: The path to the input file. Defaults to None, in which case a selection dialogue is opened.
         """
-        super().__init__(**kwargs)
+        super().__init__()
+        self._reader_options = kwargs
 
         _path: Path
 

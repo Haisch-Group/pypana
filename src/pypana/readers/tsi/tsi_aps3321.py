@@ -188,6 +188,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
             f"{row['Date']} {row['Start Time']}", "%m/%d/%y %H:%M:%S"
         )
         delta_n_dlog_dp = np.array([row[col] for col in bin_columns], dtype=float)
+        delta_n_dlog_dp[0] = 0.25  # https://github.com/Haisch-Group/pypana/issues/20
 
         number = SizeDistribution(
             quantity=Quantity.NUMBER,
@@ -237,5 +238,11 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
         d_p = 10.0 ** (relative + offset)
 
         half_step = 10.0 ** (delta_log / 2)
+        boundaries = np.asarray(
+            np.append(d_p / half_step, d_p[-1] * half_step), dtype=float
+        )
+        boundaries[0] = 10 ** (
+            np.log10(boundaries[1]) - 0.25
+        )  # https://github.com/Haisch-Group/pypana/issues/20
 
-        return np.append(d_p / half_step, d_p[-1] * half_step)
+        return boundaries

@@ -11,6 +11,7 @@ References:
 
 from datetime import datetime
 from pathlib import Path
+from typing import Literal, Unpack
 
 import numpy as np
 
@@ -21,7 +22,7 @@ from pypana.data.instrument_data import InstrumentData
 from pypana.data.measurement import Measurement
 from pypana.data.size_distribution import SizeDistribution
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
-from pypana.readers.base_reader import InputType
+from pypana.readers.base_reader import InputType, ReaderKwargs
 from pypana.readers.exceptions.read_error import ReadError
 from pypana.readers.palas.utils import _split_usmps_measurements
 
@@ -36,6 +37,22 @@ class PALASUSMPSInstrumentReader(BaseInstrumentReader):
     _LINES_PER_MEASUREMENT = 7
     _SIZE_SCALE = UnitScale.NANO  # U-SMPS reports sizes in nm (range 4-1200 nm)
     _ROW_ANCHORS = {"Xu", "Xo", "X", "dCn_raw", "dCn_inv", "dCn_inv_diff"}
+
+    def __init__(
+        self,
+        path: Path | str | None = None,
+        *,
+        delta_type: Literal["dCn_raw", "dCn_inv", "dCn_inv_diff"] = "dCn_inv_diff",
+        **kwargs: Unpack[ReaderKwargs],
+    ) -> None:
+        """Reader for PALAS U-SMPS files.
+
+        Args:
+            path: The path to the input file.
+            delta_type: Which concentration column to use as the distribution. Defaults to ``"dCn_inv_diff"``.
+        """
+        super().__init__(path, **kwargs)
+        self._delta_type = delta_type
 
     @classmethod
     def can_read(cls, path: Path) -> bool:
@@ -136,7 +153,7 @@ class PALASUSMPSInstrumentReader(BaseInstrumentReader):
         number = SizeDistribution(
             quantity=Quantity.NUMBER,
             axis=axis,
-            delta=np.array(rows["dCn_inv_diff"], dtype=float),
+            delta=np.array(rows[self._delta_type], dtype=float),
         )
 
         return Measurement(

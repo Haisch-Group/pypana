@@ -31,5 +31,5 @@ class TestTSIAPS3321InstrumentReader:
         assert m.n_bins == BINS
         assert m.diameter_type == "aerodynamic"
         assert len(m["dN/dlogdp"]) == BINS
-        assert np.allclose(m.delta_log_d_p, 1 / CHANNELS_PER_DECADE)
+        assert np.allclose(m.delta_log_d_p[1:], 1 / CHANNELS_PER_DECADE)
         assert np.all(np.diff(m.bin_boundaries) > 0)

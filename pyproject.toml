@@ -1,38 +1,56 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
 [project]
 name = "pypana"
-version = "0.1.0"
-description = "Scripts for import and evaluation of aerosol measurements"
+dynamic = ["version"]
+description = "Package for import and evaluation of aerosol measurements"
 readme = "README.md"
-requires-python = "==3.12.*"
+requires-python = ">=3.12"
+authors = [
+    { name = "Maximilian Böhmichen", email = "m.boehmichen@tum.de" },
+    { name = "Kevin Maier", email = "kevin.r.maier@tum.de" },
+    { name = "Nico Chrisam", email = "nico.chrisam@tum.de" }
+]
+license = { file = "LICENSE" }
+keywords = ["aerosol", "aerosols", "data-analysis"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
 dependencies = [
-    "cycler>=0.12.1",
-    "dill>=0.4.0",
-    "ipykernel>=7.2.0",
-    "ipympl>=0.10.0",
-    "ipywidgets>=8.1.8",
-    "matplotlib>=3.10.8",
-    "nbformat>=5.10.4",
-    "numpy>=2.4.2",
-    "openpyxl>=3.1.5",
+    "matplotlib>=3.8",
+    "numpy>=2.2",
+    "openpyxl>=3.1",
     "pandas>=3.0.0",
-    "pandas-stubs~=3.0.3",
-    "plotly>=6.7.0",
-    "pydantic>=2.12.5",
-    "pydantic-settings>=2.13.1",
-    "rich>=14.3.4",
-    "scikit-learn>=1.8.0",
-    "scipy>=1.17.0",
-    "scipy-stubs>=1.17.0",
-    "simdkalman>=1.0.4",
-    "statsmodels>=0.14.6",
-    "tqdm>=4.67.3",
-    "typing-extensions>=4.15.0",
-    "unidip>=0.1.1",
+    "plotly>=5.24",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.7",
+    "rich>=14.0",
+    "scikit-learn>=1.7.0",
+    "scipy>=1.16.0",
+    "statsmodels>=0.14",
+    "tqdm>=4.66",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pypana"]
+
+[project.urls]
+Homepage = "https://github.com/Haisch-Group/pypana"
+Repository = "https://github.com/Haisch-Group/pypana"
+Issues = "https://github.com/Haisch-Group/pypana/issues"
 
 [tool.ruff]
 target-version = "py312"
@@ -118,8 +136,12 @@ dev = [
     "hypothesis>=6.152.1",
     "jupyterlab>=4.5.6",
     "pre-commit>=4.5.1",
+    "py2puml>=0.11.0",
+    "pylint>=4.0.6",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
+    "scipy-stubs>=1.16.0",
+        "pandas-stubs>=3.0.0",
 ]
 docs = [
     "autodoc-pydantic>=2.2.0",
@@ -131,4 +153,12 @@ docs = [
     "sphinx-design>=0.7.0",
     "sphinx-rtd-theme>=3.1.0",
     "sphinxcontrib-svg2pdfconverter[cairosvg]>=2.1.0",
+]
+
+[project.optional-dependencies]
+jupyter = [
+    "ipykernel",
+    "ipywidgets",
+    "ipympl",
+    "nbformat"
 ]
