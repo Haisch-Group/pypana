@@ -72,6 +72,14 @@ jobs:
       - run: python -m build
       - run: pipx run twine check --strict dist/*
 
+      - name: Built version must match the tag
+        run: |
+          built=$(ls dist/*.whl | sed -E 's#.*/pypana-([^-]+)-.*#\1#')                                                                                                                                                                                    
+          want="${GITHUB_REF_NAME#v}"                                                                                                                                                                                                                     
+          [ "$built" = "$want" ] || { echo "::error::built $built != tag $want"; exit 1; }
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+
       - name: Verify no local version identifier
         run: |
           if ls dist/ | grep -q '+'; then
