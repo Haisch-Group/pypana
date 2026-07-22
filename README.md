@@ -69,7 +69,7 @@ The following table lists the currently supported readers. If a certain aerosol-
 | PALAS WELAS | ✅ | -/- |
 | TSI APS 3310A | planned | -/- |
 | TSI APS 3321 | ✅ | -/- |
-| TSI CPC 3775 | planned | -/- |
+| TSI CPC 3775 | ✅ | -/- |
 | TSI EM 3068 | planned | -/- |
 | TSI LAS 3340A | ✅ | -/- |
 | TSI SMPS 3071 | ✅ | -/- |
