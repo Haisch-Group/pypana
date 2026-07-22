@@ -6,6 +6,8 @@ permissions:
 on:
   push:
     tags: ["v*"]
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -45,6 +47,18 @@ jobs:
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
 
+      - name: Check event matches version
+        run: |
+          if [ "$EVENT" = "release" ] && [ "$PRERELEASE" = "true" ]; then
+            echo "::error::Prereleases must be tag-pushed, not released."; exit 1
+          fi
+          if [ "$EVENT" = "push" ] && [ "$PRERELEASE" = "false" ]; then
+            echo "::error::Final versions must be published as a GitHub Release."; exit 1
+          fi
+        env:
+          EVENT: ${{ github.event_name }}
+          PRERELEASE: ${{ steps.check.outputs.prerelease }}
+
       - run: pip install build
       - run: python -m build
       - run: pipx run twine check --strict dist/*
@@ -68,7 +82,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  #v8.0.1
         with: {name: dist, path: dist/}
@@ -83,7 +97,7 @@ jobs:
 
   testpypi:
     needs: [build, test-install]
-    if: needs.build.outputs.prerelease == 'true'
+    if: github.event_name == 'push' && needs.build.outputs.prerelease == 'true'
     runs-on: ubuntu-latest
     environment: testpypi
     permissions:
@@ -97,7 +111,7 @@ jobs:
 
   pypi:
     needs: [build, test-install]
-    if: needs.build.outputs.prerelease == 'false'
+    if: github.event_name == 'release' && needs.build.outputs.prerelease == 'false'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -107,8 +121,8 @@ jobs:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  #v8.0.1
         with: {name: dist, path: dist/}
       - uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247  # 1.14.1
-      - name: Create the GitHub release
-        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes
+      - name: Attach build artifacts to the release
+        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
