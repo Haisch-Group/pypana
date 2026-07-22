@@ -14,8 +14,11 @@ from pathlib import Path
 import numpy as np
 
 from pypana.config import UnitScale
+from pypana.data.bin_axis import BinAxis
+from pypana.data.defs import FloatArray, Quantity
 from pypana.data.instrument_data import InstrumentData
-from pypana.data.measurement import FloatArray, Measurement
+from pypana.data.measurement import Measurement
+from pypana.data.size_distribution import SizeDistribution
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.base_reader import InputType
 from pypana.readers.exceptions.read_error import ReadError
@@ -219,22 +222,29 @@ class PALASWelasInstrumentReader(BaseInstrumentReader):
                     }
                 )
 
-        delta_log_d_p = np.log10(extracted_data["d_p_upper"]) - np.log10(
-            extracted_data["d_p_lower"]
-        )
         bin_boundaries: FloatArray = np.append(
             extracted_data["d_p_lower"], extracted_data["d_p_upper"][-1]
         )
 
+        axis = BinAxis(
+            bin_boundaries=bin_boundaries,
+            d_p=extracted_data["d_p"],
+            diameter_type="optical",
+        )
+
+        number = SizeDistribution(
+            quantity=Quantity.NUMBER,
+            axis=axis,
+            delta=extracted_data["delta_n"],
+        )
+
+        other_extracted_data["median"] = extracted_data["median"]
+        other_extracted_data["mean"] = extracted_data["mean"]
+
         return Measurement(
             scan_nr=scan_nr,
             time=scan_time,
-            d_p=extracted_data["d_p"],
-            delta_n=extracted_data["delta_n"],
-            delta_d_p=extracted_data["delta_d_p"],
-            delta_log_d_p=delta_log_d_p,
-            bin_boundaries=bin_boundaries,
-            median=extracted_data["median"],
-            mean=extracted_data["mean"],
+            axis=axis,
+            distributions={Quantity.NUMBER: number},
             other=other_extracted_data,
         )

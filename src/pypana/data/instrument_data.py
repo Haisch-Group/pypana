@@ -11,26 +11,22 @@ from typing import Annotated, Any, Literal, Self, overload
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 from matplotlib.ticker import Formatter
 from pydantic import BaseModel, Field
 from rich import inspect
 
 from pypana.console import console
 from pypana.data.collection_efficiency import CollectionEfficiency
+from pypana.data.defs import DataType, DataTypeLike, FloatArray, Quantity
+from pypana.data.defs.data_type_str import DataTypeStr
 from pypana.data.exceptions.invalid_index_error import InvalidIndexError
 from pypana.data.measurement import Measurement
 from pypana.data.utils import get_xlims, is_full_rectangular_matrix
 from pypana.exceptions.incompatible_argument_error import IncompatibleArgumentError
 from pypana.plots.histograms.hist_matrix import plot_hist_matrix
-from pypana.plots.histograms.hist_single import (
-    plot_hist_single_matplotlib,
-    plot_hist_single_plotly,
-)
 from pypana.plots.scatter.collection_efficiency import plot_collection_efficiency
 from pypana.plots.themes import BaseTheme
 from pypana.utils.debug import Debuggable
-from pypana.utils.measurement_data_type import MeasurementDataType
 
 
 class InstrumentData(BaseModel, Debuggable):
@@ -67,22 +63,91 @@ class InstrumentData(BaseModel, Debuggable):
     @overload
     def __getitem__(self, index: slice) -> Self: ...
 
-    def __getitem__(self, index: int | slice) -> Measurement | Self:
+    @overload
+    def __getitem__(self, index: Quantity) -> Self: ...
+
+    @overload
+    def __getitem__(self, index: DataType | DataTypeStr) -> FloatArray: ...
+
+    @overload
+    def __getitem__(self, index: str) -> FloatArray | Self: ...
+
+    def __getitem__(
+        self, index: int | slice | DataTypeLike | str
+    ) -> Measurement | Self | FloatArray:
         if isinstance(index, int):
             return self.measurements[index]
 
-        elif isinstance(index, slice):
+        if isinstance(index, slice):
             try:
                 scan_nrs = list(self.measurements.keys())[index]
+
                 return self.keep_measurements(scan_nrs, inplace=False, verbose=False)
+
             except InvalidIndexError as e:
                 raise ValueError(
                     "Unexpected indices. If the Measurements are currently not contiguous,"
                     "call `reindex()` first."
                 ) from e
 
-        else:
-            raise TypeError()
+        if isinstance(index, Quantity):
+            return self._filtered(index)
+
+        if isinstance(index, str):
+            try:
+                quantity = Quantity(index)
+            except ValueError:
+                quantity = None
+
+            if quantity is not None:
+                return self._filtered(quantity)
+
+        if isinstance(index, (DataType, str)):
+            return self.matrix(index)
+
+        raise TypeError(f"Cannot index InstrumentData with {type(index).__name__!r}.")
+
+    def _filtered(self, quantity: Quantity) -> Self:
+        """A new InstrumentData with every measurement filtered to one quantity."""
+        filtered = {k: m[quantity] for k, m in self.measurements.items()}
+
+        return self.__class__(
+            measurements=filtered,
+            device_name=self.device_name,
+            file_path=self.file_path,
+        )
+
+    def matrix(self, data_type: DataType | str) -> FloatArray:
+        """Stack one binned data type across all measurements into a 2-D array.
+
+        Args:
+            data_type: A binned data type: ``"dN"``, ``"dV/dlogdp"``, or a ``DataType``.
+                Bare quantities are not accepted here; index with a ``Quantity`` to filter.
+                An unknown string raises ``ValueError``.
+
+        Returns:
+            A ``(n_scans × n_bins)`` array; row ``i`` is the ``i``-th measurement's values,
+            in insertion order.
+
+        Raises:
+            ValueError: If there are no measurements, or they don't share a bin count.
+            KeyError: If a measurement has no size distribution (time-series only).
+            NotImplementedError: If a measurement would need to derive the quantity.
+        """
+        if not self.measurements:
+            raise ValueError("No measurements to build a matrix from.")
+
+        requested = DataType.parse(data_type)
+        rows = [m[requested] for m in self.measurements.values()]
+
+        widths = {row.size for row in rows}
+        if len(widths) != 1:
+            raise ValueError(
+                f"Measurements have differing bin counts {sorted(widths)}; "
+                "cannot stack into a matrix."
+            )
+
+        return np.array(rows, dtype=float)
 
     def apply(self, f: Callable[[Self], Self]) -> Self:
         """Applies a function to this InstrumentData object.
@@ -298,81 +363,16 @@ class InstrumentData(BaseModel, Debuggable):
         """
         return self.mapply(lambda m: m.cut(d))
 
-    def plot_histogram_single(
-        self,
-        measurement: int,
-        *,
-        data_type: MeasurementDataType,
-        theme: type[BaseTheme] | None = None,
-        xscale: Literal["log"] = "log",
-        yscale: Literal["linear", "log"] = "linear",
-        xlim: tuple[float, float] | None = None,
-        grid: bool = False,
-        pmf: bool = False,
-        save_as: Path | None = None,
-        additional: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
-        backend: Literal["matplotlib", "plotly"] = "plotly",
-        **kwargs: object,
-    ) -> None | go.Figure:
-        """Plots the histogram of a single measurement selected.
-
-        Args:
-            measurement: The single measurement to display.
-            data_type: The data type to display. ``dN/dlogdp`` or ``dN``.
-            theme: The theme for the plot. Defaults to ``settings.THEME``.
-            xscale: The scaling of the x-axis.
-            yscale: The scaling of the y-axis. Defaults to ``linear``.
-            xlim: The range on the x-axis to display.
-            grid: Whether to show grid lines.
-            pmf: Whether to show the probability mass function instead of original values.
-            save_as: Path where to store the output image. Defaults to no output.
-            additional: Additional function to display. ``cdf``, ``fit_cdf``, or ``fit_pdf``. Defaults to None.
-            backend: The backend to use to plot the histogram. Defaults to ``matplotlib``.
-            kwargs: Additional Keyword Arguments for the backend.
-        """
-        if measurement not in self.measurements:
-            raise InvalidIndexError(
-                message="Invalid scan number.", invalid_indices=[measurement]
-            )
-
-        if backend == "matplotlib":
-            plot_hist_single_matplotlib(
-                self.measurements[measurement],
-                data_type=data_type,
-                theme=theme,
-                xscale=xscale,
-                yscale=yscale,
-                xlim=xlim,
-                grid=grid,
-                pmf=pmf,
-                save_as=save_as,
-                additional=additional,
-                **kwargs,
-            )
-            return None
-        else:
-            return plot_hist_single_plotly(
-                self.measurements[measurement],
-                data_type=data_type,
-                theme=theme,
-                xscale=xscale,
-                yscale=yscale,
-                xlim=xlim,
-                grid=grid,
-                pmf=pmf,
-                save_as=save_as,
-                additional=additional,
-                **kwargs,
-            )
-
     def histogram(
         self,
         m: int | tuple[int, ...] | list[list[int | tuple[int, ...]]],
-        data_type: MeasurementDataType,
+        data_type: DataTypeLike,
         *,
         theme: BaseTheme | None = None,
         hist_type: Literal["bar", "stairs", "both"] = "bar",
-        secondary: Literal["cdf", "fit_cdf", "fit_pdf"] | None = None,
+        secondary: Literal["cdf", "fit_cdf", "fit_pdf"]
+        | Callable[[FloatArray], FloatArray]
+        | None = None,
         save_as: str | None = None,
         legend: Literal[
             "best",
@@ -390,9 +390,10 @@ class InstrumentData(BaseModel, Debuggable):
             "column",
         ]
         | None = "best",
+        transforms: Callable[[FloatArray], FloatArray] = lambda x: x,
         pmf: bool = False,
         spines_invisible: list[Literal["left", "right", "top", "bottom"]] | None = None,
-        title: str | None = None,
+        title: str | None = "",
         xlabel: str | None = None,
         xlim: tuple[float, float] | None = None,
         xmajor_formatter: Formatter | str | None = None,
@@ -415,24 +416,27 @@ class InstrumentData(BaseModel, Debuggable):
             - ``grid_`` for the background grid (only visible, if grid_visible=True in theme),
             - ``legend_`` for the legend,
             - ``secondary_`` for the secondary line plot,
-            - ``stairs_`` for the stairs plot.
+            - ``stairs_`` for the stairs plot,
+            - ``save_`` for the matplotlib fig.savefig().
 
             For matplotlib kwargs, please consult the matplotlib documentation: https://matplotlib.org/stable/ .
 
         Args:
             m (int | list[list[int]]): The measurement(s) to plot the histogram for. For a grid, the
                 measurements are given row-major like numpy. Has to be a full rectangular matrix.
-            data_type (MeasurementDataType): The data type to plot. ``dN/dlogdp`` or ``dN``.
+            data_type (DataTypeLike): The data type to plot, e.g. ``dN/dlogdp`` or ``dN``.
             theme (BaseTheme): The theme for the plot. Defaults to ``settings.THEME``.
             hist_type (str): What histogram type to display. "bar" plots a standard bar histogram,
                 "stairs" plots the outlines of the histogram, and "both" plots both together.
                 Defaults to ``"bar"``.
-            secondary (str): The additional function to plot.
+            secondary (str | Callable[[Measurement] | Measurement]): The additional function to plot.
                 "fit_cdf" and "fit_pdf" require the measurement to already be fitted previously. Both currently raise
-                NotImplementedError. Defaults to ``None``.
+                NotImplementedError. Or give a custom function that computes the secondary data. Defaults to ``None``.
             save_as (str | None): The path where to save the figure. Defaults to ``None`` which does not save.
             legend (bool): Whether to show the legend. Defaults to ``True``.
             pmf (bool): Whether to plot the measurement as probability mass function. Defaults to ``False``.
+            transforms (Callable[[FloatArray], FloatArray]): A transform to apply to the plotted data of m.
+                Defaults to the identity function.
             spines_invisible (list): The spines not to show. Defaults to ``None``, in which case all are plotted.
             title (str | None): The title of the plot. Defaults to ``None`` and uses an adaptive title.
             xlabel (str | None): The x-axis label of the plot. Defaults to ``None`` and uses an adaptive title.
@@ -473,6 +477,7 @@ class InstrumentData(BaseModel, Debuggable):
                 Defaults to the matplotlib default.
             legend_loc (str): The location of the matplotlib legend. Can only be specified when legend=True.
                 Defaults to the matplotlib default.
+            legend_ncol (int): The number of columns in the legend. Has different defaults.
 
             secondary_color (str): The color of the line plot that shows the secondary function.
                 Can be either a hex code, e.g. "#000000" or from the color cycle, e.g. "C0". Can only be specified
@@ -486,6 +491,9 @@ class InstrumentData(BaseModel, Debuggable):
                 Can only be specified when secondary is not None. Defaults to the matplotlib default.
             secondary_linewidth (float): The linewidth of the line of the secondary function. Can only be specified
                 when secondary is not None. Defaults to the matplotlib default.
+            secondary_yformatter (Formatter | str): The matplotlib ticker.Formatter for the secondary y-axis.
+            secondary_ylabel (str): The ylabel to show for the axis. Can only be specified when secondary is not None.
+                Defaults to an empty string.
 
             stairs_color: The color of the stairs plot. Can be either a hex code, e.g. "#000000"
                 or from the color cycle, e.g. "C0". Can only be specified when hist_type="stairs" or "both".
@@ -555,6 +563,7 @@ class InstrumentData(BaseModel, Debuggable):
             secondary=secondary,
             save_as=save_as,
             legend=legend,
+            transforms=transforms,
             pmf=pmf,
             spines_invisible=spines_invisible,
             title=title,
@@ -573,6 +582,8 @@ class InstrumentData(BaseModel, Debuggable):
         self,
         m: tuple[int, int] | range | slice | None = None,
         *,
+        dp_type: Quantity = Quantity.NUMBER,
+        diameter: Literal["median", "geometric_mean"] = "geometric_mean",
         fit: Literal["sigmoid", "gompertz"] | None = "sigmoid",
         theme: type[BaseTheme] | None = None,
         save_as: str | None = None,
@@ -624,6 +635,8 @@ class InstrumentData(BaseModel, Debuggable):
                 them consecutively. A ``range`` or ``slice`` selects consecutive
                 measurements by *position* in ``self.measurements``. All selections must
                 yield an even, ≥ 2 count. Use ``permute()`` beforehand to arrange them.
+            dp_type (Quantity): The quantity to analyze. Defaults to Quantity.NUMBER.
+            diameter (str): Which diameter to use. Defaults to ``geometric_mean``.
             fit (str | None): The fit to overlay on the scatter. ``"sigmoid"`` extracts the
                 cut diameter ``d_50``. ``"gompertz"`` allows non-0/100% asymptotes. ``None``
                 plots only the data points. Defaults to ``"sigmoid"``.
@@ -728,15 +741,21 @@ class InstrumentData(BaseModel, Debuggable):
 
         ups, downs = scan_nrs[0::2], scan_nrs[1::2]
 
-        n_ups = np.array([float(self.measurements[s].n_total) for s in ups])
-        n_downs = np.array([float(self.measurements[s].n_total) for s in downs])
+        n_ups = np.array([float(self.measurements[s].total) for s in ups])
+        n_downs = np.array([float(self.measurements[s].total) for s in downs])
         if np.any(n_ups == 0):
             raise ValueError(
                 "Upstream measurement has zero total concentration; η is undefined."
             )
 
+        raw_measurements = [
+            self.measurements[s].distributions[dp_type].median
+            if diameter == "median"
+            else self.measurements[s].distributions[dp_type].geo_mean
+            for s in ups
+        ]
         ce = CollectionEfficiency(
-            d_p=np.array([self.measurements[s].geo_mean for s in downs], dtype=float),
+            d_p=np.array(raw_measurements, dtype=float),
             eta=1.0 - n_downs / n_ups,
             upstream_scan_nrs=ups,
             downstream_scan_nrs=downs,

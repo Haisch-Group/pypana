@@ -7,13 +7,22 @@ References:
 """
 
 import re
+from datetime import datetime
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
+from pypana.config import UnitScale
+from pypana.data.bin_axis import BinAxis
+from pypana.data.defs import FloatArray, Quantity
 from pypana.data.instrument_data import InstrumentData
+from pypana.data.measurement import Measurement
+from pypana.data.size_distribution import SizeDistribution
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.base_reader import InputType
 from pypana.readers.defs import IGNORED_FILES
-from pypana.readers.exceptions.read_error import ReaderNotImplementedError, ReadError
+from pypana.readers.exceptions.read_error import ReadError
 
 
 class TSILAS3340AInstrumentReader(BaseInstrumentReader):
@@ -21,6 +30,15 @@ class TSILAS3340AInstrumentReader(BaseInstrumentReader):
 
     _device_name = "TSI LAS 3340A"
     _input_type = InputType.DIRECTORY
+
+    _META_COLUMNS = 15
+    _SIZE_SCALE = UnitScale.NANO
+    _DATETIME_FORMAT = "%m/%d/%Y %I:%M:%S.%f %p"
+    _SCAN_NR_STRIDE = 1_000
+
+    # Reference conditions for the standard -> volumetric flow correction (TSI App. Note FLOW-004).
+    _STANDARD_TEMPERATURE_K = 294.26
+    _STANDARD_PRESSURE_KPA = 101.3
 
     @classmethod
     def can_read(cls, path: Path) -> bool:
@@ -79,4 +97,112 @@ class TSILAS3340AInstrumentReader(BaseInstrumentReader):
         Raises:
             ReadError: If an error occurs while reading the file.
         """
-        raise ReaderNotImplementedError()
+        files = sorted(
+            (f for f in self._path.iterdir() if f.name not in IGNORED_FILES),
+            key=lambda f: int(f.name.split("_")[1]),
+        )
+
+        measurements: dict[int, Measurement] = {}
+
+        for file in files:
+            try:
+                file_number = int(file.name.split("_")[1])
+                file_measurements = self._read_file(
+                    file, file_number * self._SCAN_NR_STRIDE
+                )
+
+            except (FileNotFoundError, ValueError, KeyError, IndexError) as e:
+                raise ReadError(f"{e}", path=file) from e
+
+            measurements.update(file_measurements)
+
+        if not measurements:
+            raise ReadError(message="No valid measurements to import!", path=self._path)
+
+        return InstrumentData(
+            measurements=measurements,
+            device_name=self._device_name,
+            file_path=self._path,
+            other_info={},
+        )
+
+    def _read_file(self, file: Path, base_scan_nr: int) -> dict[int, Measurement]:
+        """Parses one LAS file into one Measurement per time-resolved row.
+
+        Args:
+            file: The single recording file to parse.
+            base_scan_nr: The scan number assigned to this file's first row; subsequent rows
+                  increment by one (kept below ``_SCAN_NR_STRIDE`` so files never collide).
+
+
+        Returns:
+            The measurements parsed from this file, keyed by their global scan number.
+        """
+        data = pd.read_table(file, sep="\t", header=0, engine="python")
+
+        bin_columns = data.columns[self._META_COLUMNS :]
+        d_lower = np.array(bin_columns, dtype=float) * self._SIZE_SCALE
+        d_upper = (
+            data.iloc[0, self._META_COLUMNS :].to_numpy(dtype=float) * self._SIZE_SCALE
+        )
+        bin_boundaries: FloatArray = np.append(d_lower, d_upper[-1])
+
+        axis = BinAxis(
+            bin_boundaries=bin_boundaries,
+            midpoint="arithmetic",
+            diameter_type="optical",
+        )
+
+        measurements: dict[int, Measurement] = {}
+
+        # Row 0 is the units and upper-edge row
+        for offset, (_, row) in enumerate(data.iloc[1:].iterrows()):
+            time = datetime.strptime(
+                f"{row['Date']} {row['Time']}", self._DATETIME_FORMAT
+            )
+
+            counts = row.iloc[self._META_COLUMNS :].to_numpy(dtype=float)
+            volumetric_flow = self._volumetric_flow(
+                standard_flow=float(row["Sample"]),
+                temperature=float(row["Box"]),
+                pressure=float(row["Pres."]),
+            )
+            delta_n = counts * (60.0 / float(row["Accum."])) / volumetric_flow
+
+            number = SizeDistribution(
+                quantity=Quantity.NUMBER, axis=axis, delta=delta_n
+            )
+
+            scan_nr = base_scan_nr + offset
+            measurements[scan_nr] = Measurement(
+                scan_nr=scan_nr,
+                time=time,
+                axis=axis,
+                distributions={Quantity.NUMBER: number},
+                other={"file": file.name, "subscan_nr": offset + 1},
+            )
+
+        return measurements
+
+    @classmethod
+    def _volumetric_flow(
+        cls, standard_flow: float, temperature: float, pressure: float
+    ) -> float:
+        """Converts a standard (mass-controller) flow to the actual volumetric flow.
+
+        Applies the ideal gas law to map a standard flow [scm³/min] to the volumetric flow
+        [cm³/min] at the measurement temperature and pressure (TSI Application Note FLOW-004).
+
+        Args:
+            standard_flow: The reported standard aerosol flow [scm³/min].
+            temperature: The measurement temperature [K] (the "Box" column).
+            pressure: The measurement pressure [kPa] (the "Pres." column).
+
+        Returns:
+            The volumetric flow [cm³/min].
+        """
+        return (
+            standard_flow
+            * (temperature / cls._STANDARD_TEMPERATURE_K)
+            * (cls._STANDARD_PRESSURE_KPA / pressure)
+        )

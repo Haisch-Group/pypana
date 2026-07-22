@@ -20,7 +20,7 @@ class CollectionEfficiency(BaseModel):
     )
 
     d_p: FloatArray = Field(
-        description="Geometric mean diameter of each downstream measurement [m]."
+        description="Geometric mean diameter of each upstream measurement [m]."
     )
     eta: FloatArray = Field(
         description="Collection efficiency η = 1 − n_down / n_up per pair [0..1]."

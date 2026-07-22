@@ -6,22 +6,26 @@ References:
     https://tsi.com/products/particle-sizers/supermicron-capable-particle-sizer-spectrometers/aerodynamic-particle-sizer-aps-3321
 """
 
+from collections.abc import Hashable
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
 from pypana.config import UnitScale
+from pypana.data.bin_axis import BinAxis
+from pypana.data.defs import FloatArray, Quantity
 from pypana.data.instrument_data import InstrumentData
-from pypana.data.measurement import FloatArray, Measurement
+from pypana.data.measurement import Measurement
+from pypana.data.size_distribution import SizeDistribution
 from pypana.readers.base_instrument_reader import BaseInstrumentReader
 from pypana.readers.base_reader import InputType
 from pypana.readers.exceptions.read_error import ReaderNotImplementedError, ReadError
 from pypana.readers.tsi.utils import is_basic_tsi_format_file
 from pypana.readers.utils import other_columns_to_dict
-from pypana.utils.measurement_data_type import MeasurementDataType
 
 
 class TSIAPS3321InstrumentReader(BaseInstrumentReader):
@@ -31,6 +35,7 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
     _encoding = "iso-8859-1"
     _input_type = InputType.FILE
 
+    _REPORTED_DATA_TYPE = "dN/dlogDp"
     _BINS = 52
     _D_P_COLUMNS_COUNT = 52
     _SIZE_SCALING_FACTOR = UnitScale.MICRO.value
@@ -106,71 +111,40 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
             assert isinstance(d_p_start_loc, int)
             d_p_start_column = int(d_p_start_loc) + 1
 
-            d_p, delta_d_p, delta_log_d_p, bin_boundaries = self._read_bin_metadata(
-                d_p_start_column, data
+            bin_boundaries = self._read_bin_metadata(d_p_start_column, data)
+            axis = BinAxis(
+                bin_boundaries=bin_boundaries.copy(),
+                diameter_type="aerodynamic",
             )
-
             bin_columns = data.columns[
                 d_p_start_column : d_p_start_column + self._D_P_COLUMNS_COUNT
             ]
+
         except (FileNotFoundError, ValueError) as e:
             raise ReadError(f"{e}") from e
 
         float_cols = data.select_dtypes(include=["float"]).columns
         data[float_cols] = data[float_cols].astype(float)
 
-        measurements: dict[int, Measurement] = {}
+        other_columns = data.columns[
+            d_p_start_column + self._D_P_COLUMNS_COUNT : -6
+        ].to_list()
 
+        measurements: dict[int, Measurement] = {}
         for row in data.to_dict("records"):
             try:
-                if row["Aerodynamic Diameter"] != MeasurementDataType.dndlogdp.value:
-                    raise ReaderNotImplementedError(
-                        "Other types than dN/dlogDp are not yet implemented for TSI APS 3321."
-                    )
+                key, measurement = self._row_to_measurement(
+                    row, axis, bin_columns, other_columns
+                )
+                measurements[key] = measurement
 
-                scan_nr = int(row["Sample #"])
-                time = datetime.strptime(
-                    f"{row['Date']} {row['Start Time']}", "%m/%d/%y %H:%M:%S"
-                )
-                delta_n_dlog_dp: FloatArray = np.array(
-                    [row[col] for col in bin_columns],
-                    dtype=float,
-                )
-                median = row["Median(µm)"]
-                mean = row["Mean(µm)"]
-                geo_mean = row["Geo. Mean(µm)"]
-                mode = row["Mode(µm)"]
-                geo_std_dev = row["Geo. Std. Dev."]
-
-                other_info = other_columns_to_dict(
-                    row,
-                    data.columns[
-                        d_p_start_column + self._D_P_COLUMNS_COUNT : -6
-                    ].to_list(),
-                )
-
-                measurement = Measurement(
-                    scan_nr=scan_nr,
-                    time=time,
-                    d_p=d_p.copy(),
-                    delta_d_p=delta_d_p.copy(),
-                    delta_log_d_p=delta_log_d_p.copy(),
-                    delta_n_dlog_dp=delta_n_dlog_dp,
-                    bin_boundaries=bin_boundaries.copy(),
-                    median=median,
-                    mean=mean,
-                    geo_mean=geo_mean,
-                    mode=mode,
-                    geo_std_dev=geo_std_dev,
-                    other=other_info,
-                )
-                measurements[scan_nr - 1] = measurement  # 0-based indexing
             except (ValueError, AttributeError, KeyError) as e:
                 raise ReadError(f"{e}") from e
+
             except ReadError as e:
                 raise e
 
-        other_info = {
+        other_info: dict[Hashable, Any] = {
             "sample_time": sample_time,
             "density": density,
             "stokes_corrected": stokes_corrected,
@@ -183,20 +157,72 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
             other_info=other_info,
         )
 
-    def _read_bin_metadata(
-        self, d_p_start_column: int, data: DataFrame
-    ) -> tuple[FloatArray, FloatArray, FloatArray, FloatArray]:
+    def _row_to_measurement(
+        self,
+        row: dict[Hashable, Any],
+        axis: BinAxis,
+        bin_columns: pd.Index,
+        other_columns: list[str],
+    ) -> tuple[int, Measurement]:
+        """Build one Measurement from a parsed APS data row.
+
+        Args:
+            row: One record from the parsed dataframe.
+            axis: The shared diameter axis.
+            bin_columns: Column labels holding the per-bin dN/dlogDp values.
+            other_columns: Column labels carried verbatim into ``other``.
+
+        Returns:
+            The 0-based measurement key and its Measurement.
+
+        Raises:
+            ReaderNotImplementedError: If the row reports anything other than dN/dlogDp.
+        """
+        if row["Aerodynamic Diameter"] != self._REPORTED_DATA_TYPE:
+            raise ReaderNotImplementedError(
+                "Other types than dN/dlogDp are not yet implemented for TSI APS 3321."
+            )
+
+        scan_nr = int(row["Sample #"])
+        time = datetime.strptime(
+            f"{row['Date']} {row['Start Time']}", "%m/%d/%y %H:%M:%S"
+        )
+        delta_n_dlog_dp = np.array([row[col] for col in bin_columns], dtype=float)
+        delta_n_dlog_dp[0] = 0.25  # https://github.com/Haisch-Group/pypana/issues/20
+
+        number = SizeDistribution(
+            quantity=Quantity.NUMBER,
+            axis=axis,
+            delta_dlogdp=delta_n_dlog_dp,
+        )
+
+        other_info = other_columns_to_dict(row, other_columns)
+        other_info["median"] = row["Median(µm)"]
+        other_info["mean"] = row["Mean(µm)"]
+        other_info["mode"] = row["Mode(µm)"]
+        other_info["geo_std_dev"] = row["Geo. Std. Dev."]
+
+        measurement = Measurement(
+            scan_nr=scan_nr,
+            time=time,
+            axis=axis,
+            distributions={Quantity.NUMBER: number},
+            other=other_info,
+        )
+
+        return scan_nr - 1, measurement
+
+    def _read_bin_metadata(self, d_p_start_column: int, data: DataFrame) -> FloatArray:
         """Reads the metadata arrays that are constant for all measurements.
 
         Args:
             d_p_start_column (int): Column index of the start position of the bins.
-            data (DataFrame): The original dataframe with all metadata.
+            data (DataFrame): The parsed APS dataframe.
 
         Returns:
-            tuple[FloatArray, FloatArray, FloatArray]: A tuple containing:
-                - d_p, delta_d_p, delta_log_d_p
+            The ``n + 1`` bin boundaries in meters.
         """
-        d_p = (
+        d_p_file = (
             np.array(
                 data.columns[
                     d_p_start_column : d_p_start_column + self._D_P_COLUMNS_COUNT
@@ -205,17 +231,18 @@ class TSIAPS3321InstrumentReader(BaseInstrumentReader):
             )
             * self._SIZE_SCALING_FACTOR
         )
-        delta_log_d_p_constant = 1 / self._CHANNELS_PER_DECADE
-        delta_log_d_p = np.full(self._D_P_COLUMNS_COUNT, delta_log_d_p_constant)
 
-        logarithmic_bin_step = 10 ** (delta_log_d_p_constant / 2)
+        delta_log = 1 / self._CHANNELS_PER_DECADE
+        relative = np.arange(self._D_P_COLUMNS_COUNT) * delta_log
+        offset = float(np.mean(np.log10(d_p_file[1:]) - relative[1:]))
+        d_p = 10.0 ** (relative + offset)
 
-        # re-center lowest bin (machine cut off) to look like normal bin, but may be later cut off
-        d_p[0] = d_p[1] / (logarithmic_bin_step**2)
+        half_step = 10.0 ** (delta_log / 2)
+        boundaries = np.asarray(
+            np.append(d_p / half_step, d_p[-1] * half_step), dtype=float
+        )
+        boundaries[0] = 10 ** (
+            np.log10(boundaries[1]) - 0.25
+        )  # https://github.com/Haisch-Group/pypana/issues/20
 
-        d_p_lower = d_p / logarithmic_bin_step
-        d_p_upper = d_p * logarithmic_bin_step
-        delta_d_p = d_p_upper - d_p_lower
-        bin_boundaries = np.append(d_p_lower, d_p_upper[-1])
-
-        return d_p, delta_d_p, delta_log_d_p, bin_boundaries
+        return boundaries

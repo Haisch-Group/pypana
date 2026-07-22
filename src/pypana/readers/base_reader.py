@@ -28,7 +28,7 @@ class InputType(Enum):
 
 
 class ReaderKwargs(TypedDict, total=False):
-    """The kwargs passed to the reader class."""
+    """The kwargs passed to all reader classes."""
 
 
 class BaseReader(Debuggable):

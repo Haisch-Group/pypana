@@ -14,7 +14,7 @@ from pypana.data.collection_efficiency import CollectionEfficiency
 
 D_P = np.linspace(10e-9, 200e-9, 25)
 X0 = 80e-9
-K = 5e7
+K = 8.0  # log-space slope for the sigmoid/gompertz models
 
 SIGMOID_N_PARAMS = 2
 GOMPERTZ_N_PARAMS = 4
