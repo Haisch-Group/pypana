@@ -1,4 +1,5 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue?logo=python&logoColor=white)
 [![CI Status](https://github.com/Haisch-Group/pypana/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Haisch-Group/pypana/actions/workflows/ci.yml)
 
 # Pypana
