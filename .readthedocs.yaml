@@ -1,0 +1,30 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+formats:
+  - pdf
+
+# Set the OS, Python version, and other tools you might need
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  apt_packages:
+    - libcairo2-dev
+  jobs:
+    post_checkout:
+      - git fetch --tags --unshallow || git fetch --tags
+    create_environment:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+      - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
+    install:
+      - uv pip install --python "${READTHEDOCS_VIRTUALENV_PATH}" . --group docs
+
+# Build documentation with Sphinx; RTD drives sphinx-build and the LaTeX -> PDF step
+sphinx:
+  configuration: docs/source/conf.py

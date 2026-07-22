@@ -1,4 +1,6 @@
 import sys
+
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 sys.path.insert(0, str((Path(__file__).parent / "../../src").resolve()))
@@ -14,7 +16,8 @@ sys.path.insert(0, str((Path(__file__).parent / "../../src").resolve()))
 project = "pypana"
 copyright = "2026, Maximilian Böhmichen, Kevin Maier, Nico Chrisam"
 author = "Maximilian Böhmichen, Kevin Maier, Nico Chrisam"
-release = "0.0.1"
+release = _pkg_version("pypana")
+version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
