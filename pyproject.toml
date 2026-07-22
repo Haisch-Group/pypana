@@ -9,7 +9,7 @@ description = "Package for import and evaluation of aerosol measurements"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [
-    { name = "Maximilian Böhmichen", email = "m.boehmichen@tum.de" },
+    { name = "Maximilian Böhmichen", email = "34962223+maximilianboehmichen@users.noreply.github.com" },
     { name = "Kevin Maier", email = "kevin.r.maier@tum.de" },
     { name = "Nico Chrisam", email = "nico.chrisam@tum.de" }
 ]
@@ -50,6 +50,7 @@ packages = ["src/pypana"]
 
 [project.urls]
 Homepage = "https://github.com/Haisch-Group/pypana"
+Documentation = "https://pypana.readthedocs.io/en/stable/"
 Repository = "https://github.com/Haisch-Group/pypana"
 Issues = "https://github.com/Haisch-Group/pypana/issues"
 
