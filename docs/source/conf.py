@@ -1,5 +1,4 @@
 import sys
-
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
