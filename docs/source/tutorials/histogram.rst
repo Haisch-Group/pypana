@@ -52,8 +52,9 @@ object per loaded measurement and acts as a wrapper. To perform data manipulatio
 .. hint::
     Depending on how much low-level checks you want to perform on the loaded data, instead of printing the length,
     there are some other methods available:
-        - :meth:`~pypana.data.instrument_data.InstrumentData.summary` to get a pandas DataFrame with key attributes per measurement,
-        - and :meth:`info(verbose=True) <pypana.data.instrument_data.InstrumentData.info()>` to show the underlying datastructure in great detail.
+
+    - :meth:`~pypana.data.instrument_data.InstrumentData.summary` to get a pandas DataFrame with key attributes per measurement,
+    - and :meth:`info(verbose=True) <pypana.data.instrument_data.InstrumentData.info()>` to show the underlying datastructure in great detail.
 
 
 Plotting a histogram
@@ -70,11 +71,11 @@ see the documentation of that function. The following subsections introduce some
     Still, some matplotlib arguments can be given to the  :meth:`~pypana.data.instrument_data.InstrumentData.histogram` method itself.
 
     The figure size was adapted for the shown plots of this tutorial. Since pypana uses a matplotlib backend,
-    you can add `%matplotlib notebook` to a cell to rescale the plots as you need.
+    you can add '`%matplotlib notebook`' to a cell to rescale the plots as you need.
 
 In general, you have to specify three things:
     1. which data to display (measurements)
-    2. what to display (data type of :class:`~pypana.utils.measurement_data_type.MeasurementDataType`)
+    2. what to display — the data type. You can pass it however is convenient: a string (``"dN"``, ``"dN/dlogdp"``), a :obj:`~pypana.data.defs.quantity.Quantity` (defaults to per-bin, e.g. :attr:`Quantity.NUMBER<pypana.data.defs.quantity.Quantity.NUMBER>` ≡ ``"dN"``), or a :class:`~pypana.data.defs.data_type.DataType` (built directly or via DataType.parse(...)). These are the :data:`~pypana.data.defs.data_type.DataTypeLike` accepted everywhere a data type is asked for.
     3. how to display (cosmetic arguments)
 
 
@@ -86,11 +87,9 @@ Great to visualize specific data.
 
 .. code-block:: python
 
-    from pypana.utils.measurement_data_type import MeasurementDataType
-
     data.histogram(
         1,                             # measurement number to plot
-        MeasurementDataType.dndlogdp,  # data type to show, can also be `dn`
+        "dN/dlogdp",                   # data type to show, can be plain string
         save_as="./path/to/save.png",  # omit to just show
     )
 
@@ -107,17 +106,20 @@ As you can see, it produces a valid histogram of the measured data. But there ar
     - The bars are indistinguishable, no border is shown.
     - A histogram is nice, but showing an additional function is nicer.
 
-We can solve this by passing some arguments. The :attr:`~pypana.plots.histograms.hist_matrix.STANDARD_HIST_SINGLE_KWARGS`
+We can solve this by passing some arguments. The :data:`~pypana.plots.histograms.hist_matrix.STANDARD_HIST_SINGLE_KWARGS`
 provide additional preconfigured input. It supplies the arguments in the same way anyone can refer to additional matplotlib keyword arguments.
+Note that the datatype to plot is now given as specific :class:`~pypana.data.defs.data_type.DataType` object. It encapsulates
+all possible datatypes supported by pypana, but you can still default to their textual representations,
+as in the first histogram.
 
 .. code-block:: python
 
+    from pypana.data.defs import DataType, Normalization, Quantity
     from pypana.plots.histograms.hist_matrix import STANDARD_HIST_SINGLE_KWARGS
-    from pypana.utils.measurement_data_type import MeasurementDataType
 
     data.histogram(
         1,
-        MeasurementDataType.dndlogdp,
+        DataType(quantity=Quantity.NUMBER, normalization=Normalization.DLOG_DP),
         secondary="cdf",
         title="Histogram of a single measurement with additional args",
         xlim=(1.5e-7, 1e-6),
@@ -130,7 +132,6 @@ provide additional preconfigured input. It supplies the arguments in the same wa
     :width: 100%
 
     Histogram of a single measurement with additional arguments.
-
 
 Multiple measurements
 ~~~~~~~~~~~~~~~~~~~~~
@@ -155,15 +156,14 @@ The left plot displays the measurements as bars, while the right displays them a
 
 .. code-block:: python
 
+    from pypana.data.defs import DataType
     from pypana.plots.histograms.hist_matrix import STANDARD_HIST_SINGLE_KWARGS
-    from pypana.utils.measurement_data_type import MeasurementDataType
-
 
     STANDARD_HIST_SINGLE_KWARGS["bar_label"] = lambda m: f"Scan {m.scan_nr - 1}"
 
     data.histogram(
         (2, 3, 4, 5),
-        MeasurementDataType.dn,
+        DataType.parse("dN"),                   # parse() creates the datatype from a string
         title="Histogram of four measurements",
         xlim=(1.5e-7, 3e-6),
         **STANDARD_HIST_SINGLE_KWARGS,
@@ -172,14 +172,14 @@ The left plot displays the measurements as bars, while the right displays them a
 
 .. code-block:: python
 
+    from pypana.data.defs import Quantity
     from pypana.plots.histograms.hist_matrix import STANDARD_HIST_SINGLE_KWARGS
-    from pypana.utils.measurement_data_type import MeasurementDataType
 
     STANDARD_HIST_SINGLE_KWARGS["stairs_label"] = lambda m: f"T = {m.scan_nr - 1} min"
 
     data.histogram(
         (2, 3, 4, 5),
-        MeasurementDataType.dn,
+        Quantity.NUMBER,
         hist_type="stairs",
         title="Histogram of four measurements",
         xlim=(1.5e-7, 3e-6),
@@ -213,8 +213,8 @@ You can specify the measurements to show in the matrix like before, but this tim
 Each entry represents one subplot. To avoid visual cluttering, we remove some x-ticks (the 2.0 and 5.0 ones) and switch
 to a theme with more available colors.
 
-Similar to the :attr:`~pypana.plots.histograms.hist_matrix.STANDARD_HIST_SINGLE_KWARGS` available for single subplot
-histograms, pypana also provides the :attr:`~pypana.plots.histograms.hist_matrix.STANDARD_HIST_MATRIX_KWARGS` for the matrix use-case.
+Similar to the :data:`~pypana.plots.histograms.hist_matrix.STANDARD_HIST_SINGLE_KWARGS` available for single subplot
+histograms, pypana also provides the :data:`~pypana.plots.histograms.hist_matrix.STANDARD_HIST_MATRIX_KWARGS` for the matrix use-case.
 
 .. note::
 
@@ -228,15 +228,13 @@ histograms, pypana also provides the :attr:`~pypana.plots.histograms.hist_matrix
 
     from pypana.plots.histograms.hist_matrix import STANDARD_HIST_MATRIX_KWARGS
     from pypana.plots.themes.tol4 import Tol4Theme
-    from pypana.utils.measurement_data_type import MeasurementDataType
-
 
     settings.THEME = Tol4Theme
     settings.THEME.set_mode("light")
 
     data.histogram(
         [[2, 3, 4], [(2, 5), (3, 5), (4, 5)]],
-        MeasurementDataType.dn,
+        "dN",
         title="Matrix Histogram",
         stairs_linewidth=2,
         xmajor_locations=(1.0,),
@@ -253,8 +251,6 @@ histograms, pypana also provides the :attr:`~pypana.plots.histograms.hist_matrix
 
     from pypana.plots.histograms.hist_matrix import STANDARD_HIST_MATRIX_KWARGS
     from pypana.plots.themes.tab10 import Tab10Theme
-    from pypana.utils.measurement_data_type import MeasurementDataType
-
 
     settings.THEME = Tab10Theme
     settings.THEME.set_mode("light")
@@ -262,7 +258,7 @@ histograms, pypana also provides the :attr:`~pypana.plots.histograms.hist_matrix
 
     data.histogram(
         [[2, 3, 4], [5, 6, 7]],
-        MeasurementDataType.dn,
+        "dN",
         title="Matrix Histogram",
         xmajor_locations=(1.0,),
         **STANDARD_HIST_MATRIX_KWARGS,
@@ -289,4 +285,3 @@ For further quick reference, here are all arguments:
 
 .. automethod:: pypana.data.instrument_data.InstrumentData.histogram
    :noindex:
-

@@ -13,11 +13,13 @@ _D_50_ETA = 0.5
 
 
 def _sigmoid(x: FloatArray, x0: float, k: float) -> FloatArray:
-    return np.asarray(1.0 / (1.0 + np.exp(-k * (x - x0))), dtype=float)
+    return np.asarray(1.0 / (1.0 + np.exp(-k * (np.log(x) - np.log(x0)))), dtype=float)
 
 
 def _gompertz(x: FloatArray, x0: float, a: float, b: float, d: float) -> FloatArray:
-    return np.asarray(d + (a - d) * np.exp(-np.exp(-b * (x - x0))), dtype=float)
+    return np.asarray(
+        d + (a - d) * np.exp(-np.exp(-b * (np.log(x) - np.log(x0)))), dtype=float
+    )
 
 
 _MODELS: dict[FitModel, Callable[..., FloatArray]] = {
@@ -34,8 +36,8 @@ def _initial_guess(model: FitModel, d_p: FloatArray, eta: FloatArray) -> list[fl
     transition spans roughly the observed range.
     """
     x0 = float(d_p[int(np.argmin(np.abs(eta - _D_50_ETA)))])
-    span = float(d_p.max() - d_p.min()) or x0 or 1.0
-    k = 4.0 / span
+    log_span = float(np.log(d_p.max()) - np.log(d_p.min())) or 1.0
+    k = 4.0 / log_span
 
     if model == "sigmoid":
         return [x0, k]

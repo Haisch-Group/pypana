@@ -26,7 +26,7 @@ class TestPalasUSMPSInstrumentReader:
 
         n_bins = len(measurement.d_p)
 
-        assert len(measurement.delta_n) == n_bins
+        assert len(measurement["dN"]) == n_bins
         assert len(measurement.delta_d_p) == n_bins
         assert len(measurement.delta_log_d_p) == n_bins
         assert len(measurement.bin_boundaries) == n_bins + 1

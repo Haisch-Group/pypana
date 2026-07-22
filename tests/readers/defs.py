@@ -1,10 +1,17 @@
 from pathlib import Path
 
+from pypana.readers.palas.palas_ufcpc import PALASUFCPCInstrumentReader
 from pypana.readers.palas.palas_usmps import PALASUSMPSInstrumentReader
 from pypana.readers.palas.palas_welas import PALASWelasInstrumentReader
 from pypana.readers.tsi.tsi_aps3321 import TSIAPS3321InstrumentReader
+from pypana.readers.tsi.tsi_cpc3775 import TSICPC3775InstrumentReader
 from pypana.readers.tsi.tsi_las3340a import TSILAS3340AInstrumentReader
 from pypana.readers.tsi.tsi_smps3071 import TSISMPS3071InstrumentReader
+from pypana.readers.tsi.tsi_smps3938 import TSISMPS3938InstrumentReader
+from pypana.readers.tsi.tsi_smps3938_actris import (
+    TSISMPS3938ACTRISLevel0InstrumentReader,
+    TSISMPS3938ACTRISLevel1InstrumentReader,
+)
 
 EXAMPLE_FILES_DIR = Path(__file__).resolve().parents[2] / "ExampleFiles"
 
@@ -18,6 +25,15 @@ PALASWELAS_FILE1 = EXAMPLE_FILES_DIR / "20250822_PALAS_WELAS.txt"
 PALASUSMPS_FILE1 = EXAMPLE_FILES_DIR / "20240625_PALAS_USMPS.txt"
 PALASUSMPS_FILE2 = EXAMPLE_FILES_DIR / "20221215_PALAS_USMPS.txt"
 PALASUSMPS_FILE3 = EXAMPLE_FILES_DIR / "20230704_PALAS_USMPS.txt"
+PALASUFCPC_FILE = EXAMPLE_FILES_DIR / "20240701_PALAS_UFCPC.txt"
+TSICPC3775_FILE1 = EXAMPLE_FILES_DIR / "20240610_TSI_CPC3775.txt"
+TSICPC3775_FILE2 = EXAMPLE_FILES_DIR / "20230222_TSI_CPC3775.txt"
+TSICPC3775_FILE3 = EXAMPLE_FILES_DIR / "20230223_TSI_CPC3775_variablelength.txt"
+TSISMPS3938_FILE1 = EXAMPLE_FILES_DIR / "20240527_TSI_SMPS3938__ACTRISLevel1.txt"
+TSISMPS3938_FILE2 = EXAMPLE_FILES_DIR / "20240527_TSI_SMPS3938_ACTRISLevel0.txt"
+TSISMPS3938_FILE3 = EXAMPLE_FILES_DIR / "20240527_TSI_SMPS3938_tab_decimalpoint_row.TXT"
+TSISMPS3938_FILE4 = EXAMPLE_FILES_DIR / "20240529_TSISMPS3938.TXT"
+TSISMPS3938_FILE5 = EXAMPLE_FILES_DIR / "20240619_TSI_SMPS3938.TXT"
 
 INSTRUMENT_READER_TEST_CASES = [
     (TSILAS3340A_FILE, TSILAS3340AInstrumentReader),
@@ -28,4 +44,13 @@ INSTRUMENT_READER_TEST_CASES = [
     (PALASUSMPS_FILE1, PALASUSMPSInstrumentReader),
     (PALASUSMPS_FILE2, PALASUSMPSInstrumentReader),
     (PALASUSMPS_FILE3, PALASUSMPSInstrumentReader),
+    (PALASUFCPC_FILE, PALASUFCPCInstrumentReader),
+    (TSICPC3775_FILE1, TSICPC3775InstrumentReader),
+    (TSICPC3775_FILE2, TSICPC3775InstrumentReader),
+    (TSICPC3775_FILE3, TSICPC3775InstrumentReader),
+    (TSISMPS3938_FILE1, TSISMPS3938ACTRISLevel1InstrumentReader),
+    (TSISMPS3938_FILE2, TSISMPS3938ACTRISLevel0InstrumentReader),
+    (TSISMPS3938_FILE3, TSISMPS3938InstrumentReader),
+    (TSISMPS3938_FILE4, TSISMPS3938InstrumentReader),
+    (TSISMPS3938_FILE5, TSISMPS3938InstrumentReader),
 ]
