@@ -366,7 +366,7 @@ class InstrumentData(BaseModel, Debuggable):
     def histogram(
         self,
         m: int | tuple[int, ...] | list[list[int | tuple[int, ...]]],
-        data_type: DataTypeLike,
+        data_type: MeasurementDataType | str,
         *,
         theme: BaseTheme | None = None,
         hist_type: Literal["bar", "stairs", "both"] = "bar",
@@ -509,6 +509,8 @@ class InstrumentData(BaseModel, Debuggable):
             NotImplementedError: If the functionality is currently not supported and is only a placeholder.
             ParticleAnalysisError: If an internal error occurs during plotting.
         """
+        data_type = MeasurementDataType(data_type)
+
         _measurements: list[list[tuple[int, ...]]] = []
         _lowest_bound: float
         _highest_bound: float
