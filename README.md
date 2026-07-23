@@ -17,9 +17,6 @@ pip install pypana
 
 # uv
 uv add pypana
-
-# conda
-conda install -c conda-forge pypana
 ```
 
 ## Quick example
@@ -51,10 +48,12 @@ data.histogram(
 
 ## Documentation
 
-Tutorials and API references are available at <TODO ADD LINK>.
+Tutorials and API references are available at [readthedocs](https://pypana.readthedocs.io/en/stable/).
 
 To get started with pypana, we suggest starting with these tutorials:
-<TODO ADD LINK TO HIST AND DATA MANIPULATION>
+- [Data Manipulation](https://pypana.readthedocs.io/en/stable/tutorials/data_manipulation.html)
+- [Data Overview - Histogram](https://pypana.readthedocs.io/en/stable/tutorials/histogram.html)
+- [Collection Efficiency](https://pypana.readthedocs.io/en/stable/tutorials/collection_efficiency.html)
 
 Example measurement files for some supported instrument are in `ExampleFiles/`
 
@@ -76,11 +75,9 @@ The following table lists the currently supported readers. If a certain aerosol-
 | TSI SMPS 3938 | ✅ | preliminary support for ACTRIS Level 0 and 1 |
 
 
-
 ## Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Haisch-Group/pypana/issues).
-
 
 ## License
 
