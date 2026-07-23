@@ -17,9 +17,6 @@ pip install pypana
 
 # uv
 uv add pypana
-
-# conda
-conda install -c conda-forge pypana
 ```
 
 ## Quick example
